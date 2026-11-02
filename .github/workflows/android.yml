@@ -15,6 +15,9 @@ jobs:
         with:
           python-version: '3.11'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - run: python3 scripts/dev.py setup-sdk
       - run: python3 scripts/dev.py verify
       - uses: actions/upload-artifact@v4
@@ -36,6 +39,9 @@ jobs:
         with:
           python-version: '3.11'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - name: Enable hardware acceleration on this ephemeral runner
         run: sudo chmod 666 /dev/kvm
       - run: python3 scripts/dev.py setup-sdk

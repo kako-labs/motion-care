@@ -59,7 +59,9 @@ python3 scripts/dev.py verify --clean-home
 
 각 모듈 build/reports/tests, build/test-results, build/reports/lint-results-debug.html에 결과가 생깁니다. UI는 app/build/reports/androidTests 아래에 있습니다.
 
-.github/workflows/android.yml은 Ubuntu 24.04에서 같은 스크립트로 host/UI 검사를 실행하고 결과를 artifact로 보존합니다. remote 업로드 전에는 CI 실행 성공을 주장하지 않습니다.
+.github/workflows/android.yml은 Ubuntu 24.04에서 같은 스크립트로 host/UI 검사를 실행하고 결과를 artifact로 보존합니다. 최근 실행 결과는 [GitHub Actions](https://github.com/kako-labs/motion-care/actions)에서 확인합니다.
+
+SDK 설치 action에는 `packages: platform-tools`를 명시합니다. 기본값에 포함된 구형 `tools` 패키지는 현재 SDK 저장소에서 찾을 수 없어 설치가 실패합니다. API·Build Tools·Emulator는 이후 `scripts/dev.py setup-sdk`가 프로젝트 설정에 맞춰 설치합니다.
 
 ## 자주 만나는 문제
 
