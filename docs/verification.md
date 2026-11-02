@@ -1,4 +1,4 @@
-# 검증 기록 · 모듈화 후
+# 검증 기록 · 모듈화 및 GitHub 공유
 
 2026-11-02, macOS ARM64 / JDK 17 / Android SDK 35에서 확인했습니다.
 
@@ -36,6 +36,18 @@ python3 scripts/dev.py verify --clean-home
 
 버전 갱신 권고 lint 3종만 고정 도구체인 정책으로 제외했습니다. 코드·리소스 경고는 오류로 처리하며 전체 lint baseline으로 숨기지 않았습니다.
 
+## GitHub Actions 검증
+
+2026-11-02, 비공개 저장소 `kako-labs/motion-care`의 코드 커밋 `4291150`을 GitHub-hosted Ubuntu 24.04에서 검증했습니다. [실행 결과와 보고서](https://github.com/kako-labs/motion-care/actions/runs/41455647976)는 저장소 접근 권한이 있는 계정으로 볼 수 있습니다.
+
+| 검사 | 결과 |
+| --- | --- |
+| verify | APK 빌드·모든 모듈 단위 테스트·lint·모듈 의존성 검사 통과 |
+| ui | Gradle Managed Device의 Android UI 테스트 통과 |
+| 환경 재현 | GitHub의 새 실행 환경에서 JDK·SDK 준비 후 프로젝트 스크립트 실행 |
+
+첫 실행은 SDK 설치 action의 기본값에 있던 구형 `tools` 패키지 때문에 실패했습니다. `.github/workflows/android.yml`에 `packages: platform-tools`를 명시한 뒤 두 작업 모두 통과했습니다. 개인 `local.properties`·SDK·Gradle 캐시·에뮬레이터는 저장소에 포함하지 않았습니다.
+
 ## 아직 별도 검증이 필요한 환경
 
-Windows/Linux 로컬 실행과 GitHub-hosted CI 실행은 이 컴퓨터에서 실행한 결과가 아닙니다. CI 정의는 포함했으며 remote 업로드 후 첫 실행을 확인해야 합니다. 실제 Pleos 시스템·Vehicle SDK·차량 주행 제한은 샘플 테스트로 검증하지 않습니다.
+Windows/Linux 개인 컴퓨터에서의 설치·실행은 별도 확인이 필요합니다. Linux 검증은 위 GitHub-hosted Ubuntu 실행 결과입니다. 실제 Pleos 시스템·Vehicle SDK·차량 주행 제한은 샘플 테스트로 검증하지 않습니다.
