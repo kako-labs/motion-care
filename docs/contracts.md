@@ -1,0 +1,43 @@
+# 공개 연결 계약 v0.2
+
+## 데이터 접근
+
+`data/trip/src/main/java/dev/motioncare/data/trip/TripRepository.kt`가 기능에 공개되는 데이터 API입니다.
+
+| API | 의미 |
+| --- | --- |
+| records | 커밋된 주행 원본 목록 StateFlow |
+| initialize() | 저장소 로드·미완료 기록 복구. 여러 번 호출해도 한 번 초기화 |
+| get(id) | 해당 원본과 샘플, 없으면 null. IO 실패와 없음 구분 |
+| start(vehicleId) | 샘플 주행 생성. 이미 기록 중이면 Rejected |
+| captureSample() | 수동 샘플 한 건 추가. 실제 고빈도 SDK 수집 계약이 아님 |
+| finish() | 종료 원본 저장. 기록 중이 아니면 Rejected |
+
+화면은 `TripReader`·SQL·VehicleDataSource에 접근하지 않습니다. 이들은 데이터 모듈 내부 구현입니다. 조립부는 `createSampleTripRepository(context)`만 호출합니다.
+
+## 데이터 의미
+
+- 모델 정의: `core/model/src/main/java/dev/motioncare/core/model/`.
+- TripId·PersonId·VehicleId 구분, 비어 있는 ID 금지.
+- 시작/종료는 epoch ms, 샘플 elapsedMs는 시작 기준 경과시간.
+- 속도는 m/s. 0과 null/UNAVAILABLE 구분.
+- SYNTHETIC/VEHICLE 출처를 저장하고 화면에 표시.
+- 샘플 시각은 엄격히 증가. 역행·중복 입력은 거부.
+- 수정 revision은 증가하고 오래된 원본 덮어쓰기를 거부.
+- 종료/중단 시각은 마지막 저장된 관측보다 이르지 않음.
+
+## 상태·오류
+
+Repository의 도메인 거부는 CommandResult.Rejected, 저장/미지원 실패는 예외로 전달합니다. 화면 ViewModel은 사용자 오류 상태로 변환하고 CancellationException은 전파합니다. 상세는 Loading/Content/NotFound/Error를 구분합니다.
+
+DrivingViewModel의 busy는 주행 명령에만 적용합니다. 상세 조회는 별도 Job·request version으로 늦게 끝난 이전 조회를 차단합니다. 서로의 작업을 조용히 무시하는 전역 busy 상태가 없습니다.
+
+## 수명·저장
+
+Application의 AppGraph가 Repository를 한 개 소유합니다. Activity 재생성은 주행을 끊지 않습니다. 새 프로세스에서 미완료 원본은 INTERRUPTED로 보존합니다. 화면 종료를 자동 운행 종료로 해석하지 않습니다.
+
+SQLite 이름·스키마 v1은 유지했습니다. 트랜잭션 저장 후 목록을 갱신하고 읽기·쓰기는 IO dispatcher에서 처리합니다. 샘플 전체 교체 저장은 작은 뼈대용이며 실차 연속 수집 전 batch·보관 정책을 설계해야 합니다.
+
+## 후속 계약
+
+프로필/평가 관련 최소 모델은 남겨 두었으나 실행 API는 구현하지 않았습니다. [초안](future-contracts.md)은 설계 참고용입니다. 실제 질문·응답자·삭제·단위·지원 조건을 정한 후 기능과 함께 확장합니다. 현재 앱에 구현되지 않은 기능을 빈 성공 응답으로 꾸미지 않습니다.

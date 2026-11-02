@@ -1,0 +1,34 @@
+import java.util.Properties
+
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+}
+val androidConfig = Properties().apply {
+    rootProject.file("config/android-test.properties").inputStream().use { load(it) }
+}
+android {
+    namespace = "dev.motioncare.core.ui"
+    compileSdk = androidConfig.getProperty("compileSdk").toInt()
+    buildToolsVersion = androidConfig.getProperty("buildTools")
+    defaultConfig { minSdk = androidConfig.getProperty("minSdk").toInt() }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = "17" }
+    buildFeatures { compose = true }
+    testOptions { unitTests.isIncludeAndroidResources = true }
+    lint {
+        abortOnError = true
+        warningsAsErrors = true
+        disable += setOf("OldTargetApi", "AndroidGradlePluginVersion", "GradleDependency")
+    }
+}
+dependencies {
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.material3)
+    implementation(libs.compose.ui)
+    testImplementation(libs.junit)
+}

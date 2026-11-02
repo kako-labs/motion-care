@@ -1,0 +1,71 @@
+# 아키텍처와 결정 이유
+
+## 기준
+
+공식 Android 권장 구조의 **UI 계층·데이터 계층·Repository·화면별 ViewModel·단방향 상태 흐름**을 적용합니다. 모듈 수 자체가 목표가 아니며 현재 협업 경계를 컴파일러로 구분할 만큼만 분리했습니다.
+
+```mermaid
+flowchart TD
+  App[app · 조립과 Navigation] --> Driving[feature:driving · 주행 UI/상태]
+  App --> History[feature:history · 기록 UI/상태]
+  App --> Data[data:trip · 공개 Repository]
+  Driving --> Data
+  History --> Data
+  Driving --> UI[core:ui]
+  History --> UI
+  Data --> Model[core:model]
+  Driving --> Model
+  History --> Model
+```
+
+앱은 공통 모델·UI도 직접 사용할 수 있습니다. 두 feature 사이의 의존성은 없습니다.
+
+## 각 모듈의 이유
+
+| 모듈 | 공개 영역 | 숨기는 것 |
+| --- | --- | --- |
+| app | 앱 진입점·내비게이션 | 기능의 데이터 처리 로직을 두지 않음 |
+| core:model | ID·기록·샘플·오류 결과 등 순수 Kotlin 타입 | Android·DB·UI 의존 없음 |
+| core:ui | 재사용 Section·기능 자리 UI | Repository·업무 로직 없음 |
+| data:trip | TripRepository, 샘플 Repository 생성 함수 | DB·SQL·세션·입력·샘플을 internal로 제한 |
+| feature:driving | DrivingViewModel·주행 컴포넌트 | 주행 UI 상태를 독립 관리 |
+| feature:history | 목록/상세 ViewModel·기록 관련 화면 | 상세 로딩·오류·재시도 상태를 독립 관리 |
+
+프로필·평가·출발/종료 화면은 아직 기록 흐름의 연결 자리이므로 history 안에 둡니다. 실제 기능이 커지거나 독립 변경이 잦아지면 기능 단위로 분리합니다. 빈 기능마다 Gradle 모듈을 만들지 않았습니다.
+
+## 상태 흐름
+
+사용자 입력 → 해당 화면 ViewModel → Repository → 원본 저장/상태 → StateFlow → Compose.
+
+- DrivingViewModel: 초기화·기록 중 상태·명령 처리·완료 ID.
+- HistoryViewModel: 기록 목록 관찰, 구독 수명에 맞춰 StateFlow 유지.
+- TripDetailViewModel: 선택 ID의 로딩/본문/없음/오류, 재시도. 이전 조회가 늦게 끝나도 새 선택을 덮어쓰지 않음.
+- app: 화면 이동과 객체 조립. 상세의 busy 상태를 주행 명령과 공유하지 않음.
+
+Navigation Compose의 back stack을 사용합니다. 평가 자리에서 뒤로 가면 이전 상세로 복귀하며, 각 상세 ViewModel은 해당 destination에 묶입니다. DrivingViewModel은 앱의 기록 UI 흐름 수명을 갖습니다.
+
+## 저장·주입
+
+기존 SQLite 스키마와 DB 이름을 유지했습니다. 이번 구조 변경으로 데이터를 초기화하지 않습니다. SqliteTripStore와 DB helper는 data 모듈 internal이라 feature에서 접근하면 컴파일되지 않습니다.
+
+AppGraph는 명시적 생성자 주입으로 Repository 한 개를 조립합니다. 프로젝트가 작고 생성 지점이 하나여서 DI 프레임워크는 추가하지 않았습니다. 공식 문서는 Hilt를 권장하면서 수동 주입 방법도 설명합니다. 의존성 수명 관리가 복잡해지면 Hilt 도입을 검토할 수 있습니다.
+
+현재 SQLiteOpenHelper는 스키마가 작은 샘플 원본 저장 구현을 보존한 선택입니다. Room이 필수라는 뜻도, 자체 데이터 프레임워크를 만들겠다는 뜻도 아닙니다. 프로필·삭제·마이그레이션 기능을 확장할 때 기존 데이터 보존 계획과 함께 저장 구현을 선택합니다.
+
+## 의존성 보호
+
+1. Gradle 모듈 간 classpath로 접근 범위 제한.
+2. data 내부 클래스는 Kotlin internal.
+3. root verifyArchitecture가 실제 Gradle dependency graph를 검사해 feature 간 의존·공통층 역방향 의존 차단.
+4. 리뷰에서 public API 확대·DB 우회·공통층 과잉 확장을 확인.
+
+API/implementation 모듈 이중화·별도 domain/use case 계층·자체 DI/라우터 프레임워크는 현재 도입하지 않습니다. 재사용할 복잡한 업무 로직이 생길 때 필요한 계층을 추가합니다.
+
+## 공식 참고
+
+- [Android architecture recommendations](https://developer.android.com/topic/architecture/recommendations): 계층·Repository·UDF·화면별 ViewModel.
+- [Common modularization patterns](https://developer.android.com/topic/modularization/patterns): app/data/feature/common 역할과 구현 숨기기.
+- [Modularization guide](https://developer.android.com/topic/modularization): 과도한 세분화의 비용.
+- [Manual dependency injection](https://developer.android.com/training/dependency-injection/manual): 생성자 주입과 앱 조립.
+- [Navigation releases](https://developer.android.com/jetpack/androidx/releases/navigation): 고정한 Navigation Compose 2.9.0. 기존 Kotlin/SDK 조합에서 검증하며 최신 자동 갱신하지 않음.
+- [Pleos 시작 안내](https://document.pleos.ai/en/docs/pleos-only/getting-started): 차량 실제 연동은 승인된 SDK·권한·전용 환경 검증 후.

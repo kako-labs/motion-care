@@ -1,0 +1,49 @@
+name: Android scaffold
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: android-actions/setup-android@v3
+      - run: python3 scripts/dev.py setup-sdk
+      - run: python3 scripts/dev.py verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: host-test-reports
+          path: |
+            **/build/reports/
+            **/build/test-results/
+  ui:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: android-actions/setup-android@v3
+      - name: Enable hardware acceleration on this ephemeral runner
+        run: sudo chmod 666 /dev/kvm
+      - run: python3 scripts/dev.py setup-sdk
+      - run: python3 scripts/dev.py ui
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: device-test-reports
+          path: |
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/

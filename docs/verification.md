@@ -1,0 +1,41 @@
+# 검증 기록 · 모듈화 후
+
+2026-11-02, macOS ARM64 / JDK 17 / Android SDK 35에서 확인했습니다.
+
+| 검사 | 결과 |
+| --- | --- |
+| Gradle 모듈 6개 APK 빌드 | 통과 |
+| 전체 모듈 host 테스트 | 17개, 실패·오류 0 |
+| 전체 Android 모듈 lint | 통과 |
+| 개인 Gradle 홈 배제·clean 빌드 | .gradle-user-home에서 새 Wrapper/의존성 다운로드 후 verifyAll 통과 |
+| Gradle Managed Device | 프로젝트 정의로 Pixel 2 / API 35 AOSP ARM64 이미지 설치·생성·검사·종료 |
+| Android UI 테스트 | 1개 전체 흐름 통과 |
+| 금지된 모듈 의존성 | history → driving을 임시 주입한 검증에서 예상대로 차단 |
+| 환경 점검 실패 경로 | 없는 JDK에 명확한 오류·설치 안내, traceback 없이 종료 |
+| 문서 링크·개인 경로 검사 | 공유 문서 링크 정상, 공유 소스에 개인 절대 경로 없음 |
+
+## 무엇을 검증했나
+
+- 모델: 값 없음/0, 시각 순서, 종료 원본 조건.
+- 데이터: 시작/종료 중복, 입력 순서, 저장 실패, 프로세스 복구, 실제 어댑터 미지원, SQLite 재연결·revision 충돌.
+- 주행 상태: 초기화 실패·재시도, 명령 중복 방지·오류 전달.
+- 상세 상태: 늦게 끝난 이전 조회가 새 선택을 덮어쓰지 않음, 실패/없음/재시도 구분.
+- 실제 UI: 샘플 3건 입력 → Activity 재생성 → 종료 → 상세 → 평가 자리 → 같은 상세 복귀.
+
+주행 원본 DB 이름과 스키마 v1을 유지했습니다. 과거 단일 모듈에서 통과한 강제 종료/재실행 검사와 구분해, 이번 기록은 모듈화 후 테스트입니다.
+
+## 재현
+
+```sh
+python3 scripts/dev.py verify
+python3 scripts/dev.py ui
+python3 scripts/dev.py verify --clean-home
+```
+
+처음 도구 준비는 docs/testing.md를 따릅니다. 로컬 진단 로그/검사 보고서 백업은 artifacts 아래이며 공유 소스에는 포함하지 않습니다.
+
+버전 갱신 권고 lint 3종만 고정 도구체인 정책으로 제외했습니다. 코드·리소스 경고는 오류로 처리하며 전체 lint baseline으로 숨기지 않았습니다.
+
+## 아직 별도 검증이 필요한 환경
+
+Windows/Linux 로컬 실행과 GitHub-hosted CI 실행은 이 컴퓨터에서 실행한 결과가 아닙니다. CI 정의는 포함했으며 remote 업로드 후 첫 실행을 확인해야 합니다. 실제 Pleos 시스템·Vehicle SDK·차량 주행 제한은 샘플 테스트로 검증하지 않습니다.
