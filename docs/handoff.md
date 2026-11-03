@@ -32,5 +32,6 @@
 ## 운영사무국에 확인할 것
 
 - `distractionOptimized` 선언과 `android.car.permission.CAR_SPEED` 권한의 승인 여부
+- 멀미 안내를 `CATEGORY_MESSAGE` 알림으로 보내도 심사를 통과하는지
 
 구현되지 않은 데이터 API를 미리 모두 넣지 않습니다. 기능을 시작할 때 해당 도메인의 Repository·입력·상태·인수 기준을 정합니다. 최초 기획서의 상세 계약은 참고이며 실제 공개 API는 docs/contracts.md와 코드가 기준입니다.
