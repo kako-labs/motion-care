@@ -106,25 +106,25 @@ class FgService : Service() {
             subscribeCarProperties()
             subscribeVehicleSdk()
         }
-        intent?.getStringExtra("act")?.let(::act)
+        intent?.getStringExtra("act")?.let { act(it, intent.getStringExtra("title"), intent.getStringExtra("text")) }
         return START_STICKY
     }
 
-    private fun act(action: String) {
+    private fun act(action: String, title: String?, text: String?) {
         Log.i(TAG, "act $action")
         when {
-            action.startsWith("hun:") -> postAlert(action.removePrefix("hun:"))
+            action.startsWith("hun:") -> postAlert(action.removePrefix("hun:"), title, text)
             action == "toast" -> Toast.makeText(applicationContext, "PROBE TOAST FROM SERVICE", Toast.LENGTH_LONG).show()
             action == "overlay" -> showOverlay()
             action == "overlay_off" -> hideOverlay()
         }
     }
 
-    private fun postAlert(category: String) {
+    private fun postAlert(category: String, title: String?, text: String?) {
         val builder = Notification.Builder(this, "probe_high")
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .setContentTitle("PROBE HUN $category")
-            .setContentText("category=$category importance=HIGH")
+            .setContentTitle(title ?: "PROBE HUN $category")
+            .setContentText(text ?: "category=$category importance=HIGH")
         when (category) {
             "nav" -> builder.setCategory(Notification.CATEGORY_NAVIGATION)
             "msg" -> builder.setCategory(Notification.CATEGORY_MESSAGE)

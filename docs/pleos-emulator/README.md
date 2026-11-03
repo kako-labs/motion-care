@@ -7,7 +7,7 @@
 - Pleos Connect v2.1.0, API 34, arm64, user build에서 측정했습니다.
 - 실차와 App Market 심사 결과가 아닙니다.
 - 권한은 adb로 강제 부여했습니다. 실제 권한 요청 흐름과 마켓 승인은 확인하지 못했습니다.
-- 소리를 끈 상태(`-no-audio`)로 실행해 소리와 음성 안내는 확인하지 못했습니다.
+- 소리와 음성 안내는 확인하지 못했습니다. 첫 측정은 소리를 끈 상태(`-no-audio`)였고, 메시지 카드 측정은 소리를 켰지만 재생 여부를 들을 수 없었습니다.
 - 시험하지 않은 항목: 자동 시작, 앱 닫기 제스처, 시동 껐다 켜기, 앱 두 개 동시 표시, 3분을 넘는 기록, 공조 제어 호출
 
 ## 결과
@@ -30,6 +30,23 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 | 오버레이, `-g` 없이 설치 | `BadTokenException`. `MANAGE_OVERLAY_PERMISSION` 설정 화면도 열리지 않음 | [40_overlay_settings](shots/40_overlay_settings.png) |
 
 리마인더와 상태 알림은 알림 센터 표시를 따로 캡처하지 않았습니다.
+
+### 메시지 카드로 안내 띄우기
+
+주행 중 안내에 쓸 `CATEGORY_MESSAGE` 카드를 실제 안내 문구로 다시 측정했습니다. 별도 표시가 없으면 D 기어 40km/h, 내비 표시 상태입니다.
+
+| 시험 | 결과 | 증거 |
+| --- | --- | --- |
+| 실제 문구 | 내비 위 앱 창 왼쪽 위에 앱 이름과 문구가 표시됨. 메시지 말풍선 배지가 함께 보임 | [70_msg_real_copy](shots/70_msg_real_copy.png) |
+| 표시 시간 | 약 1초 간격 캡처에서 1.3초부터 9.6초까지 보이고 10.7초에는 사라짐 | |
+| 카드 크기 | 가로 약 720px, 세로 약 160px. 두 줄이면 약 190px. 상태 표시줄 일부를 덮음 | |
+| 1초 간격 3건 | 쌓이지 않고 마지막 안내만 보임. 첫 캡처 뒤 약 10.6초에도 표시됨 | [71_three_alerts](shots/71_three_alerts.png) |
+| 긴 문구 | 두 줄(줄당 약 30자)까지만 보이고 말줄임표 없이 잘림 | [72_long_copy](shots/72_long_copy.png) |
+| P 기어 | 같은 카드가 표시됨 | [73_msg_park](shots/73_msg_park.png) |
+
+- **소리:** 미확인입니다. `dumpsys notification`의 `mSoundNotificationKey`는 비어 있었고 로그에서도 재생 흔적을 찾지 못했지만, 실제로 소리가 나지 않는다는 뜻은 아닙니다.
+- **경로 안내 화면:** 에뮬레이터 내비에 지도와 경로가 표시되지 않아, 회전 안내를 가리는지는 확인하지 못했습니다.
+- **내비 앱 내부 표시:** NaviHelper 문서의 API는 경로 요청, 경유지 추가, 내비 화면 호출, 이벤트 수신이며, 내비 화면 안에 문구를 넣는 기능은 찾지 못했습니다.
 
 ### 백그라운드 기록
 
@@ -115,6 +132,9 @@ adb shell am start --user 10 -n dev.probe/.DoActivity
 
 # Foreground service. act: hun:plain|msg|nav|call|status|reminder, toast, overlay, overlay_off
 adb shell am start-foreground-service --user 10 -n dev.probe/.FgService --es act hun:plain
+
+# Message card with real copy. title and text are optional.
+adb shell "am start-foreground-service --user 10 -n dev.probe/.FgService --es act hun:msg --es title '모션케어' --es text '조금 일찍 감속해보세요.'"
 
 # Navigation
 adb shell am start --user 10 -n ai.umos.maps.android.navigation.app/.MainActivity
