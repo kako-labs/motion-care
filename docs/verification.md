@@ -82,6 +82,20 @@ python3 scripts/dev.py verify --clean-home
 
 실차, App Market 권한 승인, 3분을 넘는 기록은 확인하지 못했습니다.
 
+## 패턴 탐지 검증
+
+2026-11-03, macOS ARM64 / JDK 17 / Android SDK 35에서 확인했습니다.
+
+| 검사 | 결과 |
+| --- | --- |
+| 전체 모듈 host 테스트 | 65개, 실패·오류 0 |
+| 전체 Android 모듈 lint | 통과 |
+| Android UI 테스트 | 2개 통과 |
+| v1 DB 업그레이드 | Robolectric에서 기존 주행을 유지하고 관찰 저장 가능 |
+| Pleos 에뮬레이터 종단 시험 | 관찰 저장과 상세 화면 표시 통과. [결과](pleos-emulator/README.md#패턴-탐지) |
+
+실제 차량 신호에서의 탐지 정확도, 소음이 섞인 신호의 기준값, 실기기의 v1 파일 업그레이드는 확인하지 못했습니다.
+
 ## 아직 별도 검증이 필요한 환경
 
 Windows/Linux 개인 컴퓨터에서의 설치·실행은 별도 확인이 필요합니다. Linux 검증은 위 GitHub-hosted Ubuntu 실행 결과입니다. 실제 Pleos 시스템·Vehicle SDK·차량 주행 제한은 샘플 테스트로 검증하지 않습니다. Pleos 에뮬레이터에서 별도로 측정한 결과는 [측정 기록](pleos-emulator/README.md)에 있고, 실차는 아직 확인하지 못했습니다.

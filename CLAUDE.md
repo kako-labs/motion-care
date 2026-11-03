@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트
 
-현대자동차그룹 차량용 앱 공모전 출품작인 멀미 대응 앱(가칭 모션케어)입니다. Pleos Connect(AAOS API 34) 대상 Kotlin·Jetpack Compose 앱이며, 일반 기기에서는 합성 샘플로 동작하고 자동차 기기에서는 차량 속도를 기록합니다. 환경 API, 패턴 분석, 주행 중 안내, AI 요약은 아직 없습니다. 문서 목록은 `README.md`의 문서 지도를 봅니다.
+현대자동차그룹 차량용 앱 공모전 출품작인 멀미 대응 앱(가칭 모션케어)입니다. Pleos Connect(AAOS API 34) 대상 Kotlin·Jetpack Compose 앱이며, 일반 기기에서는 합성 샘플로 동작하고 자동차 기기에서는 차량 속도를 기록하고 운전 패턴을 찾아 저장합니다. 환경 API, 주행 중 안내, AI 요약은 아직 없습니다. 문서 목록은 `README.md`의 문서 지도를 봅니다.
 
 ## 작업 흐름: 브랜치와 PR
 
@@ -73,6 +73,7 @@ data:* ───────► core:model
 - **화면 패턴:** `*Route` 컴포저블이 ViewModel을 만들고 상태를 `*Content`에 넘깁니다. 도메인 거부는 `CommandResult.Rejected`, 저장 실패는 예외로 전달되며 ViewModel이 화면 상태로 바꿉니다.
 - **주행 기록:** `TripSessionController`가 기록 중인 주행을 하나로 유지합니다. 새 프로세스에서 미완료 기록은 `INTERRUPTED`가 되고, `SqliteTripStore`는 오래된 revision의 저장을 거부합니다. `UnavailableVehicleDataSource`는 차량 입력이 없을 때 합성값으로 대체되지 않도록 예외를 던집니다.
 - **차량 기록:** `AppGraph`는 자동차 기기에서만 `createVehicleTripData`를 조립합니다. 주행이 시작되면 `TripRecordingService`가 `VehicleRecorder.record()`를 돌리고, 속도는 이벤트 시각 기준으로 약 1초마다 묶어 추가 저장합니다. 단위 테스트로 잡히지 않는 이 흐름은 `docs/pleos-emulator/tools/recording_e2e.py`로 확인합니다.
+- **패턴 탐지:** `TripSessionController`가 차량 샘플을 `PatternDetector`에 한 건씩 넘기고, 찾은 `Observation`을 샘플과 같은 트랜잭션으로 저장합니다. 합성 샘플 주행은 탐지하지 않습니다. 기준값은 실제 신호로 조정할 시작값이며 멀미 기준이 아닙니다(`docs/contracts.md`).
 
 ## Pleos 제약
 

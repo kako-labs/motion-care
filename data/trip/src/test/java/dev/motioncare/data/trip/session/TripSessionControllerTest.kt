@@ -25,13 +25,15 @@ class TripSessionControllerTest {
         override suspend fun lastSampleElapsedMs(id: TripId) = snapshots[id]?.samples?.lastOrNull()?.elapsedMs
         override suspend fun saveTrip(trip: TripRecord) {
             check(!failWrites) { "Storage failed" }
-            snapshots[trip.id] = TripSnapshot(trip, snapshots[trip.id]?.samples.orEmpty())
+            val saved = snapshots[trip.id]
+            snapshots[trip.id] = TripSnapshot(trip, saved?.samples.orEmpty(), saved?.observations.orEmpty())
             publish()
         }
-        override suspend fun appendSamples(trip: TripRecord, samples: List<SpeedSample>) {
+        override suspend fun appendSamples(trip: TripRecord, samples: List<SpeedSample>, observations: List<Observation>) {
             check(!failWrites) { "Storage failed" }
             appendCalls++
-            snapshots[trip.id] = TripSnapshot(trip, snapshots[trip.id]?.samples.orEmpty() + samples)
+            val saved = snapshots[trip.id]
+            snapshots[trip.id] = TripSnapshot(trip, saved?.samples.orEmpty() + samples, saved?.observations.orEmpty() + observations)
             publish()
         }
         private fun publish() { records.value = snapshots.values.map { it.trip } }
@@ -219,6 +221,46 @@ class TripSessionControllerTest {
         runCurrent()
         assertEquals(listOf(1000L, 2000L), store.get(trip.id)!!.samples.map { it.elapsedMs })
         trip.job.cancel()
+    }
+
+    @Test fun `patterns found in vehicle readings are saved with the trip`() = runTest {
+        val controller = controller()
+        val trip = startRecording(controller)
+        for (ms in 0L..2000L step 200) trip.readings.emit(reading(ms, value = 0.0))
+        // About 3 m/s2 from a stop.
+        for (ms in 2200L..5000L step 200) trip.readings.emit(reading(ms, value = (ms - 2000) * 0.003))
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        assertEquals(listOf(DrivingPattern.RAPID_START), store.get(trip.id)!!.observations.map { it.pattern })
+    }
+
+    @Test fun `a pattern still open at the finish is saved`() = runTest {
+        val controller = controller()
+        val trip = startRecording(controller)
+        for (ms in 0L..1000L step 200) trip.readings.emit(reading(ms, value = 0.0))
+        for (ms in 1200L..2400L step 200) trip.readings.emit(reading(ms, value = (ms - 1000) * 0.003))
+        runCurrent()
+        assertTrue(store.get(trip.id)!!.observations.isEmpty())
+        controller.finish()
+        runCurrent()
+        assertEquals(listOf(DrivingPattern.RAPID_START), store.get(trip.id)!!.observations.map { it.pattern })
+    }
+
+    @Test fun `a new trip does not inherit detection state from the last one`() = runTest {
+        val controller = controller()
+        val first = startRecording(controller)
+        for (ms in 0L..1000L step 200) first.readings.emit(reading(ms, value = 0.0))
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        val second = startRecording(controller)
+        // Already moving when recording starts, so this is not a start from a stop.
+        for (ms in 0L..3000L step 200) second.readings.emit(reading(ms, value = 15.0))
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        assertTrue(store.get(second.id)!!.observations.isEmpty())
     }
 
     @Test fun `recording without an active trip ends immediately`() = runTest {

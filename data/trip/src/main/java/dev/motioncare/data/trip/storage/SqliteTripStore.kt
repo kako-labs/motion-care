@@ -33,7 +33,11 @@ internal class SqliteTripStore(
         }
     }
 
-    override suspend fun appendSamples(trip: TripRecord, samples: List<SpeedSample>) = withContext(io) {
+    override suspend fun appendSamples(
+        trip: TripRecord,
+        samples: List<SpeedSample>,
+        observations: List<Observation>,
+    ) = withContext(io) {
         mutex.withLock {
             val db = database.writableDatabase
             db.transaction {
@@ -42,6 +46,13 @@ internal class SqliteTripStore(
                     db.insertOrThrow("speed_samples", null, ContentValues().apply {
                         put("trip_id", trip.id.value); put("elapsed", sample.elapsedMs)
                         put("speed", sample.metersPerSecond); put("quality", sample.quality.name)
+                    })
+                }
+                observations.forEach { seen ->
+                    db.insertOrThrow("observations", null, ContentValues().apply {
+                        put("trip_id", trip.id.value); put("pattern", seen.pattern.name)
+                        put("start_ms", seen.startMs); put("end_ms", seen.endMs)
+                        put("peak_mps2", seen.peakAccelerationMps2); put("detector_version", seen.detectorVersion)
                     })
                 }
             }
@@ -64,7 +75,17 @@ internal class SqliteTripStore(
                         Quality.valueOf(c.getString(c.getColumnIndexOrThrow("quality")))))
                 } }
             }
-            TripSnapshot(trip, samples)
+            val observations = db.rawQuery("SELECT * FROM observations WHERE trip_id = ? ORDER BY start_ms, pattern",
+                arrayOf(id.value)).use { c ->
+                buildList { while (c.moveToNext()) {
+                    add(Observation(DrivingPattern.valueOf(c.getString(c.getColumnIndexOrThrow("pattern"))),
+                        c.getLong(c.getColumnIndexOrThrow("start_ms")),
+                        c.getLong(c.getColumnIndexOrThrow("end_ms")),
+                        c.getDouble(c.getColumnIndexOrThrow("peak_mps2")),
+                        c.getString(c.getColumnIndexOrThrow("detector_version"))))
+                } }
+            }
+            TripSnapshot(trip, samples, observations)
         }
     }
 

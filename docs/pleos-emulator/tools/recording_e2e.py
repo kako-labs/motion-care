@@ -165,7 +165,7 @@ def main():
     print("tap detail:", tap("주행 상세"))
     time.sleep(3)
     shot("87_detail")
-    print("detail:", [t for t in texts() if "출처" in t or "샘플" in t][:3])
+    print("detail:", [t for t in texts() if "출처" in t or "샘플" in t or "패턴" in t][:3])
     time.sleep(1)
 
     print("\n--- saved data")
@@ -191,6 +191,8 @@ def main():
         print("speed km/h min/max:", round(min(speeds) * 3.6, 1), round(max(speeds) * 3.6, 1))
         print("quality:", {q: sum(1 for r in rows if r[2] == q) for q in {r[2] for r in rows}})
         print("strictly increasing:", all(g > 0 for g in gaps))
+    for row in db.execute("SELECT pattern, start_ms, end_ms, round(peak_mps2, 2), detector_version FROM observations ORDER BY start_ms"):
+        print("observation:", row)
     print("screenshots:", OUT)
     stop.set()
 
