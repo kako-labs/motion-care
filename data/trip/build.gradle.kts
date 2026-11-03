@@ -10,6 +10,7 @@ val androidConfig = Properties().apply {
 android {
     namespace = "dev.motioncare.data.trip"
     compileSdk = androidConfig.getProperty("compileSdk").toInt()
+    useLibrary("android.car")
     buildToolsVersion = androidConfig.getProperty("buildTools")
     defaultConfig { minSdk = androidConfig.getProperty("minSdk").toInt() }
     compileOptions {

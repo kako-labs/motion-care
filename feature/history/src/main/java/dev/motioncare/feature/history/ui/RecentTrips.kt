@@ -25,7 +25,7 @@ fun RecentTripsRoute(repository: TripRepository, onSelect: (TripId) -> Unit) {
 
 @Composable
 fun RecentTrips(records: List<TripRecord>, onSelect: (TripId) -> Unit) {
-    ScaffoldSection("저장된 샘플 기록") {
+    ScaffoldSection("저장된 기록") {
         if (records.isEmpty()) Text("아직 기록이 없습니다.")
         records.forEach { trip ->
             TextButton(onClick = { onSelect(trip.id) }) {
