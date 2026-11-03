@@ -7,7 +7,7 @@
 3. `python3 scripts/dev.py verify`.
 4. Android Studio에서 app 실행 → 샘플 시작/신호 추가/종료/상세 확인.
 
-## 전경연님
+## 주행 담당
 
 - `app/.../AppGraph.kt`: Repository 생성과 주입.
 - `data/trip/.../TripRepository.kt`: 상대에게 주는 공개 기능.
@@ -16,7 +16,7 @@
 
 실제 데이터 입력을 바꿔도 기록 UI는 Repository 계약을 유지하면 동작해야 합니다.
 
-## 송호현님
+## 기록 담당
 
 - `feature/history/.../navigation/HistoryNavigation.kt`: 새 화면 경로를 추가하는 위치.
 - `data/profile/.../ProfileRepository.kt`: 프로필·차량·인물 연결·평가·설정 저장을 추가하는 위치.

@@ -7,11 +7,11 @@
 | 자료 | 위치 | 접근 조건 |
 | --- | --- | --- |
 | 화면 시안 (Claude Design) | [모션케어 앱 화면 시안](https://claude.ai/artifact/Rs6oUxktSkUH1nntnA7jEP) | 비공개입니다. 소유자가 공유 메뉴에서 공유해야 볼 수 있습니다. |
-| 팀 보드 (Notion) | [HMG 대시보드](https://app.notion.com/p/HMG-40bae4c07fd6804ba9fed356a13e7a28) | 팀 워크스페이스 권한이 필요합니다. |
-| Pleos 창 정책 | [Window Policy](https://pleos-playground-docs.appmarket-int.umos.ai/docs/connect/guide/docs-design/getting-started/window) | Pleos 개발자 문서 |
-| Pleos 화면 모델 | [Screen model](https://pleos-playground-docs.appmarket-int.umos.ai/docs/pleos-only/vehicle-app-planning-guide/app-structure-screen-model) | Pleos 개발자 문서 |
-| Pleos 글꼴 기준 | [Typography](https://pleos-playground-docs.appmarket-int.umos.ai/docs/connect/guide/docs-design/foundations/typography) | Pleos 개발자 문서 |
-| Pleos 주행 방해 심사 기준 | [Driver distraction](https://pleos-playground-docs.appmarket-int.umos.ai/docs/pleos-only/distribute/app-review-guide/review-driver-distraction-elements) | Pleos 개발자 문서 |
+| 팀 보드 (Notion) | [대시보드](https://app.notion.com/p/40bae4c07fd6804ba9fed356a13e7a28), [디자인 시안 페이지](https://app.notion.com/p/40dae4c07fd68180a128ffc333949174) | 팀 워크스페이스 권한이 필요합니다. |
+| Pleos 창 정책 | [Window Policy](https://document.pleos.ai/en/docs/connect/guide/docs-design/getting-started/window) | Pleos 개발자 문서 |
+| Pleos 화면 모델 | [Screen model](https://document.pleos.ai/en/docs/pleos-only/vehicle-app-planning-guide/app-structure-screen-model) | Pleos 개발자 문서 |
+| Pleos 글꼴 기준 | [Typography](https://document.pleos.ai/en/docs/connect/guide/docs-design/foundations/typography) | Pleos 개발자 문서 |
+| Pleos 주행 방해 심사 기준 | [Driver distraction](https://document.pleos.ai/en/docs/pleos-only/distribute/app-review-guide/review-driver-distraction-elements) | Pleos 개발자 문서 |
 
 ## 현재 기준
 

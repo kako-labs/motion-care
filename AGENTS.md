@@ -1,6 +1,8 @@
 # Motion Care working rules
 
 - Keep work limited to the authorized scaffold or feature scope.
+- Work on a branch and open a pull request against main. Push directly to main only when the user explicitly asks.
+- Refer to people by role in this repository. The contest bans developer real names in shared links.
 - Follow the module graph and rationale in docs/architecture.md. Do not split by developer name.
 - UI uses screen-level ViewModels and immutable StateFlow UI state. No shared global busy flag for unrelated screens.
 - Features use repository interfaces from data modules; they never access database, session, sample, vehicle or external API implementations.

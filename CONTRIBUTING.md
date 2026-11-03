@@ -6,6 +6,16 @@
 2. `python3 scripts/dev.py verify`가 통과하는 기준에서 기능 브랜치를 만듭니다.
 3. 담당 모듈 안에서 구현합니다. 모듈별 시작 지점은 `docs/ownership.md`를 확인합니다.
 
+## 브랜치와 PR
+
+`main`에 직접 push하지 않고 브랜치에서 PR로 합칩니다. 현재 요금제에서는 브랜치 보호를 쓸 수 없어 GitHub가 막아 주지 않으므로 약속으로 지킵니다.
+
+1. 최신 `main`에서 `type/설명` 형식으로 브랜치를 만듭니다. 예: `feat/profile-edit`
+2. 커밋 메시지는 `type: 한글 설명`입니다. type은 `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`입니다.
+3. push 전에 `python3 scripts/dev.py verify`를 실행합니다. 화면 이동이나 수명주기를 바꿨다면 `python3 scripts/dev.py ui`도 실행합니다.
+4. PR 본문에 변경 내용, 영향받는 모듈, 실행한 검증, 확인하지 못한 항목을 적습니다.
+5. CI의 `verify`와 `ui`가 통과하고 상대 담당이 확인한 뒤 병합합니다. force push는 하지 않습니다.
+
 ## 공통 계약을 바꿀 때
 
 요구하는 필드·단위·오류·소비 화면·샘플을 먼저 정리합니다. 공통 모델/Repository 변경을 작은 변경으로 합친 뒤 각 기능을 구현합니다. 소비자가 없는 인터페이스를 미리 대량 생성하지 않습니다.

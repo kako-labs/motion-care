@@ -73,4 +73,4 @@ SDK 설치 action에는 `packages: platform-tools`를 명시합니다. 기본값
 - dependency lock 오류: 임의로 lockfile을 삭제하지 않고 버전 변경 여부를 확인합니다. 변경 작업일 때만 --write-locks 사용.
 - 사내 프록시: 조직의 정상 프록시 설정 사용. 개인 토큰·프록시 비밀번호를 저장소에 넣지 않습니다.
 
-실차 SDK·차량 표시면·자동 시동·권한의 검증은 별도이며 일반 Android UI 테스트로 대체하지 않습니다.
+실차 SDK·차량 표시면·자동 시동·권한의 검증은 별도이며 일반 Android UI 테스트로 대체하지 않습니다. Pleos 에뮬레이터 설치와 측정 방법은 [측정 기록](pleos-emulator/README.md)을 따릅니다.

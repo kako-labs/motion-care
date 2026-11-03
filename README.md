@@ -8,7 +8,7 @@ KAKO Labs의 비공개 저장소: [kako-labs/motion-care](https://github.com/kak
 
 ## 현재 가능한 것
 
-샘플 시작 → 신호 추가 → 종료 → 저장 목록 → 상세 → 평가 자리 → 같은 상세 복귀. 앱 프로세스 종료 후에도 기록이 유지되고 미완료 기록은 중단됨으로 보존됩니다.
+샘플 시작 → 신호 추가 → 종료 → 저장 목록 → 상세 → 평가 자리 → 같은 상세 복귀. 앱 프로세스 종료 후에도 기록이 유지되고 미완료 기록은 중단됨으로 보존됩니다. 프로필 화면에서는 저장된 사람 목록을 볼 수 있습니다.
 
 ## 처음 실행
 
@@ -51,7 +51,7 @@ python3 scripts/dev.py ui-connected
 python3 scripts/dev.py verify --clean-home
 ```
 
-UI 테스트 최초 실행은 시스템 이미지를 다운로드하며 하드웨어 가상화가 필요합니다. 실제 Pleos 호환성 검사는 별도입니다. [환경 준비·문제 해결](docs/testing.md)을 확인하세요.
+UI 테스트 최초 실행은 시스템 이미지를 다운로드하며 하드웨어 가상화가 필요합니다. [환경 준비·문제 해결](docs/testing.md)을 확인하세요. 이 테스트는 일반 Android 기기에서 돌며, Pleos 환경에서 따로 측정한 결과는 [에뮬레이터 측정 기록](docs/pleos-emulator/README.md)에 있습니다.
 
 ## 구조
 
@@ -67,7 +67,7 @@ feature/history/    목록·상세·프로필·출발/종료 UI·각 ViewModel·
 
 두 feature는 서로 참조하지 않습니다. 데이터 접근은 data 모듈의 Repository를 통하고 DB·입력 구현은 `internal`로 숨깁니다. `app`은 주입과 메인 화면을 조립하고, 기록 쪽 화면 이동은 `feature/history`의 `historyGraph`가 맡습니다. 각각 독립 Gradle 모듈입니다.
 
-모듈은 기능과 책임으로 나눴으며 사람별 개인 모듈이 아닙니다. 현재 분담은 전경연님이 app·data/trip·feature/driving, 송호현님이 data/profile·feature/history입니다. 공통 모델·UI는 함께 확인하고 전경연님이 통합합니다.
+모듈은 기능과 책임으로 나눴으며 사람별 개인 모듈이 아닙니다. 현재 분담은 주행 담당이 app·data/trip·feature/driving, 기록 담당이 data/profile·feature/history입니다. 공통 모델·UI는 함께 확인하고 주행 담당이 통합합니다.
 
 ## 동료에게 소스 전달
 
@@ -77,10 +77,12 @@ Git remote로 공유하거나, 아래 명령으로 개인 설정·캐시·빌드
 python3 scripts/export_source.py
 ```
 
-`artifacts/motion-care-source.zip`을 전달하면 됩니다. 동료는 압축을 풀고 이 README의 처음 실행 절차를 따라갑니다. 이 ZIP은 현재 Git에 커밋되지 않은 새 소스도 포함합니다.
+`artifacts/motion-care-source.zip`을 전달하면 됩니다. 동료는 압축을 풀고 이 README의 처음 실행 절차를 따라갑니다. 이 ZIP은 현재 Git에 커밋되지 않은 새 소스도 포함합니다. 시안과 측정 자료가 들어 있어 용량은 약 40MB입니다.
 
 ## 문서 지도
 
+- [개발 규칙](CONTRIBUTING.md): 브랜치·PR·제출 전 확인 항목
+- [Claude Code 안내](CLAUDE.md): 명령·구조·작업 흐름 요약
 - [구조와 공식 근거](docs/architecture.md): 왜 이 정도로 나눴는지
 - [소유권](docs/ownership.md): 각자 수정할 위치·공통 변경 절차
 - [연결 계약](docs/contracts.md): Repository·단위·상태·오류
