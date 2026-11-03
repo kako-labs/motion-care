@@ -4,6 +4,8 @@
 
 KAKO Labs의 비공개 저장소: [kako-labs/motion-care](https://github.com/kako-labs/motion-care). 초대받은 GitHub 계정으로 접근합니다.
 
+기획, 화면, 작업 보드, 일정, 제출 준비는 [Notion 팀 대시보드](https://gainful-trilby-a8b.notion.site/HMG-40bae4c07fd6804ba9fed356a13e7a28)에 있습니다. 실제 구조와 공개 API는 이 저장소의 문서와 코드가 기준입니다.
+
 **처음 받은 분:** 아래 실행 절차 → [두 사람 시작 가이드](docs/quick-start.md) → [개발 규칙](CONTRIBUTING.md) 순서로 읽습니다.
 
 ## 현재 가능한 것
@@ -81,6 +83,7 @@ python3 scripts/export_source.py
 
 ## 문서 지도
 
+- [Notion 팀 대시보드](https://gainful-trilby-a8b.notion.site/HMG-40bae4c07fd6804ba9fed356a13e7a28): 기획·화면·작업 보드·일정·제출 준비
 - [개발 규칙](CONTRIBUTING.md): 브랜치·PR·제출 전 확인 항목
 - [Claude Code 안내](CLAUDE.md): 명령·구조·작업 흐름 요약
 - [구조와 공식 근거](docs/architecture.md): 왜 이 정도로 나눴는지
@@ -89,6 +92,7 @@ python3 scripts/export_source.py
 - [환경·테스트](docs/testing.md): 로컬·CI·에뮬레이터 재현
 - [인계·후속 순서](docs/handoff.md): 구현된 것과 다음 작업
 - [검증 기록](docs/verification.md): 실제 확인한 범위
+- [기획서 초안](docs/proposal.md): 공모전 접수양식 항목별 초안과 제출 전 확인 항목
 - [화면 디자인](docs/design.md): 시안 링크·스타일 기준·Pleos 화면 제약
 - [Pleos 에뮬레이터 측정](docs/pleos-emulator/README.md): 알림·백그라운드·주행 제한 실측
 
