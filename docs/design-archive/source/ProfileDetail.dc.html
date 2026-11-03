@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>프로필 상세</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#07111E}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1600px; height: 1280px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 24px; background: #07111E; color: #F3EFE9; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+
+  <header style="display: flex; align-items: center; gap: 20px; flex: none">
+    <a href="Main.dc.html" aria-label="뒤로" style="display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; flex: none; border-radius: 6px; background: #0D1C2F">
+      <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <span aria-hidden="true" style="display: flex; align-items: center; justify-content: center; width: 96px; height: 96px; flex: none; border-radius: 6px; background: #002C5F; font-size: 44px; font-weight: 800; color: #E4DCD3">민</span>
+    <div style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0">
+      <h1 style="margin: 0; font-size: 56px; font-weight: 800; line-height: 1.1">민준</h1>
+      <span style="font-size: 24px; color: #B9C4D2">성인 · 연결된 주행 15회</span>
+    </div>
+    <a href="ProfileEdit.dc.html" style="display: flex; align-items: center; height: 80px; box-sizing: border-box; padding: 0 28px; border: 2px solid #3A5C82; border-radius: 6px; font-size: 26px; font-weight: 700">수정</a>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; flex: none">
+    <section style="display: flex; flex-direction: column; box-sizing: border-box; padding: 36px; background: #002C5F; border-radius: 6px; height: 620px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <h2 style="margin: 0; font-size: 36px; font-weight: 800">운전자로</h2>
+        <span style="font-size: 26px; color: #D5DCE5">유효 주행 12회</span>
+      </div>
+      <div aria-hidden="true" style="display: flex; gap: 4px; height: 4px; margin-top: 20px">
+        <div style="width: 120px; background: #00AAD2"></div>
+        <div style="flex: 1; background: #2F5A8C"></div>
+      </div>
+      <span style="margin-top: 24px; font-size: 24px; color: #B9C4D2">현재 제공 중인 조언</span>
+      <span style="margin-top: 6px; font-size: 36px; line-height: 1.3; font-weight: 800">정지 지점보다 조금 일찍 감속해보세요</span>
+      <div style="display: flex; flex-direction: column; margin-top: auto">
+        <sc-for list="{{driver}}" as="d" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-top: 2px solid #2F5A8C">
+            <span style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 26px; font-weight: 700">{{d.name}}</span>
+              <span style="font-size: 20px; color: #B9C4D2">{{d.detail}}</span>
+            </span>
+            <span style="flex: none; font-size: 22px; font-weight: 700; color: #E4DCD3">{{d.trend}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; box-sizing: border-box; padding: 36px; background: #0D1C2F; border-radius: 6px; height: 620px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <h2 style="margin: 0; font-size: 36px; font-weight: 800">동승자로</h2>
+        <span style="font-size: 26px; color: #D5DCE5">연결된 주행 3회</span>
+      </div>
+      <div aria-hidden="true" style="display: flex; gap: 4px; height: 4px; margin-top: 20px">
+        <div style="width: 120px; background: #E4DCD3"></div>
+        <div style="flex: 1; background: #24405F"></div>
+      </div>
+      <span style="margin-top: 24px; font-size: 24px; color: #93A3B5">본인이 남긴 평가</span>
+      <div style="display: flex; flex-direction: column; margin-top: 8px">
+        <sc-for list="{{ratings}}" as="r" hint-placeholder-count="4">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 16px 0; border-top: 2px solid #1B3350">
+            <span style="font-size: 26px; color: #D5DCE5">{{r.label}}</span>
+            <span style="font-size: 36px; font-weight: 800">{{r.count}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 16px; border-top: 2px solid #1B3350">
+        <span style="font-size: 22px; font-weight: 700; color: #E4DCD3">기록이 더 필요해요</span>
+        <span style="font-size: 22px; line-height: 1.45; color: #93A3B5">평가가 3회 미만이라 경향을 표시하지 않아요. 평가하지 않은 주행은 ‘불편 없음’으로 세지 않아요.</span>
+      </div>
+    </section>
+  </div>
+
+  <section style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px">
+    <h2 style="margin: 0; font-size: 32px; font-weight: 800">관련 기록</h2>
+    <sc-for list="{{trips}}" as="t" hint-placeholder-count="3">
+      <a href="TripDetail.dc.html" style="display: grid; grid-template-columns: 340px 130px 170px 1fr 40px; align-items: center; gap: 16px; height: 88px; flex: none; box-sizing: border-box; padding: 0 28px; background: #0D1C2F; border-radius: 6px">
+        <span style="font-size: 28px; font-weight: 700">{{t.when}}</span>
+        <span style="font-size: 26px; color: #D5DCE5">{{t.dur}}</span>
+        <span style="font-size: 26px; color: #D5DCE5">{{t.dist}}</span>
+        <span style="justify-self: start; font-size: 20px; font-weight: 600; padding: 6px 12px; background: #132842; border-radius: 4px; color: #E4DCD3">{{t.role}}</span>
+        <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#93A3B5" stroke-width="3" stroke-linecap="square" style="justify-self: end"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+    </sc-for>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1280}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      driver: [
+        { name: '정차 직전 속도 변화', detail: '12회 중 8회에서 관찰', trend: '줄어드는 중' },
+        { name: '출발 직후 속도 증가', detail: '12회 중 5회에서 관찰', trend: '비슷함' },
+        { name: '반복 가감속', detail: '12회 중 3회에서 관찰', trend: '기록 부족' },
+      ],
+      ratings: [
+        { label: '편안했어요', count: '1회' },
+        { label: '조금 불편했어요', count: '1회' },
+        { label: '많이 불편했어요', count: '0회' },
+        { label: '미응답', count: '1회' },
+      ],
+      trips: [
+        { when: '11월 2일 08:12', dur: '38분', dist: '21.4 km', role: '운전' },
+        { when: '10월 29일 19:20', dur: '44분', dist: '27.1 km', role: '동승' },
+        { when: '10월 28일 08:05', dur: '41분', dist: '22.0 km', role: '운전' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

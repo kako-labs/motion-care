@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>데이터 상태 모음</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#020A16}
+</style>
+</helmet>
+<div style="position: relative; width: 1600px; height: 1280px; box-sizing: border-box; padding: 32px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 16px; overflow: hidden; word-break: keep-all; color: #EAF4FF; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums; background: radial-gradient(1100px 620px at 82% 4%, #0B447F 0%, rgba(11,68,127,0) 62%), radial-gradient(900px 620px at 4% 58%, #07365F 0%, rgba(7,54,95,0) 60%), radial-gradient(1000px 480px at 60% 104%, #06396B 0%, rgba(6,57,107,0) 62%), #030E1F">
+  <sc-for list="{{cards}}" as="c" hint-placeholder-count="9">
+    <section style="display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; padding: 26px 28px; border-radius: 28px; background: linear-gradient(155deg, rgba(122,176,240,0.16) 0%, rgba(40,84,140,0.10) 55%, rgba(12,34,66,0.30) 100%); border: 1.5px solid rgba(156,205,255,0.26); box-shadow: 0 18px 44px rgba(0,6,20,0.5), inset 0 1.5px 0 rgba(255,255,255,0.18); min-height: 0">
+      <div style="display: flex; align-items: center; gap: 14px">
+        <span style="display: flex; align-items: center; justify-content: center; width: 62px; height: 62px; flex: none; border-radius: 50%; background: {{c.orb}}; border: 1.5px solid {{c.ring}}; box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 6px 18px rgba(0,30,70,0.6)">
+          <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="{{c.fg}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{c.icon}}"></path></svg>
+        </span>
+        <span style="flex: 1; min-width: 0; font-size: 22px; color: #B9D2EC">{{c.where}}</span>
+        <span style="flex: none; font-size: 21px; font-weight: 700; padding: 5px 14px; border-radius: 16px; background: {{c.chip}}; color: {{c.fg}}">{{c.tag}}</span>
+      </div>
+      <span style="font-size: 34px; line-height: 1.24; font-weight: 800; color: #FFFFFF">{{c.title}}</span>
+      <span style="font-size: 23px; line-height: 1.45; color: #D5E4F4">{{c.body}}</span>
+      <sc-if value="{{c.action}}" hint-placeholder-val="{{ false }}">
+        <button type="button" style="margin-top: auto; height: 68px; flex: none; border-radius: 20px; background: linear-gradient(155deg, rgba(122,176,240,0.18), rgba(30,70,125,0.14)); border: 1.5px solid rgba(156,205,255,0.32); box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.2); color: #F4FAFF; font: inherit; font-size: 24px; font-weight: 700; cursor: pointer">{{c.action}}</button>
+      </sc-if>
+    </section>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1280}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const info = { fg: '#A9EDFC', chip: 'rgba(0,170,210,0.22)', ring: 'rgba(90,210,240,0.55)', orb: 'radial-gradient(circle at 32% 26%, rgba(120,225,250,0.45), rgba(8,80,120,0.38) 60%, rgba(4,22,46,0.6))' };
+    const warn = { fg: '#FFD3B3', chip: 'rgba(255,190,140,0.16)', ring: 'rgba(255,200,160,0.5)', orb: 'radial-gradient(circle at 32% 26%, rgba(255,190,140,0.45), rgba(120,70,40,0.35) 60%, rgba(40,24,20,0.6))' };
+    const plain = { fg: '#D5E4F4', chip: 'rgba(156,205,255,0.14)', ring: 'rgba(156,205,255,0.42)', orb: 'radial-gradient(circle at 32% 26%, rgba(130,200,255,0.42), rgba(20,60,110,0.38) 60%, rgba(6,22,46,0.6))' };
+    const icon = {
+      refresh: 'M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5M20 12a8 8 0 0 1-13.7 5.6L4 15M4 20v-5h5',
+      clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3.5 2',
+      offline: 'M2 8.5a15 15 0 0 1 6-3.4M22 8.5a15 15 0 0 0-11-4M5.5 12.5a10 10 0 0 1 3.6-2.2M18.5 12.5a10 10 0 0 0-4-2.5M9 16a5 5 0 0 1 6 0M12 20h.01M3 3l18 18',
+      slash: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM5.6 5.6l12.8 12.8',
+      signal: 'M3 12h4l3-8 4 16 3-8h4',
+      eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+      bars: 'M5 20v-6M12 20V10M19 20V4',
+      spark: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18',
+      face: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM8.5 9.5h.01M15.5 9.5h.01M10.5 15.5h3',
+    };
+    return {
+      cards: [
+        { ...info, icon: icon.refresh, tag: '확인 중', where: '외부 대기질', title: '환경 정보를 확인하고 있어요', body: '이전 값이 있으면 갱신 시각과 함께 보여줘요.', action: '' },
+        { ...warn, icon: icon.clock, tag: '오래된 값', where: '외부 대기질', title: '보통 · 3시간 전', body: '[대기질 API] · 11:20 갱신. 지금 값이 아닐 수 있어요.', action: '다시 확인' },
+        { ...warn, icon: icon.offline, tag: '연결 필요', where: '외부 대기질', title: '네트워크 연결이 필요해요', body: '주행 기록과 조언은 그대로 사용할 수 있어요.', action: '다시 확인' },
+        { ...plain, icon: icon.slash, tag: '미지원', where: '실내 공기질', title: '이 차량에서 제공되지 않아요', body: '외부 값으로 대신하지 않아요.', action: '' },
+        { ...plain, icon: icon.signal, tag: '데이터 없음', where: '차량 속도', title: '신호를 받지 못했어요', body: '패턴 분석에서 이 구간을 뺐어요. 0으로 계산하지 않아요.', action: '' },
+        { ...info, icon: icon.eye, tag: '이번 운행만', where: '오늘의 조언', title: '이번 운행에서 관찰됐어요', body: '한 번의 관찰이라 습관으로 판단하지 않아요.', action: '' },
+        { ...plain, icon: icon.bars, tag: '기록 부족', where: '최근 운행 비교', title: '비교하려면 기록이 더 필요해요', body: '같은 운전자·차량의 유효 주행이 쌓이면 보여줘요.', action: '' },
+        { ...warn, icon: icon.spark, tag: '생성 실패', where: '이번 운행 요약', title: '요약을 만들지 못했어요', body: '관찰 결과와 그래프는 아래에서 볼 수 있어요.', action: '다시 시도' },
+        { ...plain, icon: icon.face, tag: '미응답', where: '동승자 평가', title: '아직 평가가 없어요', body: '‘불편 없음’으로 세지 않아요.', action: '평가 남기기' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

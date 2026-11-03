@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>왜 이런 조언을 받았나요?</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#07111E}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1600px; height: 1280px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 24px; background: #07111E; color: #F3EFE9; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+
+  <header style="display: flex; align-items: center; gap: 16px; flex: none">
+    <a href="Main.dc.html" aria-label="뒤로" style="display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; flex: none; border-radius: 6px; background: #0D1C2F">
+      <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <h1 style="margin: 0; font-size: 40px; font-weight: 800">왜 이런 조언을 받았나요?</h1>
+  </header>
+
+  <section style="display: flex; flex-direction: column; gap: 12px; flex: none; box-sizing: border-box; padding: 40px 44px; background: #002C5F; border-radius: 6px">
+    <span style="font-size: 26px; font-weight: 700; color: #E4DCD3">오늘의 조언</span>
+    <span style="font-size: 56px; line-height: 1.2; font-weight: 800; letter-spacing: -0.015em">정지 지점보다 조금 일찍 감속해보세요</span>
+  </section>
+
+  <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <sc-for list="{{blocks}}" as="b" hint-placeholder-count="4">
+      <section style="display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; padding: 36px; background: #0D1C2F; border-radius: 6px; min-height: 0">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+          <h2 style="margin: 0; font-size: 36px; font-weight: 800">{{b.title}}</h2>
+          <span style="flex: none; font-size: 20px; font-weight: 700; padding: 6px 12px; background: #132842; border-radius: 4px; color: #E4DCD3">{{b.kind}}</span>
+        </div>
+        <div aria-hidden="true" style="height: 2px; background: #24405F"></div>
+        <sc-for list="{{b.lines}}" as="l" hint-placeholder-count="2">
+          <p style="margin: 0; font-size: 28px; line-height: 1.45; color: #D5DCE5">{{l}}</p>
+        </sc-for>
+        <sc-if value="{{b.hasLink}}" hint-placeholder-val="{{ false }}">
+          <a href="TripDetail.dc.html" style="margin-top: auto; display: flex; align-items: center; height: 64px; font-size: 26px; font-weight: 700; color: #6FD6EE">해당 주행 보기</a>
+        </sc-if>
+      </section>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1280}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      blocks: [
+        {
+          title: '차량에서 관찰한 것', kind: '차량 기록', hasLink: true,
+          lines: ['최근 도심 운행 3회 중 2회에서 정차 직전 속도 변화가 집중됐어요.', '가장 최근 주행에서는 5회 관찰됐어요.'],
+        },
+        {
+          title: '비교한 조건', kind: '계산 조건', hasLink: false,
+          lines: ['같은 운전자·같은 차량의 유효 주행만 비교했어요.', '유효 구간 10분당 횟수로 계산했어요. 계산 버전 v1.'],
+        },
+        {
+          title: '함께 탄 사람의 평가', kind: '자기보고', hasLink: false,
+          lines: ['서아: 최근 주행에서 ‘조금 불편했어요’, 가장 불편했던 것은 ‘출발·정차’.', '차량 기록과는 별개로 남긴 응답이에요.'],
+        },
+        {
+          title: '근거와 한계', kind: '연구·적용 범위', hasLink: false,
+          lines: ['실도로 운전자–승객 16쌍 연구에서 가속 피드백이 운전 변화와 관련됐어요 (Xie 외, 2026).', '도로·교통 영향이 포함돼 있고, 실제 멀미 여부나 원인을 확인한 결과는 아니에요.'],
+        },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

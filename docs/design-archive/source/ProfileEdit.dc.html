@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>프로필 등록·수정</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#07111E}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1600px; height: 1280px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 24px; background: #07111E; color: #F3EFE9; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+
+  <header style="display: flex; align-items: center; gap: 16px; flex: none">
+    <a href="ProfileDetail.dc.html" aria-label="뒤로" style="display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; flex: none; border-radius: 6px; background: #0D1C2F">
+      <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <h1 style="margin: 0; font-size: 40px; font-weight: 800">프로필 수정</h1>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 740px 756px; gap: 24px">
+    <section style="display: flex; flex-direction: column; gap: 32px; box-sizing: border-box; padding: 40px; background: #0D1C2F; border-radius: 6px; min-height: 0">
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <label for="profile-name" style="font-size: 28px; font-weight: 700">이름 또는 별명</label>
+        <input id="profile-name" type="text" value="서아" style="height: 112px; box-sizing: border-box; padding: 0 28px; border: 3px solid #3A5C82; border-radius: 6px; background: #07111E; color: #F3EFE9; font: inherit; font-size: 40px; font-weight: 700">
+      </div>
+
+      <fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 12px">
+        <legend style="padding: 0; margin-bottom: 12px; font-size: 28px; font-weight: 700">구분</legend>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <sc-for list="{{kinds}}" as="k" hint-placeholder-count="2">
+            <button type="button" aria-pressed="{{k.pressed}}" onClick="{{k.pick}}" style="height: 112px; border: 3px solid {{k.border}}; border-radius: 6px; background: {{k.bg}}; color: {{k.fg}}; font: inherit; font-size: 32px; font-weight: 800; cursor: pointer">{{k.label}}</button>
+          </sc-for>
+        </div>
+      </fieldset>
+
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 16px; padding-top: 24px; border-top: 2px solid #1B3350">
+        <p style="margin: 0; font-size: 24px; line-height: 1.5; color: #B9C4D2">이 사람이 연결된 기록 15건은 프로필을 지워도 ‘삭제된 프로필’로 남아요. 다른 사람으로 옮겨지지 않아요.</p>
+        <button type="button" style="height: 88px; border: 2px solid #8A6A52; border-radius: 6px; background: transparent; color: #E4DCD3; font: inherit; font-size: 26px; font-weight: 700; cursor: pointer">프로필 삭제</button>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; padding: 40px; background: #0D1C2F; border-radius: 6px; min-height: 0">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <h2 style="margin: 0; font-size: 32px; font-weight: 800">동승할 때 불편해하는 상황</h2>
+        <span style="font-size: 22px; color: #93A3B5">선택</span>
+      </div>
+      <p style="margin: 0; font-size: 24px; line-height: 1.5; color: #B9C4D2">다음 운전 조언의 우선순위를 정하는 데 참고해요. 진단에 쓰지 않아요.</p>
+      <div role="group" aria-label="불편해하는 상황" style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px">
+        <sc-for list="{{situations}}" as="s" hint-placeholder-count="5">
+          <button type="button" aria-pressed="{{s.pressed}}" onClick="{{s.flip}}" style="display: flex; align-items: center; justify-content: space-between; height: 104px; flex: none; box-sizing: border-box; padding: 0 28px; border: 3px solid {{s.border}}; border-radius: 6px; background: {{s.bg}}; color: #F3EFE9; font: inherit; font-size: 30px; font-weight: 700; cursor: pointer">
+            {{s.label}}
+            <sc-if value="{{s.on}}" hint-placeholder-val="{{ false }}">
+              <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6FD6EE" stroke-width="3.5" stroke-linecap="square"><path d="M4 12l6 6L20 6"></path></svg>
+            </sc-if>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px; flex: none">
+    <a href="ProfileDetail.dc.html" style="display: flex; align-items: center; justify-content: center; height: 112px; box-sizing: border-box; border: 3px solid #3A5C82; border-radius: 6px; font-size: 30px; font-weight: 700; color: #D5DCE5">취소</a>
+    <a href="ProfileDetail.dc.html" style="display: flex; align-items: center; justify-content: center; height: 112px; border-radius: 6px; background: #00AAD2; color: #04121F; font-size: 36px; font-weight: 800">저장</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1280}}'>
+class Component extends DCLogic {
+  state = { kind: '어린이', on: { '출발·정차': true, '반복 가감속': true } };
+  renderVals() {
+    return {
+      kinds: ['어린이', '성인'].map((label) => {
+        const on = this.state.kind === label;
+        return { label, pressed: String(on), pick: () => this.setState({ kind: label }), border: on ? '#00AAD2' : '#3A5C82', bg: on ? '#00AAD2' : 'transparent', fg: on ? '#04121F' : '#F3EFE9' };
+      }),
+      situations: ['출발·정차', '반복 가감속', '커브', '정체', '장거리'].map((label) => {
+        const on = !!this.state.on[label];
+        return { label, on, pressed: String(on), flip: () => this.setState({ on: { ...this.state.on, [label]: !on } }), border: on ? '#00AAD2' : '#24405F', bg: on ? '#002C5F' : 'transparent' };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>주행 중 (1:1 창)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#020A16}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 840px; height: 1280px; overflow: hidden; word-break: keep-all; color: #EAF4FF; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums; background: #030E1F">
+  <img src="/_blob/2059ab7c736404042a8ca812601e8704" alt="" style="position: absolute; left: -540px; top: 0; width: 1920px; height: 1280px; object-fit: cover">
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3,14,31,0.25) 0%, rgba(3,14,31,0) 40%, rgba(3,14,31,0) 56%, rgba(3,14,31,0.74) 100%)"></div>
+
+  <div style="position: relative; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; padding: 24px 26px 26px; gap: 16px">
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none">
+      <span style="display: flex; align-items: center; gap: 10px; height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 24px; background: rgba(0,170,210,0.24); border: 1.5px solid rgba(90,210,240,0.65); font-size: 24px; font-weight: 700; color: #BDF1FD">
+        <span aria-hidden="true" style="width: 14px; height: 14px; border-radius: 50%; background: #5FE0FB; box-shadow: 0 0 12px #5FE0FB"></span>운행 기록 중
+      </span>
+      <span style="display: flex; align-items: center; height: 44px; box-sizing: border-box; padding: 0 16px; border-radius: 22px; background: rgba(255,190,140,0.16); border: 1.5px solid rgba(255,200,160,0.5); font-size: 21px; font-weight: 700; color: #FFD3B3">합성 데이터</span>
+    </header>
+
+    <div role="status" style="display: flex; align-items: center; gap: 16px; flex: none; box-sizing: border-box; padding: 22px 26px; border-radius: 26px; background: linear-gradient(180deg, rgba(255,233,214,0.97), rgba(244,212,186,0.95)); box-shadow: 0 18px 44px rgba(0,8,24,0.6), 0 0 34px rgba(255,190,140,0.35); color: #0A1B33">
+      <svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="M12 3a6 6 0 0 0-6 6c0 5-2 6-2 8h16c0-2-2-3-2-8a6 6 0 0 0-6-6zM10 20a2 2 0 0 0 4 0"></path></svg>
+      <span style="font-size: 30px; line-height: 1.28; font-weight: 800">외부 대기질이 나빠졌어요.<br>내기 순환을 확인해보세요</span>
+    </div>
+
+    <main style="flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; align-items: center">
+      <span style="font-size: 30px; font-weight: 700; color: #C6DAF0">경과 시간</span>
+      <span style="font-size: 230px; line-height: 1.02; font-weight: 800; letter-spacing: -0.035em; background: linear-gradient(180deg, #FFFFFF 26%, #BFE6FA 58%, #4FB4EC 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 36px rgba(0,170,225,0.55))">24<span style="font-size: 84px; letter-spacing: 0; margin-left: 10px">분</span></span>
+    </main>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; flex: none">
+      <sc-for list="{{stats}}" as="s" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; justify-content: space-between; height: 100px; box-sizing: border-box; padding: 0 28px; border-radius: 24px; background: linear-gradient(155deg, rgba(122,176,240,0.24) 0%, rgba(40,84,140,0.22) 55%, rgba(12,34,66,0.50) 100%); border: 1.5px solid rgba(156,205,255,0.34); box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.22)">
+          <span style="font-size: 27px; color: #D5E4F4">{{s.label}}</span>
+          <span style="font-size: 50px; font-weight: 800; color: {{s.tone}}">{{s.value}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <span style="display: flex; align-items: center; gap: 12px; flex: none; font-size: 24px; color: #DCEBFA">
+      <span style="display: flex"><img src="/_blob/d037b8f6d888fe055acc1463e9f4069d" alt="" style="width: 48px; height: 48px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(120,220,250,0.7)"><img src="/_blob/4cec43282a9fc4fce1e5dae98de2900b" alt="" style="width: 48px; height: 48px; margin-left: -12px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(120,220,250,0.7)"></span>
+      민준 운전 · 서아 동승
+    </span>
+    <a href="Finished2.dc.html" style="display: flex; align-items: center; justify-content: center; height: 112px; flex: none; box-sizing: border-box; border-radius: 26px; background: linear-gradient(155deg, rgba(122,176,240,0.28), rgba(30,70,125,0.30)); border: 2px solid rgba(190,230,255,0.6); box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.28), 0 14px 36px rgba(0,8,24,0.55); font-size: 36px; font-weight: 800; color: #FFFFFF">운행 종료</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":840,"height":1280}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      stats: [
+        { label: '이동 거리', value: '12.6 km', tone: '#FFFFFF' },
+        { label: '외부 대기질', value: '나쁨', tone: '#FFD3B3' },
+        { label: '실내 온도', value: '23.5°C', tone: '#FFFFFF' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

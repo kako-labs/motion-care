@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>차량 선택·관리</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#07111E}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1600px; height: 1280px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 24px; background: #07111E; color: #F3EFE9; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+
+  <header style="display: flex; align-items: center; gap: 16px; flex: none">
+    <a href="Main.dc.html" aria-label="뒤로" style="display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; flex: none; border-radius: 6px; background: #0D1C2F">
+      <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <h1 style="margin: 0; font-size: 40px; font-weight: 800; flex: 1">차량</h1>
+    <button type="button" style="height: 80px; box-sizing: border-box; padding: 0 28px; border: 2px solid #3A5C82; border-radius: 6px; background: transparent; color: #F3EFE9; font: inherit; font-size: 26px; font-weight: 700; cursor: pointer">차량 추가</button>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 460px 1036px; gap: 24px">
+    <div style="display: flex; flex-direction: column; gap: 12px; min-height: 0">
+      <sc-for list="{{vehicles}}" as="v" hint-placeholder-count="2">
+        <button type="button" aria-pressed="{{v.pressed}}" onClick="{{v.pick}}" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px; height: 148px; flex: none; box-sizing: border-box; padding: 0 28px; border: 3px solid {{v.border}}; border-radius: 6px; background: {{v.bg}}; color: #F3EFE9; font: inherit; text-align: left; cursor: pointer">
+          <span style="font-size: 32px; font-weight: 800">{{v.name}}</span>
+          <span style="font-size: 22px; color: #B9C4D2">{{v.meta}}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 24px; min-height: 0">
+      <section style="display: flex; flex-direction: column; gap: 24px; flex: none; box-sizing: border-box; padding: 36px; background: #0D1C2F; border-radius: 6px">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <label for="vehicle-name" style="font-size: 26px; font-weight: 700">차량 이름</label>
+          <input id="vehicle-name" type="text" value="중형 전기차" style="height: 96px; box-sizing: border-box; padding: 0 24px; border: 3px solid #3A5C82; border-radius: 6px; background: #07111E; color: #F3EFE9; font: inherit; font-size: 32px; font-weight: 700">
+        </div>
+        <fieldset style="margin: 0; padding: 0; border: 0">
+          <legend style="padding: 0; margin-bottom: 12px; font-size: 26px; font-weight: 700">크기</legend>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+            <sc-for list="{{sizes}}" as="o" hint-placeholder-count="3">
+              <button type="button" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="height: 88px; border: 3px solid {{o.border}}; border-radius: 6px; background: {{o.bg}}; color: {{o.fg}}; font: inherit; font-size: 28px; font-weight: 700; cursor: pointer">{{o.label}}</button>
+            </sc-for>
+          </div>
+        </fieldset>
+        <fieldset style="margin: 0; padding: 0; border: 0">
+          <legend style="padding: 0; margin-bottom: 12px; font-size: 26px; font-weight: 700">파워트레인</legend>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+            <sc-for list="{{powers}}" as="o" hint-placeholder-count="3">
+              <button type="button" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="height: 88px; border: 3px solid {{o.border}}; border-radius: 6px; background: {{o.bg}}; color: {{o.fg}}; font: inherit; font-size: 28px; font-weight: 700; cursor: pointer">{{o.label}}</button>
+            </sc-for>
+          </div>
+        </fieldset>
+      </section>
+
+      <section style="flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box; padding: 32px 36px; background: #0D1C2F; border-radius: 6px">
+        <h2 style="margin: 0 0 8px; font-size: 28px; font-weight: 700">이 차량에서 받을 수 있는 정보</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px">
+          <sc-for list="{{signals}}" as="s" hint-placeholder-count="6">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0; border-top: 2px solid #1B3350">
+              <span style="font-size: 26px; color: #D5DCE5">{{s.label}}</span>
+              <span style="flex: none; font-size: 20px; font-weight: 700; padding: 4px 10px; border-radius: 4px; background: #132842; color: {{s.fg}}">{{s.state}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px; flex: none">
+    <a href="Main.dc.html" style="display: flex; align-items: center; justify-content: center; height: 112px; box-sizing: border-box; border: 3px solid #3A5C82; border-radius: 6px; font-size: 30px; font-weight: 700; color: #D5DCE5">취소</a>
+    <a href="Main.dc.html" style="display: flex; align-items: center; justify-content: center; height: 112px; border-radius: 6px; background: #00AAD2; color: #04121F; font-size: 36px; font-weight: 800">이 차량으로 저장</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1280}}'>
+class Component extends DCLogic {
+  state = { vehicle: 'ev', size: '중형', power: '전기차' };
+  group(key, labels) {
+    return labels.map((label) => {
+      const on = this.state[key] === label;
+      return { label, pressed: String(on), pick: () => this.setState({ [key]: label }), border: on ? '#00AAD2' : '#3A5C82', bg: on ? '#00AAD2' : 'transparent', fg: on ? '#04121F' : '#F3EFE9' };
+    });
+  }
+  renderVals() {
+    const ok = '#6FD6EE';
+    const pending = '#E4DCD3';
+    const no = '#E8B48F';
+    return {
+      vehicles: [
+        { id: 'ev', name: '중형 전기차', meta: '기본 차량 · 주행 12회' },
+        { id: 'hev', name: '소형 하이브리드', meta: '주행 3회' },
+      ].map((v) => {
+        const on = this.state.vehicle === v.id;
+        return { ...v, pressed: String(on), pick: () => this.setState({ vehicle: v.id }), border: on ? '#00AAD2' : '#24405F', bg: on ? '#002C5F' : '#0D1C2F' };
+      }),
+      sizes: this.group('size', ['소형', '중형', '대형']),
+      powers: this.group('power', ['내연기관', '하이브리드', '전기차']),
+      signals: [
+        { label: '실내 온도', state: '제공', fg: ok },
+        { label: '브레이크 페달', state: '제공', fg: ok },
+        { label: '내기 순환', state: '제공', fg: ok },
+        { label: '조향각', state: '제공', fg: ok },
+        { label: '차량 속도', state: '확인 중', fg: pending },
+        { label: '실내 공기질', state: '미지원', fg: no },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

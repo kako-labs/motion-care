@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>전체 기록</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#07111E}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1600px; height: 1280px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 20px; background: #07111E; color: #F3EFE9; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+
+  <header style="display: flex; align-items: center; gap: 16px; flex: none">
+    <a href="Main.dc.html" aria-label="뒤로" style="display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; flex: none; border-radius: 6px; background: #0D1C2F">
+      <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <h1 style="margin: 0; font-size: 40px; font-weight: 800; flex: 1">전체 기록</h1>
+    <div role="group" aria-label="운전자 필터" style="display: flex; gap: 8px">
+      <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+        <button type="button" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}" style="height: 80px; box-sizing: border-box; padding: 0 28px; border: 2px solid {{f.border}}; border-radius: 6px; background: {{f.bg}}; color: {{f.fg}}; font: inherit; font-size: 26px; font-weight: 700; cursor: pointer">{{f.label}}</button>
+      </sc-for>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0">
+    <sc-for list="{{trips}}" as="t" hint-placeholder-count="8">
+      <div style="display: flex; align-items: center; gap: 12px; height: 124px; flex: none; box-sizing: border-box; padding: 0 12px 0 28px; background: #0D1C2F; border-radius: 6px">
+        <a href="TripDetail.dc.html" style="flex: 1; min-width: 0; display: grid; grid-template-columns: 290px 90px 130px 240px 1fr 170px; align-items: center; gap: 16px; height: 124px">
+          <span style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 28px; font-weight: 700">{{t.date}}</span>
+            <span style="font-size: 22px; color: #93A3B5">{{t.time}}</span>
+          </span>
+          <span style="font-size: 26px; color: #D5DCE5">{{t.dur}}</span>
+          <span style="font-size: 26px; color: #D5DCE5">{{t.dist}}</span>
+          <span style="font-size: 24px; color: #E4DCD3">{{t.people}}</span>
+          <span style="font-size: 24px; color: #D5DCE5">{{t.pattern}}</span>
+          <span style="justify-self: end; font-size: 20px; font-weight: 700; padding: 6px 12px; border-radius: 4px; background: #132842; color: {{t.evalFg}}; white-space: nowrap">{{t.eval}}</span>
+        </a>
+        <a href="LinkPeople.dc.html" aria-label="함께 탄 사람 연결" style="display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; flex: none; border-radius: 50%; border: 2px solid #3A5C82; color: #E4DCD3">
+          <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M12 4v16M4 12h16"></path></svg>
+        </a>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1280}}'>
+class Component extends DCLogic {
+  state = { filter: '전체' };
+  renderVals() {
+    const all = [
+      { date: '11월 2일 (월)', time: '08:12 출발', dur: '38분', dist: '21.4 km', people: '민준 · 서아', driver: '민준', pattern: '정차 직전 속도 변화', eval: '평가 있음' },
+      { date: '11월 1일 (일)', time: '18:40 출발', dur: '26분', dist: '13.2 km', people: '민준', driver: '민준', pattern: '출발 직후 속도 증가', eval: '동승자 없음' },
+      { date: '10월 31일 (토)', time: '09:05 출발', dur: '52분', dist: '34.8 km', people: '인물 미지정', driver: '', pattern: '반복 가감속', eval: '미응답' },
+      { date: '10월 29일 (목)', time: '19:20 출발', dur: '44분', dist: '27.1 km', people: '지영 · 민준', driver: '지영', pattern: '관찰된 패턴 없음', eval: '평가 있음' },
+      { date: '10월 28일 (수)', time: '08:05 출발', dur: '41분', dist: '22.0 km', people: '민준 · 서아', driver: '민준', pattern: '정차 직전 속도 변화', eval: '미응답' },
+      { date: '10월 27일 (화)', time: '17:48 출발', dur: '12분', dist: '거리 정보 없음', people: '민준', driver: '민준', pattern: '신호 부족으로 분석 제외', eval: '중단됨' },
+      { date: '10월 25일 (일)', time: '10:30 출발', dur: '1시간 16분', dist: '68.3 km', people: '지영 · 서아 · 도윤', driver: '지영', pattern: '반복 가감속', eval: '평가 있음' },
+    ];
+    const f = this.state.filter;
+    const list = f === '전체' ? all : f === '미지정' ? all.filter((t) => !t.driver) : all.filter((t) => t.driver === f);
+    return {
+      filters: ['전체', '민준', '지영', '미지정'].map((label) => {
+        const on = f === label;
+        return { label, pressed: String(on), pick: () => this.setState({ filter: label }), border: on ? '#00AAD2' : '#24405F', bg: on ? '#00AAD2' : 'transparent', fg: on ? '#04121F' : '#D5DCE5' };
+      }),
+      trips: list.map((t) => ({ ...t, evalFg: t.eval === '평가 있음' ? '#6FD6EE' : t.eval === '중단됨' ? '#E8B48F' : '#B9C4D2' })),
+    };
+  }
+}
+</script>
+</body>
+</html>

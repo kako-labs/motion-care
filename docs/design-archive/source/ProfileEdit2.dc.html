@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>프로필 등록·수정</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#020A16}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 1600px; height: 1280px; box-sizing: border-box; padding: 18px 32px 26px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; word-break: keep-all; color: #EAF4FF; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums; background: radial-gradient(1100px 620px at 82% 4%, #0B447F 0%, rgba(11,68,127,0) 62%), radial-gradient(900px 620px at 4% 58%, #07365F 0%, rgba(7,54,95,0) 60%), radial-gradient(1000px 480px at 60% 104%, #06396B 0%, rgba(6,57,107,0) 62%), #030E1F">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 46px; flex: none; font-size: 22px; color: #C6DAF0">
+    <div style="display: flex; align-items: center; gap: 28px">
+      <span style="font-size: 26px; font-weight: 700; color: #F4FAFF">오전 8:10</span>
+      <span style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: rgba(0,170,210,0.22); border: 1.5px solid rgba(90,210,240,0.55); font-size: 22px; font-weight: 800; color: #9BE8FB">P</span>
+      <span>주행 가능 <b style="font-weight: 700; color: #F4FAFF">450 km</b></span>
+    </div>
+    <span style="font-size: 22px; font-weight: 600">5G</span>
+  </div>
+
+  <header style="display: flex; align-items: center; gap: 18px; height: 84px; flex: none">
+    <a href="ProfileDetail2.dc.html" aria-label="뒤로" style="display: flex; align-items: center; justify-content: center; width: 76px; height: 76px; flex: none; border-radius: 50%; background: linear-gradient(155deg, rgba(122,176,240,0.22), rgba(30,70,125,0.18)); border: 1.5px solid rgba(156,205,255,0.36); box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.25), 0 10px 26px rgba(0,8,24,0.45)">
+      <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#EAF4FF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <h1 style="margin: 0; font-size: 44px; font-weight: 800; letter-spacing: -0.02em; background: linear-gradient(180deg, #FFFFFF 20%, #A7DDF7 100%); -webkit-background-clip: text; background-clip: text; color: transparent">프로필 수정</h1>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 720px 1fr; gap: 14px">
+    <section style="display: flex; flex-direction: column; gap: 22px; box-sizing: border-box; padding: 32px 34px; border-radius: 28px; background: linear-gradient(155deg, rgba(122,176,240,0.16) 0%, rgba(40,84,140,0.10) 55%, rgba(12,34,66,0.30) 100%); border: 1.5px solid rgba(156,205,255,0.26); box-shadow: 0 18px 44px rgba(0,6,20,0.5), inset 0 1.5px 0 rgba(255,255,255,0.18); min-height: 0">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+        <img src="/_blob/4cec43282a9fc4fce1e5dae98de2900b" alt="" style="width: 196px; height: 196px; border-radius: 50%; box-shadow: 0 0 0 3px rgba(120,220,250,0.8), 0 0 48px rgba(0,170,210,0.6)">
+        <button type="button" style="height: 56px; box-sizing: border-box; padding: 0 22px; border: 0; background: transparent; color: #8FDDF7; font: inherit; font-size: 24px; font-weight: 700; cursor: pointer">캐릭터 바꾸기</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <label for="profile-name" style="font-size: 26px; font-weight: 700">이름 또는 별명</label>
+        <input id="profile-name" type="text" value="서아" style="height: 100px; box-sizing: border-box; padding: 0 28px; border-radius: 22px; border: 1.5px solid rgba(156,205,255,0.4); background: rgba(4,18,40,0.7); box-shadow: inset 0 2px 8px rgba(0,8,24,0.6); color: #FFFFFF; font: inherit; font-size: 40px; font-weight: 700">
+      </div>
+      <fieldset style="margin: 0; padding: 0; border: 0">
+        <legend style="padding: 0; margin-bottom: 10px; font-size: 26px; font-weight: 700">구분</legend>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <sc-for list="{{kinds}}" as="k" hint-placeholder-count="2">
+            <button type="button" aria-pressed="{{k.pressed}}" onClick="{{k.pick}}" style="height: 96px; border-radius: 22px; border: 2px solid {{k.border}}; background: {{k.bg}}; box-shadow: {{k.glow}}; color: #FFFFFF; font: inherit; font-size: 32px; font-weight: 800; cursor: pointer">{{k.label}}</button>
+          </sc-for>
+        </div>
+      </fieldset>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 14px">
+        <p style="margin: 0; font-size: 23px; line-height: 1.45; color: #C6DAF0">연결된 기록 15건은 프로필을 지워도 ‘삭제된 프로필’로 남고, 다른 사람으로 옮겨지지 않아요.</p>
+        <button type="button" style="height: 76px; flex: none; border-radius: 20px; border: 1.5px solid rgba(255,200,160,0.5); background: rgba(255,190,140,0.10); color: #FFD3B3; font: inherit; font-size: 25px; font-weight: 700; cursor: pointer">프로필 삭제</button>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; box-sizing: border-box; padding: 32px 34px; border-radius: 28px; background: linear-gradient(155deg, rgba(122,176,240,0.16) 0%, rgba(40,84,140,0.10) 55%, rgba(12,34,66,0.30) 100%); border: 1.5px solid rgba(156,205,255,0.26); box-shadow: 0 18px 44px rgba(0,6,20,0.5), inset 0 1.5px 0 rgba(255,255,255,0.18); min-height: 0">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <h2 style="margin: 0; font-size: 34px; font-weight: 800">동승할 때 불편해하는 상황</h2>
+        <span style="font-size: 22px; color: #A9C4E0">선택</span>
+      </div>
+      <p style="margin: 10px 0 0; font-size: 24px; line-height: 1.45; color: #C6DAF0">다음 운전 조언의 우선순위를 정하는 데 참고해요. 진단에 쓰지 않아요.</p>
+      <div role="group" aria-label="불편해하는 상황" style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; margin-top: 20px">
+        <sc-for list="{{situations}}" as="s" hint-placeholder-count="5">
+          <button type="button" aria-pressed="{{s.pressed}}" onClick="{{s.flip}}" style="flex: 1; min-height: 0; display: flex; align-items: center; gap: 22px; box-sizing: border-box; padding: 0 26px; border-radius: 24px; border: 2px solid {{s.border}}; background: {{s.bg}}; box-shadow: {{s.glow}}; color: #FFFFFF; font: inherit; font-size: 32px; font-weight: 700; text-align: left; cursor: pointer">
+            <span style="display: flex; align-items: center; justify-content: center; width: 68px; height: 68px; flex: none; border-radius: 50%; background: radial-gradient(circle at 32% 26%, rgba(130,200,255,0.42), rgba(20,60,110,0.38) 60%, rgba(6,22,46,0.6)); border: 1.5px solid rgba(156,205,255,0.42); box-shadow: inset 0 1px 0 rgba(255,255,255,0.35)">
+              <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#BFEBFC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{s.icon}}"></path></svg>
+            </span>
+            <span style="flex: 1">{{s.label}}</span>
+            <sc-if value="{{s.on}}" hint-placeholder-val="{{ false }}">
+              <svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 6"></path></svg>
+            </sc-if>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 14px; flex: none">
+    <a href="ProfileDetail2.dc.html" style="display: flex; align-items: center; justify-content: center; height: 108px; box-sizing: border-box; border-radius: 26px; background: linear-gradient(155deg, rgba(122,176,240,0.18), rgba(30,70,125,0.14)); border: 1.5px solid rgba(156,205,255,0.36); box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.2); font-size: 30px; font-weight: 700">취소</a>
+    <a href="ProfileDetail2.dc.html" style="display: flex; align-items: center; justify-content: center; height: 108px; box-sizing: border-box; border-radius: 26px; background: linear-gradient(180deg, #2F9BEA 0%, #0B5FC4 100%); border: 1.5px solid rgba(170,225,255,0.65); box-shadow: 0 0 36px rgba(20,130,230,0.55), inset 0 2px 0 rgba(255,255,255,0.35); font-size: 36px; font-weight: 800; color: #FFFFFF">저장</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1280}}'>
+class Component extends DCLogic {
+  state = { kind: '어린이', on: { '출발·정차': true, '반복 가감속': true } };
+  renderVals() {
+    const paint = (on) => ({
+      border: on ? 'rgba(170,235,255,0.85)' : 'rgba(156,205,255,0.24)',
+      bg: on ? 'linear-gradient(180deg, rgba(47,155,234,0.55), rgba(11,95,196,0.55))' : 'rgba(8,28,58,0.5)',
+      glow: on ? '0 0 28px rgba(20,150,235,0.45), inset 0 1.5px 0 rgba(255,255,255,0.28)' : 'none',
+    });
+    return {
+      kinds: ['어린이', '성인'].map((label) => {
+        const on = this.state.kind === label;
+        return { label, ...paint(on), pressed: String(on), pick: () => this.setState({ kind: label }) };
+      }),
+      situations: [
+        { label: '출발·정차', icon: 'M4 12h12M12 6l6 6-6 6M21 5v14' },
+        { label: '반복 가감속', icon: 'M2 12c3-7 5-7 7 0s4 7 6 0 4-7 7 0' },
+        { label: '커브', icon: 'M5 21c0-8 2-10 7-11s7-3 7-7' },
+        { label: '정체', icon: 'M3 15l1.6-4.2C5 9.6 5.8 9 7 9h4c1.2 0 2 .6 2.4 1.8L15 15v3H3zM14 7l1.2-3c.4-1 1.1-1.5 2-1.5H19c.9 0 1.6.5 2 1.5l1 3v3h-5' },
+        { label: '장거리', icon: 'M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z' },
+      ].map((s) => {
+        const on = !!this.state.on[s.label];
+        return { ...s, ...paint(on), on, pressed: String(on), flip: () => this.setState({ on: { ...this.state.on, [s.label]: !on } }) };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>

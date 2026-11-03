@@ -50,4 +50,4 @@ python3 scripts/dev.py verify --clean-home
 
 ## 아직 별도 검증이 필요한 환경
 
-Windows/Linux 개인 컴퓨터에서의 설치·실행은 별도 확인이 필요합니다. Linux 검증은 위 GitHub-hosted Ubuntu 실행 결과입니다. 실제 Pleos 시스템·Vehicle SDK·차량 주행 제한은 샘플 테스트로 검증하지 않습니다.
+Windows/Linux 개인 컴퓨터에서의 설치·실행은 별도 확인이 필요합니다. Linux 검증은 위 GitHub-hosted Ubuntu 실행 결과입니다. 실제 Pleos 시스템·Vehicle SDK·차량 주행 제한은 샘플 테스트로 검증하지 않습니다. Pleos 에뮬레이터에서 별도로 측정한 결과는 [측정 기록](pleos-emulator/README.md)에 있고, 실차는 아직 확인하지 못했습니다.

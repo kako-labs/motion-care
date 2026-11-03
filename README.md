@@ -86,5 +86,7 @@ python3 scripts/export_source.py
 - [환경·테스트](docs/testing.md): 로컬·CI·에뮬레이터 재현
 - [인계·후속 순서](docs/handoff.md): 구현된 것과 다음 작업
 - [검증 기록](docs/verification.md): 실제 확인한 범위
+- [화면 디자인](docs/design.md): 시안 링크·스타일 기준·Pleos 화면 제약
+- [Pleos 에뮬레이터 측정](docs/pleos-emulator/README.md): 알림·백그라운드·주행 제한 실측
 
 프로필·평점은 아직 화면 연결 자리입니다. 환경 API·패턴 분석·AI 요약·녹음·주행 중 배너는 구현하지 않았습니다. 케어·경로는 메인 기능 완료 후 시간이 남을 때만 진행합니다.

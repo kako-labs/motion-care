@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>주행 상세</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#07111E}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1600px; height: 1760px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 24px; background: #07111E; color: #F3EFE9; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+
+  <header style="display: flex; align-items: center; gap: 16px; flex: none">
+    <a href="Main.dc.html" aria-label="뒤로" style="display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; flex: none; border-radius: 6px; background: #0D1C2F">
+      <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0">
+      <h1 style="margin: 0; font-size: 40px; font-weight: 800">11월 2일 08:12 출발</h1>
+      <span style="font-size: 24px; color: #B9C4D2">민준 운전 · 서아 동승 · 중형 전기차 · 38분 · 21.4 km</span>
+    </div>
+    <span style="font-size: 20px; font-weight: 600; padding: 6px 14px; border: 2px solid #8A6A52; border-radius: 4px; color: #E4DCD3">합성 주행</span>
+    <a href="LinkPeople.dc.html" style="display: flex; align-items: center; height: 80px; box-sizing: border-box; padding: 0 28px; border: 2px solid #3A5C82; border-radius: 6px; font-size: 26px; font-weight: 700">사람 수정</a>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 960px 536px; gap: 24px">
+    <div style="display: flex; flex-direction: column; gap: 24px; min-height: 0">
+      <section style="display: flex; flex-direction: column; flex: none; box-sizing: border-box; padding: 40px; background: #002C5F; border-radius: 6px">
+        <h2 style="margin: 0; font-size: 28px; font-weight: 700; color: #E4DCD3">이번 운행 요약</h2>
+        <p style="margin: 16px 0 0; font-size: 36px; line-height: 1.4; font-weight: 700">도심 구간에서 정차 직전 속도 변화가 5회 관찰됐어요. 같은 운전자·차량의 직전 3회 평균보다 적어요.</p>
+        <div aria-hidden="true" style="display: flex; gap: 4px; height: 4px; margin-top: 28px">
+          <div style="width: 120px; background: #00AAD2"></div>
+          <div style="flex: 1; background: #2F5A8C"></div>
+        </div>
+        <span style="margin-top: 24px; font-size: 26px; color: #B9C4D2">다음에 바꿔볼 행동</span>
+        <span style="margin-top: 8px; font-size: 48px; line-height: 1.25; font-weight: 800; letter-spacing: -0.01em">정지 지점보다 조금 일찍 감속해보세요</span>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px; flex: none; box-sizing: border-box; padding: 32px; background: #0D1C2F; border-radius: 6px">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <h2 style="margin: 0; font-size: 32px; font-weight: 800">시간에 따른 속도</h2>
+          <span style="display: flex; align-items: center; gap: 10px; font-size: 22px; color: #D5DCE5">
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#E8935F"></circle></svg>정차 직전 속도 변화
+          </span>
+        </div>
+        <svg role="img" aria-label="38분 주행의 속도 변화 그래프. 네 번의 정차 전후로 속도가 크게 줄고, 정차 직전 속도 변화가 5회 표시됩니다." width="896" height="330" viewBox="0 0 896 330" style="display: block">
+          <g stroke="#1B3350" stroke-width="2">
+            <line x1="64" y1="20" x2="896" y2="20"></line>
+            <line x1="64" y1="140" x2="896" y2="140"></line>
+            <line x1="64" y1="260" x2="896" y2="260"></line>
+          </g>
+          <g fill="#93A3B5" font-size="20" font-family="inherit">
+            <text x="0" y="27">80</text>
+            <text x="0" y="147">40</text>
+            <text x="0" y="267">0</text>
+            <text x="64" y="300">0분</text>
+            <text x="460" y="300" text-anchor="middle">19분</text>
+            <text x="896" y="300" text-anchor="end">38분</text>
+            <text x="0" y="327">km/h</text>
+          </g>
+          <polyline fill="none" stroke="#00AAD2" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" points="64,260 92,170 120,134 148,200 168,260 188,260 216,146 254,104 292,95 320,185 334,260 354,260 386,125 424,56 472,44 520,50 558,38 596,80 624,194 640,260 660,260 693,155 731,116 769,170 793,260 812,260 841,176 865,215 890,260"></polyline>
+          <g fill="#E8935F" stroke="#0D1C2F" stroke-width="3">
+            <circle cx="158" cy="230" r="9"></circle>
+            <circle cx="327" cy="222" r="9"></circle>
+            <circle cx="632" cy="226" r="9"></circle>
+            <circle cx="781" cy="215" r="9"></circle>
+            <circle cx="878" cy="238" r="9"></circle>
+          </g>
+        </svg>
+      </section>
+
+      <section style="flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box; padding: 32px; background: #0D1C2F; border-radius: 6px">
+        <h2 style="margin: 0 0 12px; font-size: 32px; font-weight: 800">관찰된 패턴</h2>
+        <table style="width: 100%; border-collapse: collapse; font-size: 26px">
+          <thead>
+            <tr style="color: #93A3B5; font-size: 22px; text-align: left">
+              <th scope="col" style="padding: 12px 0; font-weight: 500">패턴</th>
+              <th scope="col" style="padding: 12px 0; font-weight: 500; text-align: right; width: 120px">횟수</th>
+              <th scope="col" style="padding: 12px 0; font-weight: 500; text-align: right; width: 140px">10분당</th>
+              <th scope="col" style="padding: 12px 0; font-weight: 500; text-align: right; width: 180px">직전 3회 평균</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{patterns}}" as="p" hint-placeholder-count="3">
+              <tr style="border-top: 2px solid #1B3350">
+                <td style="padding: 20px 0; font-weight: 700">{{p.name}}</td>
+                <td style="padding: 20px 0; text-align: right; font-weight: 800; font-size: 32px">{{p.count}}</td>
+                <td style="padding: 20px 0; text-align: right; color: #D5DCE5">{{p.rate}}</td>
+                <td style="padding: 20px 0; text-align: right; color: #D5DCE5">{{p.prev}}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+        <p style="margin: auto 0 0; padding-top: 16px; font-size: 22px; line-height: 1.5; color: #93A3B5">유효 구간 37분 기준. 도로와 교통 상황의 영향이 포함돼 있어요.</p>
+      </section>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 24px; min-height: 0">
+      <section style="display: flex; flex-direction: column; flex: none; box-sizing: border-box; padding: 28px; background: #0D1C2F; border-radius: 6px">
+        <h2 style="margin: 0 0 8px; font-size: 28px; font-weight: 700">당시 환경</h2>
+        <sc-for list="{{env}}" as="e" hint-placeholder-count="3">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 0; border-top: 2px solid #1B3350">
+            <span style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 24px; color: #D5DCE5">{{e.label}}</span>
+              <span style="font-size: 20px; color: #93A3B5">{{e.source}}</span>
+            </span>
+            <span style="font-size: 32px; font-weight: 800; white-space: nowrap">{{e.value}}</span>
+          </div>
+        </sc-for>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px; flex: none; box-sizing: border-box; padding: 28px; background: #0D1C2F; border-radius: 6px">
+        <h2 style="margin: 0; font-size: 28px; font-weight: 700">최근 운행 비교</h2>
+        <span style="font-size: 22px; line-height: 1.4; color: #93A3B5">같은 운전자·차량 · 정차 직전 속도 변화 · 10분당</span>
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="display: flex; justify-content: space-between; font-size: 24px"><span style="color: #D5DCE5">최근 3회</span><span style="font-weight: 800">1.4회</span></span>
+            <div style="height: 14px; width: 58%; background: #00AAD2; border-radius: 0 4px 4px 0"></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="display: flex; justify-content: space-between; font-size: 24px"><span style="color: #D5DCE5">이전 3회</span><span style="font-weight: 800">2.4회</span></span>
+            <div style="height: 14px; width: 100%; background: #3A5C82; border-radius: 0 4px 4px 0"></div>
+          </div>
+        </div>
+        <p style="margin: 0; font-size: 22px; line-height: 1.5; color: #E4DCD3">관찰 빈도가 줄었다는 뜻이며, 멀미가 줄었다는 뜻은 아니에요.</p>
+      </section>
+
+      <section style="display: flex; flex-direction: column; flex: none; box-sizing: border-box; padding: 28px; background: #0D1C2F; border-radius: 6px">
+        <h2 style="margin: 0 0 8px; font-size: 28px; font-weight: 700">실제 안내 이력</h2>
+        <sc-for list="{{alerts}}" as="a" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 2px solid #1B3350">
+            <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+              <span style="font-size: 24px">{{a.text}}</span>
+              <span style="font-size: 20px; color: #93A3B5">{{a.time}}</span>
+            </span>
+            <span style="flex: none; font-size: 20px; font-weight: 700; padding: 4px 10px; border-radius: 4px; background: #132842; color: #E4DCD3">{{a.state}}</span>
+          </div>
+        </sc-for>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 12px; flex: none; box-sizing: border-box; padding: 28px; background: #0D1C2F; border-radius: 6px">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <h2 style="margin: 0; font-size: 28px; font-weight: 700">동승자 평가</h2>
+          <a href="Rating.dc.html" style="display: flex; align-items: center; height: 56px; font-size: 24px; font-weight: 700; color: #6FD6EE">수정</a>
+        </div>
+        <span style="font-size: 32px; font-weight: 800">서아 · 조금 불편했어요</span>
+        <span style="font-size: 22px; color: #93A3B5">가장 불편했던 것: 출발·정차 · 직접 입력</span>
+      </section>
+
+      <section style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; padding: 28px; background: #0D1C2F; border-radius: 6px">
+        <h2 style="margin: 0; font-size: 28px; font-weight: 700">근거와 한계</h2>
+        <p style="margin: 0; font-size: 24px; line-height: 1.5; color: #D5DCE5">차량 속도 변화로 계산한 근사값이며, 탑승자의 실제 멀미 여부를 확인한 결과는 아니에요.</p>
+        <a href="Reason.dc.html" style="display: flex; align-items: center; height: 56px; font-size: 24px; font-weight: 700; color: #6FD6EE">근거 자세히 보기</a>
+        <button type="button" style="margin-top: auto; height: 72px; flex: none; border: 2px solid #8A6A52; border-radius: 6px; background: transparent; color: #E4DCD3; font: inherit; font-size: 24px; font-weight: 700; cursor: pointer">이 기록 삭제</button>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      patterns: [
+        { name: '정차 직전 속도 변화', count: '5', rate: '1.4', prev: '2.4' },
+        { name: '출발 직후 속도 증가', count: '3', rate: '0.8', prev: '0.9' },
+        { name: '반복 가감속 구간', count: '2', rate: '0.5', prev: '0.6' },
+      ],
+      env: [
+        { label: '외부 대기질', source: '[대기질 API] · 08:10 기준', value: '나쁨' },
+        { label: '외부 기온', source: '[날씨 API] · 08:10 기준', value: '6°C' },
+        { label: '실내 온도', source: '차량 측정값 · 출발 시', value: '22.0°C' },
+      ],
+      alerts: [
+        { text: '내기 순환 확인 안내', time: '08:31', state: '표시' },
+        { text: '같은 안내 반복', time: '08:40', state: '생략' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

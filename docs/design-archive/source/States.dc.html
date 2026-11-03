@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>데이터 상태 모음</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#07111E}
+</style>
+</helmet>
+<div style="width: 1600px; height: 1280px; box-sizing: border-box; padding: 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 24px; background: #07111E; color: #F3EFE9; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+  <sc-for list="{{cards}}" as="c" hint-placeholder-count="9">
+    <section style="display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; padding: 32px; background: #0D1C2F; border-radius: 6px; min-height: 0">
+      <span style="align-self: flex-start; font-size: 20px; font-weight: 700; padding: 4px 12px; border-radius: 4px; background: #132842; color: {{c.tone}}">{{c.tag}}</span>
+      <span style="font-size: 24px; color: #93A3B5">{{c.where}}</span>
+      <span style="font-size: 36px; line-height: 1.25; font-weight: 800">{{c.title}}</span>
+      <span style="font-size: 24px; line-height: 1.45; color: #D5DCE5">{{c.body}}</span>
+      <sc-if value="{{c.action}}" hint-placeholder-val="{{ false }}">
+        <button type="button" style="margin-top: auto; height: 72px; flex: none; border: 2px solid #3A5C82; border-radius: 6px; background: transparent; color: #F3EFE9; font: inherit; font-size: 24px; font-weight: 700; cursor: pointer">{{c.action}}</button>
+      </sc-if>
+    </section>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1280}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const info = '#6FD6EE';
+    const warn = '#E8B48F';
+    const plain = '#E4DCD3';
+    return {
+      cards: [
+        { tag: '확인 중', tone: info, where: '외부 대기질', title: '환경 정보를 확인하고 있어요', body: '이전 값이 있으면 갱신 시각과 함께 보여줘요.', action: '' },
+        { tag: '오래된 값', tone: warn, where: '외부 대기질', title: '보통 · 3시간 전', body: '[대기질 API] · 11:20 갱신. 지금 값이 아닐 수 있어요.', action: '다시 확인' },
+        { tag: '연결 필요', tone: warn, where: '외부 대기질', title: '네트워크 연결이 필요해요', body: '주행 기록과 조언은 그대로 사용할 수 있어요.', action: '다시 확인' },
+        { tag: '미지원', tone: plain, where: '실내 공기질', title: '이 차량에서 제공되지 않아요', body: '외부 값으로 대신하지 않아요.', action: '' },
+        { tag: '데이터 없음', tone: plain, where: '차량 속도', title: '신호를 받지 못했어요', body: '패턴 분석에서 이 구간을 뺐어요. 0으로 계산하지 않아요.', action: '' },
+        { tag: '이번 운행만', tone: info, where: '오늘의 조언', title: '이번 운행에서 관찰됐어요', body: '한 번의 관찰이라 습관으로 판단하지 않아요.', action: '' },
+        { tag: '기록 부족', tone: plain, where: '최근 운행 비교', title: '비교하려면 기록이 더 필요해요', body: '같은 운전자·차량의 유효 주행이 쌓이면 보여줘요.', action: '' },
+        { tag: '생성 실패', tone: warn, where: '이번 운행 요약', title: '요약을 만들지 못했어요', body: '관찰 결과와 그래프는 아래에서 볼 수 있어요.', action: '다시 시도' },
+        { tag: '미응답', tone: plain, where: '동승자 평가', title: '아직 평가가 없어요', body: '‘불편 없음’으로 세지 않아요.', action: '평가 남기기' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

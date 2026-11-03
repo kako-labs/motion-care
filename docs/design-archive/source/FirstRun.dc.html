@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>첫 실행</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#07111E}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1600px; height: 1280px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 24px; background: #07111E; color: #F3EFE9; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+
+  <header style="display: flex; align-items: center; gap: 20px; height: 72px; flex: none">
+    <span style="font-size: 40px; font-weight: 800; letter-spacing: -0.01em">모션케어</span>
+    <span style="font-size: 20px; font-weight: 600; padding: 6px 14px; border: 2px solid #24405F; border-radius: 4px; color: #B9C4D2">첫 이용</span>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 960px 536px; gap: 24px">
+    <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0">
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; flex: none">
+        <a href="ProfileEdit.dc.html" style="display: flex; flex-direction: column; justify-content: center; gap: 2px; height: 116px; box-sizing: border-box; padding: 0 24px; border: 2px solid #3A5C82; border-radius: 6px">
+          <span style="font-size: 20px; color: #93A3B5">운전자</span>
+          <span style="font-size: 28px; font-weight: 700; color: #6FD6EE">등록하기</span>
+        </a>
+        <a href="ProfileEdit.dc.html" style="display: flex; flex-direction: column; justify-content: center; gap: 2px; height: 116px; box-sizing: border-box; padding: 0 24px; border: 2px solid #3A5C82; border-radius: 6px">
+          <span style="font-size: 20px; color: #93A3B5">동승자</span>
+          <span style="font-size: 28px; font-weight: 700; color: #6FD6EE">등록하기</span>
+        </a>
+        <a href="VehicleManage.dc.html" style="display: flex; flex-direction: column; justify-content: center; gap: 2px; height: 116px; box-sizing: border-box; padding: 0 24px; border: 2px solid #3A5C82; border-radius: 6px">
+          <span style="font-size: 20px; color: #93A3B5">차량</span>
+          <span style="font-size: 28px; font-weight: 700; color: #6FD6EE">등록하기</span>
+        </a>
+      </div>
+
+      <section style="flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box; padding: 44px; background: #002C5F; border-radius: 6px">
+        <span style="font-size: 28px; font-weight: 700; color: #E4DCD3">기본 준비 안내</span>
+        <h1 style="margin: 28px 0 0; font-size: 60px; line-height: 1.22; font-weight: 800; letter-spacing: -0.015em">운전 패턴을<br>알아가는 중이에요</h1>
+        <div aria-hidden="true" style="display: flex; gap: 4px; height: 4px; margin-top: 32px">
+          <div style="width: 120px; background: #00AAD2"></div>
+          <div style="flex: 1; background: #2F5A8C"></div>
+        </div>
+        <p style="margin: 28px 0 0; font-size: 30px; line-height: 1.5; font-weight: 600; color: #F3EFE9">그동안은 함께 타는 사람에게 가까운 화면을 잠시 쉬고 먼 곳을 보도록 권해보세요.</p>
+        <p style="margin: 16px 0 0; font-size: 24px; line-height: 1.5; color: #B9C4D2">개인 기록이 아니라 일반 행동 안내예요. 주행을 기록하면 다음 출발부터 지난 운행에 맞춘 조언을 드려요.</p>
+        <a href="Driving.dc.html" style="margin-top: auto; display: flex; align-items: center; justify-content: center; height: 112px; flex: none; border-radius: 6px; background: #00AAD2; color: #04121F; font-size: 36px; font-weight: 800">운행 기록 시작</a>
+      </section>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0">
+      <section style="display: flex; flex-direction: column; gap: 16px; flex: none; box-sizing: border-box; padding: 28px; background: #0D1C2F; border-radius: 6px">
+        <h2 style="margin: 0; font-size: 28px; font-weight: 700">현재 환경</h2>
+        <div style="display: flex; flex-direction: column">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 0; border-top: 2px solid #1B3350">
+            <span style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 24px; color: #D5DCE5">외부 대기질</span>
+              <span style="font-size: 20px; color: #93A3B5">지역을 정하면 볼 수 있어요</span>
+            </span>
+            <span style="font-size: 28px; font-weight: 700; color: #E4DCD3">지역 필요</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 0; border-top: 2px solid #1B3350">
+            <span style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 24px; color: #D5DCE5">실내 온도</span>
+              <span style="font-size: 20px; color: #93A3B5">차량 측정값</span>
+            </span>
+            <span style="font-size: 36px; font-weight: 800">23.5°C</span>
+          </div>
+        </div>
+        <button type="button" style="height: 80px; flex: none; border: 2px solid #3A5C82; border-radius: 6px; background: transparent; color: #F3EFE9; font: inherit; font-size: 26px; font-weight: 700; cursor: pointer">지역 선택</button>
+      </section>
+
+      <section style="flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 12px; box-sizing: border-box; padding: 36px; background: #0D1C2F; border-radius: 6px">
+        <h2 style="margin: 0; font-size: 32px; font-weight: 800">아직 기록이 없어요</h2>
+        <p style="margin: 0; font-size: 26px; line-height: 1.5; color: #B9C4D2">사람을 등록하지 않아도 주행은 기록돼요. 나중에 주행 목록의 ＋로 함께 탄 사람을 연결할 수 있어요.</p>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1280}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

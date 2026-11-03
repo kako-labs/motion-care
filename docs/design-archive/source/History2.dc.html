@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>전체 기록</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#020A16}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 1600px; height: 1280px; box-sizing: border-box; padding: 18px 32px 22px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; word-break: keep-all; color: #EAF4FF; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums; background: radial-gradient(1100px 620px at 82% 4%, #0B447F 0%, rgba(11,68,127,0) 62%), radial-gradient(900px 620px at 4% 58%, #07365F 0%, rgba(7,54,95,0) 60%), radial-gradient(1000px 480px at 60% 104%, #06396B 0%, rgba(6,57,107,0) 62%), #030E1F">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 46px; flex: none; font-size: 22px; color: #C6DAF0">
+    <div style="display: flex; align-items: center; gap: 28px">
+      <span style="font-size: 26px; font-weight: 700; color: #F4FAFF">오전 8:10</span>
+      <span style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: rgba(0,170,210,0.22); border: 1.5px solid rgba(90,210,240,0.55); font-size: 22px; font-weight: 800; color: #9BE8FB">P</span>
+      <span>주행 가능 <b style="font-weight: 700; color: #F4FAFF">450 km</b></span>
+    </div>
+    <span style="font-size: 22px; font-weight: 600">5G</span>
+  </div>
+
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 84px; flex: none">
+    <h1 style="margin: 0; font-size: 50px; font-weight: 800; letter-spacing: -0.02em; background: linear-gradient(180deg, #FFFFFF 20%, #A7DDF7 100%); -webkit-background-clip: text; background-clip: text; color: transparent">전체 기록</h1>
+    <div role="group" aria-label="운전자 필터" style="display: flex; gap: 10px">
+      <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+        <button type="button" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}" style="display: flex; align-items: center; gap: 10px; height: 76px; box-sizing: border-box; padding: {{f.pad}}; border-radius: 38px; border: 2px solid {{f.border}}; background: {{f.bg}}; box-shadow: {{f.glow}}; color: #FFFFFF; font: inherit; font-size: 25px; font-weight: 700; cursor: pointer">
+          <sc-if value="{{f.img}}" hint-placeholder-val="{{ false }}"><img src="{{f.img}}" alt="" style="width: 56px; height: 56px; border-radius: 50%"></sc-if>
+          {{f.label}}
+        </button>
+      </sc-for>
+    </div>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px">
+    <sc-for list="{{trips}}" as="t" hint-placeholder-count="7">
+      <div style="flex: 1; min-height: 0; display: flex; align-items: center; gap: 14px; box-sizing: border-box; padding: 0 16px 0 26px; border-radius: 24px; background: linear-gradient(155deg, rgba(122,176,240,0.16) 0%, rgba(40,84,140,0.10) 55%, rgba(12,34,66,0.30) 100%); border: 1.5px solid rgba(156,205,255,0.26); box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.18)">
+        <a href="TripDetail2.dc.html" style="flex: 1; min-width: 0; height: 100%; display: grid; grid-template-columns: 250px 210px 196px 1fr 132px; align-items: center; gap: 16px">
+          <span style="display: flex; flex-direction: column; gap: 1px">
+            <span style="font-size: 26px; font-weight: 800">{{t.date}}</span>
+            <span style="font-size: 21px; color: #B9D2EC">{{t.time}}</span>
+          </span>
+          <span style="display: flex; flex-direction: column; gap: 1px">
+            <span style="font-size: 25px; font-weight: 700">{{t.dur}}</span>
+            <span style="font-size: 21px; color: {{t.distTone}}">{{t.dist}}</span>
+          </span>
+          <svg aria-hidden="true" width="190" height="56" viewBox="0 0 190 56" fill="none" style="filter: drop-shadow(0 0 5px rgba(0,190,235,0.7))"><polyline points="{{t.spark}}" stroke="{{t.sparkTone}}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+          <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+            <span style="display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 600; color: {{t.peopleTone}}">
+              <span style="display: flex">
+                <sc-for list="{{t.avatars}}" as="a" hint-placeholder-count="2">
+                  <img src="{{a}}" alt="" style="width: 34px; height: 34px; margin-right: -8px; border-radius: 50%; box-shadow: 0 0 0 1.5px #0B2A52">
+                </sc-for>
+              </span>
+              <span style="margin-left: {{t.nameGap}}">{{t.people}}</span>
+            </span>
+            <span style="font-size: 21px; color: #C6DAF0">{{t.pattern}}</span>
+          </span>
+          <span style="justify-self: end; font-size: 20px; font-weight: 700; padding: 5px 13px; border-radius: 16px; white-space: nowrap; background: {{t.evalBg}}; color: {{t.evalFg}}">{{t.eval}}</span>
+        </a>
+        <a href="LinkPeople2.dc.html" aria-label="함께 탄 사람 연결" style="display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; flex: none; border-radius: 50%; background: rgba(120,190,250,0.14); border: 1.5px solid rgba(156,205,255,0.45); box-shadow: inset 0 1px 0 rgba(255,255,255,0.3)">
+          <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#DDF2FF" stroke-width="3" stroke-linecap="round"><path d="M12 4v16M4 12h16"></path></svg>
+        </a>
+      </div>
+    </sc-for>
+  </div>
+
+  <nav aria-label="주요 메뉴" style="position: relative; display: grid; grid-template-columns: 1fr 1fr 220px 1fr 1fr; align-items: center; height: 100px; flex: none; margin-top: 2px; border-radius: 30px; background: linear-gradient(180deg, rgba(90,145,215,0.20), rgba(16,46,92,0.42)); border: 1.5px solid rgba(156,205,255,0.26); box-shadow: 0 18px 44px rgba(0,6,20,0.55), inset 0 1.5px 0 rgba(255,255,255,0.18)">
+    <a href="Home2.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 21px; color: #C6DAF0">
+      <svg aria-hidden="true" width="34" height="34" viewBox="0 0 24 24" fill="#C6DAF0"><path d="M12 3l9 8h-3v9h-4v-6h-4v6H6v-9H3z"></path></svg>홈
+    </a>
+    <a href="History2.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 21px; font-weight: 700; color: #9BE8FB">
+      <svg aria-hidden="true" width="34" height="34" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#9BE8FB"></circle><path d="M12 6.5V12l3.6 2.2" fill="none" stroke="#0A2547" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>기록
+    </a>
+    <a href="Driving2.dc.html" style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; justify-self: center; width: 122px; height: 122px; margin-top: -16px; border-radius: 50%; background: radial-gradient(circle at 34% 24%, #6FD9F8 0%, #1191E2 48%, #0A4CB0 100%); border: 2px solid rgba(190,240,255,0.8); box-shadow: 0 0 0 8px rgba(0,170,210,0.16), 0 0 56px rgba(0,170,225,0.8), inset 0 2px 0 rgba(255,255,255,0.55); font-weight: 800; color: #FFFFFF">
+      <svg aria-hidden="true" width="34" height="34" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M8 5v14l11-7z"></path></svg><span style="font-size: 21px">운행 시작</span>
+    </a>
+    <a href="ProfileDetail2.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 21px; color: #C6DAF0">
+      <svg aria-hidden="true" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#C6DAF0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>프로필
+    </a>
+    <a href="VehicleManage2.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 21px; color: #C6DAF0">
+      <svg aria-hidden="true" width="38" height="34" viewBox="0 0 34 26" fill="none" stroke="#C6DAF0" stroke-width="2" stroke-linejoin="round"><path d="M3 15l3-8c.6-1.6 1.6-3 4-3h14c2.4 0 3.4 1.4 4 3l3 8v7H3z"></path><circle cx="9" cy="17" r="1.8" fill="#C6DAF0"></circle><circle cx="25" cy="17" r="1.8" fill="#C6DAF0"></circle></svg>차량
+    </a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1280}}'>
+class Component extends DCLogic {
+  state = { filter: '전체' };
+  renderVals() {
+    const A = {
+      minjun: '/_blob/d037b8f6d888fe055acc1463e9f4069d',
+      jiyoung: '/_blob/b9b9803b95f883f521b56d7ead990c8f',
+      seoa: '/_blob/4cec43282a9fc4fce1e5dae98de2900b',
+      doyun: '/_blob/fb413833e6479ba6e3b7d29344a17f81',
+    };
+    const all = [
+      { date: '11월 2일 (월)', time: '08:12 출발', dur: '38분', dist: '21.4 km', people: '민준 · 서아', avatars: [A.minjun, A.seoa], driver: '민준', pattern: '정차 직전 속도 변화', eval: '평가 있음', spark: '2,50 16,20 28,14 40,40 50,52 60,50 72,18 92,8 112,10 124,44 134,52 146,24 164,18 176,42 188,52' },
+      { date: '11월 1일 (일)', time: '18:40 출발', dur: '26분', dist: '13.2 km', people: '민준', avatars: [A.minjun], driver: '민준', pattern: '출발 직후 속도 증가', eval: '동승자 없음', spark: '2,50 14,12 30,10 50,14 70,16 88,12 104,34 116,50 128,48 144,16 166,12 178,38 188,50' },
+      { date: '10월 31일 (토)', time: '09:05 출발', dur: '52분', dist: '34.8 km', people: '인물 미지정', avatars: [], driver: '', pattern: '반복 가감속', eval: '미응답', spark: '2,50 10,26 18,40 26,20 34,44 42,18 50,40 60,22 72,14 90,10 110,12 130,10 150,16 170,34 188,50' },
+      { date: '10월 29일 (목)', time: '19:20 출발', dur: '44분', dist: '27.1 km', people: '지영 · 민준', avatars: [A.jiyoung, A.minjun], driver: '지영', pattern: '관찰된 패턴 없음', eval: '평가 있음', spark: '2,50 22,26 44,18 70,14 96,14 122,14 148,16 170,28 188,50' },
+      { date: '10월 28일 (수)', time: '08:05 출발', dur: '41분', dist: '22.0 km', people: '민준 · 서아', avatars: [A.minjun, A.seoa], driver: '민준', pattern: '정차 직전 속도 변화', eval: '미응답', spark: '2,50 18,18 34,12 48,44 56,52 66,50 80,16 100,10 118,46 126,52 136,50 152,20 172,16 182,42 188,52' },
+      { date: '10월 27일 (화)', time: '17:48 출발', dur: '12분', dist: '거리 정보 없음', noDist: true, people: '민준', avatars: [A.minjun], driver: '민준', pattern: '신호 부족으로 분석 제외', eval: '중단됨', spark: '2,50 24,24 46,20 70,30', missing: true },
+      { date: '10월 25일 (일)', time: '10:30 출발', dur: '1시간 16분', dist: '68.3 km', people: '지영 · 서아 · 도윤', avatars: [A.jiyoung, A.seoa, A.doyun], driver: '지영', pattern: '반복 가감속', eval: '평가 있음', spark: '2,50 12,22 22,38 32,18 42,36 54,16 72,10 96,8 124,8 150,10 168,24 180,42 188,50' },
+    ];
+    const f = this.state.filter;
+    const list = f === '전체' ? all : f === '미지정' ? all.filter((t) => !t.driver) : all.filter((t) => t.driver === f);
+    const chip = {
+      '평가 있음': ['rgba(0,170,210,0.22)', '#A9EDFC'],
+      '중단됨': ['rgba(255,190,140,0.16)', '#FFD3B3'],
+      '미응답': ['rgba(156,205,255,0.14)', '#D5E4F4'],
+      '동승자 없음': ['rgba(156,205,255,0.14)', '#D5E4F4'],
+    };
+    return {
+      filters: [
+        { label: '전체', img: '', pad: '0 30px' },
+        { label: '민준', img: A.minjun, pad: '0 26px 0 8px' },
+        { label: '지영', img: A.jiyoung, pad: '0 26px 0 8px' },
+        { label: '미지정', img: '', pad: '0 28px' },
+      ].map((x) => {
+        const on = f === x.label;
+        return {
+          ...x,
+          pressed: String(on),
+          pick: () => this.setState({ filter: x.label }),
+          border: on ? 'rgba(170,235,255,0.85)' : 'rgba(156,205,255,0.26)',
+          bg: on ? 'linear-gradient(180deg, rgba(47,155,234,0.62), rgba(11,95,196,0.62))' : 'rgba(8,28,58,0.5)',
+          glow: on ? '0 0 26px rgba(20,150,235,0.5), inset 0 1.5px 0 rgba(255,255,255,0.3)' : 'none',
+        };
+      }),
+      trips: list.map((t) => ({
+        ...t,
+        distTone: t.noDist ? '#FFD3B3' : '#B9D2EC',
+        peopleTone: t.driver ? '#EAF4FF' : '#FFD3B3',
+        nameGap: t.avatars.length ? '14px' : '0',
+        sparkTone: t.missing ? '#FFB98A' : '#5FE0FB',
+        evalBg: chip[t.eval][0],
+        evalFg: chip[t.eval][1],
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

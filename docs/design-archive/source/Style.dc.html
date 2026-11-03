@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>색·글자·컴포넌트</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#07111E}
+</style>
+</helmet>
+<div style="width: 1600px; height: 1280px; box-sizing: border-box; padding: 40px; display: grid; grid-template-columns: 860px 636px; grid-template-rows: auto minmax(0, 1fr); gap: 24px; background: #07111E; color: #F3EFE9; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+
+  <section style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; padding: 32px; background: #0D1C2F; border-radius: 6px">
+    <h2 style="margin: 0; font-size: 32px; font-weight: 800">색</h2>
+    <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px">
+      <sc-for list="{{colors}}" as="c" hint-placeholder-count="8">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="height: 120px; border-radius: 6px; border: 2px solid #24405F; background: {{c.hex}}"></div>
+          <span style="font-size: 22px; font-weight: 700; line-height: 1.25">{{c.name}}</span>
+          <span style="font-size: 20px; color: #B9C4D2">{{c.hex}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; box-sizing: border-box; padding: 32px; background: #0D1C2F; border-radius: 6px; min-height: 0">
+    <h2 style="margin: 0 0 8px; font-size: 32px; font-weight: 800">글자 · Asta Sans</h2>
+    <sc-for list="{{types}}" as="t" hint-placeholder-count="6">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 2px solid #1B3350">
+        <span style="font-size: {{t.size}}px; font-weight: {{t.weight}}; line-height: 1.2; white-space: nowrap">{{t.sample}}</span>
+        <span style="flex: none; font-size: 20px; color: #B9C4D2">{{t.spec}}</span>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; padding: 32px; background: #0D1C2F; border-radius: 6px; min-height: 0">
+    <h2 style="margin: 0; font-size: 32px; font-weight: 800">컴포넌트</h2>
+    <button type="button" style="height: 112px; flex: none; border: 0; border-radius: 6px; background: #00AAD2; color: #04121F; font: inherit; font-size: 36px; font-weight: 800; cursor: pointer">기본 버튼 · 112</button>
+    <button type="button" style="height: 96px; flex: none; border: 3px solid #E4DCD3; border-radius: 6px; background: transparent; color: #F3EFE9; font: inherit; font-size: 30px; font-weight: 800; cursor: pointer">강조 외곽선 · 96</button>
+    <button type="button" style="height: 80px; flex: none; border: 2px solid #3A5C82; border-radius: 6px; background: transparent; color: #F3EFE9; font: inherit; font-size: 26px; font-weight: 700; cursor: pointer">보조 버튼 · 80</button>
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+      <span style="font-size: 20px; font-weight: 600; padding: 6px 14px; border: 2px solid #24405F; border-radius: 4px; color: #B9C4D2">상태 칩</span>
+      <span style="font-size: 20px; font-weight: 600; padding: 6px 14px; border: 2px solid #8A6A52; border-radius: 4px; color: #E4DCD3">합성 데이터</span>
+      <span style="font-size: 20px; font-weight: 600; padding: 6px 12px; background: #132842; border-radius: 4px; color: #E4DCD3">민준 운전</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 24px">
+      <button type="button" aria-label="켜짐" aria-pressed="true" style="display: flex; align-items: center; justify-content: flex-end; width: 112px; height: 56px; box-sizing: border-box; padding: 4px; border: 2px solid #00AAD2; border-radius: 6px; background: #00AAD2; cursor: pointer">
+        <span aria-hidden="true" style="display: block; width: 44px; height: 44px; border-radius: 4px; background: #04121F"></span>
+      </button>
+      <button type="button" aria-label="꺼짐" aria-pressed="false" style="display: flex; align-items: center; justify-content: flex-start; width: 112px; height: 56px; box-sizing: border-box; padding: 4px; border: 2px solid #3A5C82; border-radius: 6px; background: transparent; cursor: pointer">
+        <span aria-hidden="true" style="display: block; width: 44px; height: 44px; border-radius: 4px; background: #93A3B5"></span>
+      </button>
+      <button type="button" aria-label="연결" style="display: flex; align-items: center; justify-content: center; width: 68px; height: 68px; border-radius: 50%; border: 2px solid #3A5C82; background: transparent; color: #E4DCD3; cursor: pointer">
+        <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M12 4v16M4 12h16"></path></svg>
+      </button>
+    </div>
+    <div role="status" style="display: flex; align-items: center; gap: 16px; flex: none; box-sizing: border-box; padding: 20px 24px; background: #E4DCD3; color: #07111E; border-radius: 6px">
+      <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" style="flex: none"><path d="M12 3a6 6 0 0 0-6 6c0 5-2 6-2 8h16c0-2-2-3-2-8a6 6 0 0 0-6-6zM10 20a2 2 0 0 0 4 0"></path></svg>
+      <span style="font-size: 28px; font-weight: 800">주행 중 상단 배너</span>
+    </div>
+    <div aria-hidden="true" style="display: flex; gap: 4px; height: 4px; margin-top: auto">
+      <div style="width: 120px; background: #00AAD2"></div>
+      <div style="flex: 1; background: #2F5A8C"></div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1280}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      colors: [
+        { name: '바탕', hex: '#07111E' },
+        { name: '패널', hex: '#0D1C2F' },
+        { name: '패널 위 요소', hex: '#132842' },
+        { name: 'Hyundai Blue', hex: '#002C5F' },
+        { name: 'Active Blue', hex: '#00AAD2' },
+        { name: 'Light Sand', hex: '#E4DCD3' },
+        { name: 'Sand 경고', hex: '#E8B48F' },
+        { name: '본문 글자', hex: '#F3EFE9' },
+      ],
+      types: [
+        { size: 60, weight: 800, sample: '오늘의 조언', spec: 'Headline L · 60 · 800' },
+        { size: 48, weight: 800, sample: '이번 운행 요약', spec: 'Headline S · 48 · 800' },
+        { size: 40, weight: 800, sample: '화면 제목', spec: 'Title L · 40 · 800' },
+        { size: 32, weight: 800, sample: '구역 제목', spec: 'Title S · 32 · 800' },
+        { size: 28, weight: 500, sample: '본문과 안내 문장', spec: 'Body M · 28' },
+        { size: 24, weight: 400, sample: '보조 설명과 항목 이름', spec: 'Label M · 24' },
+        { size: 20, weight: 400, sample: '출처와 갱신 시각', spec: 'Label S · 20 · 최소' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

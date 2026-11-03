@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>함께 탄 사람 연결</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#07111E}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1600px; height: 1280px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 24px; background: #07111E; color: #F3EFE9; font-family: 'Asta Sans', 'Noto Sans KR', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+
+  <header style="display: flex; align-items: center; gap: 16px; flex: none">
+    <a href="Main.dc.html" aria-label="닫기" style="display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; flex: none; border-radius: 6px; background: #0D1C2F">
+      <svg aria-hidden="true" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M5 5l14 14M19 5L5 19"></path></svg>
+    </a>
+    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0">
+      <h1 style="margin: 0; font-size: 40px; font-weight: 800">이 주행에 함께한 사람</h1>
+      <span style="font-size: 24px; color: #B9C4D2">10월 31일 09:05 출발 · 52분 · 34.8 km</span>
+    </div>
+    <a href="ProfileEdit.dc.html" style="display: flex; align-items: center; height: 80px; box-sizing: border-box; padding: 0 28px; border: 2px solid #3A5C82; border-radius: 6px; font-size: 26px; font-weight: 700">프로필 추가</a>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <fieldset style="margin: 0; border: 0; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; padding: 36px; background: #0D1C2F; border-radius: 6px; min-height: 0">
+      <legend style="float: left; width: 100%; padding: 0; margin-bottom: 12px; font-size: 36px; font-weight: 800">운전자 <span style="font-size: 24px; font-weight: 500; color: #93A3B5; margin-left: 8px">한 명</span></legend>
+      <sc-for list="{{drivers}}" as="d" hint-placeholder-count="4">
+        <label style="display: flex; align-items: center; gap: 20px; height: 112px; flex: none; box-sizing: border-box; padding: 0 24px; border: 3px solid {{d.border}}; border-radius: 6px; background: {{d.bg}}; cursor: pointer">
+          <input type="radio" name="driver" checked="{{d.selected}}" onChange="{{d.pick}}" style="width: 32px; height: 32px; margin: 0; accent-color: #00AAD2">
+          <span aria-hidden="true" style="display: flex; align-items: center; justify-content: center; width: 68px; height: 68px; flex: none; border-radius: 6px; background: #132842; font-size: 30px; font-weight: 800; color: #E4DCD3">{{d.mark}}</span>
+          <span style="font-size: 32px; font-weight: 700">{{d.name}}</span>
+        </label>
+      </sc-for>
+    </fieldset>
+
+    <fieldset style="margin: 0; border: 0; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; padding: 36px; background: #0D1C2F; border-radius: 6px; min-height: 0">
+      <legend style="float: left; width: 100%; padding: 0; margin-bottom: 12px; font-size: 36px; font-weight: 800">동승자 <span style="font-size: 24px; font-weight: 500; color: #93A3B5; margin-left: 8px">여러 명 선택 가능</span></legend>
+      <sc-for list="{{passengers}}" as="p" hint-placeholder-count="3">
+        <label style="display: flex; align-items: center; gap: 20px; height: 112px; flex: none; box-sizing: border-box; padding: 0 24px; border: 3px solid {{p.border}}; border-radius: 6px; background: {{p.bg}}; cursor: pointer">
+          <input type="checkbox" checked="{{p.selected}}" onChange="{{p.flip}}" style="width: 32px; height: 32px; margin: 0; accent-color: #00AAD2">
+          <span aria-hidden="true" style="display: flex; align-items: center; justify-content: center; width: 68px; height: 68px; flex: none; border-radius: 6px; background: #132842; font-size: 30px; font-weight: 800; color: #E4DCD3">{{p.mark}}</span>
+          <span style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 32px; font-weight: 700">{{p.name}}</span>
+            <span style="font-size: 22px; color: #93A3B5">{{p.kind}}</span>
+          </span>
+        </label>
+      </sc-for>
+      <p style="margin: auto 0 0; font-size: 24px; line-height: 1.5; color: #B9C4D2">연결을 바꾸면 개인 요약과 다음 출발 안내도 함께 갱신돼요. 주행 원본 기록은 바뀌지 않아요.</p>
+    </fieldset>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px; flex: none">
+    <a href="Main.dc.html" style="display: flex; align-items: center; justify-content: center; height: 112px; box-sizing: border-box; border: 3px solid #3A5C82; border-radius: 6px; font-size: 30px; font-weight: 700; color: #D5DCE5">인물 미지정으로 두기</a>
+    <a href="Main.dc.html" style="display: flex; align-items: center; justify-content: center; height: 112px; border-radius: 6px; background: #00AAD2; color: #04121F; font-size: 36px; font-weight: 800">저장</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1280}}'>
+class Component extends DCLogic {
+  state = { driver: 'minjun', passengers: { seoa: true } };
+  renderVals() {
+    const people = [
+      { id: 'minjun', name: '민준', mark: '민', kind: '성인' },
+      { id: 'jiyoung', name: '지영', mark: '지', kind: '성인' },
+      { id: 'seoa', name: '서아', mark: '서', kind: '어린이' },
+      { id: 'doyun', name: '도윤', mark: '도', kind: '어린이' },
+    ];
+    const paint = (on) => ({ border: on ? '#00AAD2' : '#24405F', bg: on ? '#002C5F' : 'transparent' });
+    return {
+      drivers: people.filter((p) => p.kind === '성인').map((p) => {
+        const selected = this.state.driver === p.id;
+        return { ...p, selected, ...paint(selected), pick: () => this.setState({ driver: p.id }) };
+      }),
+      passengers: people.filter((p) => p.id !== this.state.driver).map((p) => {
+        const selected = !!this.state.passengers[p.id];
+        return { ...p, selected, ...paint(selected), flip: () => this.setState({ passengers: { ...this.state.passengers, [p.id]: !selected } }) };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>

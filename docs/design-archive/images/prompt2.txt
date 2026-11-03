@@ -1,0 +1,11 @@
+Use your built-in image generation tool to create the five images below, and save each as a PNG in the current working directory with the exact file name given. Do not write any code and do not edit anything else. Rules for every image: ultra-realistic premium 3D render, automotive concept art quality; absolutely no text, letters, numbers, logos, badges or watermarks; color world is deep midnight navy (#03152E to #002C5F) with luminous cyan (#00AAD2) light and a very small warm sand glow only as accent. These must match the existing set: a sleek generic silver electric SUV on dark glossy floors, and stylized clay character busts.
+
+1. road.png (wide, 1536x1024): an empty smooth road seen from low driver height at dusk, gently curving toward a perfectly calm horizon with a thin warm sand glow; thin luminous cyan light lines along the road edges; faint out-of-focus city lights far away; no cars. The composition is calm and uncluttered, and the center of the frame stays dark enough for large white text on top.
+
+2. arrive.png (wide, 1536x1024): generic premium silver electric SUV (no badges) seen from a 3/4 rear view, parked on a dark glossy reflective floor at dusk, placed in the right 50 percent of the frame, with soft red tail lamps and a thin calm cyan light line on the floor that ends at the car. The left 50 percent is nearly empty dark navy for text overlay. Edges fade to #061A33.
+
+3. car_small.png (square, 1024x1024): generic compact silver hybrid hatchback (no badges) from a 3/4 front view, centered on a dark glossy reflective floor, plain dark navy background #061A33, soft cyan rim light.
+
+4. avatar_woman.png (square, 1024x1024): friendly stylized 3D character bust of a calm smiling adult woman with a simple dark top, soft matte clay look with frosted glass highlights, cyan rim light, centered on a plain dark navy background #0A2342.
+
+5. avatar_boy.png (square, 1024x1024): matching stylized 3D character bust of a cheerful young boy with short hair, same matte clay look and cyan rim light, centered on the same plain dark navy background #0A2342.

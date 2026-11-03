@@ -1,0 +1,39 @@
+** Dumping CarPackageManagerService
+
+*CarPackageManagerService*
+mEnableActivityBlocking:true
+mPreventTemplatedAppsFromShowingDialog:true
+mTemplateActivityClassName:androidx.car.app.activity.CarAppActivity
+Display Restrictions:
+Display 0 is restricted
+ Blocked activity log:
+**System allowlist**
+AppBlockingPackageInfoWrapper [info=AppBlockingPackageInfo [packageName=ai.umos.vehiclecontrol, flags=1, minRevisionCode=0, maxRevisionCode=0, signatures=[android.content.pm.Signature@734b0138], activities=[ai.umos.vehiclecontrol.VehicleControlActivity]], isMatching=true]
+AppBlockingPackageInfoWrapper [info=AppBlockingPackageInfo [packageName=ai.umos.maps.android.navigation.app, flags=1, minRevisionCode=0, maxRevisionCode=0, signatures=[android.content.pm.Signature@734b0138], activities=[ai.umos.maps.android.navigation.app.MainActivity]], isMatching=true]
+AppBlockingPackageInfoWrapper [info=AppBlockingPackageInfo [packageName=com.android.permissioncontroller, flags=1, minRevisionCode=0, maxRevisionCode=0, signatures=[android.content.pm.Signature@734b0138], activities=[com.android.permissioncontroller.permission.ui.GrantPermissionsActivity]], isMatching=true]
+AppBlockingPackageInfoWrapper [info=AppBlockingPackageInfo [packageName=com.android.systemui, flags=1, minRevisionCode=0, maxRevisionCode=0, signatures=[android.content.pm.Signature@734b0138], activities=[com.android.systemui.car.activity.ActivityBlockingActivity, com.android.systemui.car.userpicker.UserPickerActivity]], isMatching=true]
+AppBlockingPackageInfoWrapper [info=AppBlockingPackageInfo [packageName=com.android.car.templates.host, flags=1, minRevisionCode=0, maxRevisionCode=0, signatures=[android.content.pm.Signature@734b0138], activities=[com.android.car.libraries.templates.host.internal.debug.ClusterActivity]], isMatching=true]
+AppBlockingPackageInfoWrapper [info=AppBlockingPackageInfo [packageName=ai.umos.mediaapp, flags=1, minRevisionCode=0, maxRevisionCode=0, signatures=[android.content.pm.Signature@734b0138], activities=[ai.umos.mediaapp.main.screen.MediaAppActivity, ai.umos.mediaapp.main.screen.MediaDispatcherActivity]], isMatching=true]
+AppBlockingPackageInfoWrapper [info=AppBlockingPackageInfo [packageName=ai.umos.callandmessage, flags=1, minRevisionCode=0, maxRevisionCode=0, signatures=[android.content.pm.Signature@734b0138], activities=[ai.umos.incall.InCallActivity, ai.umos.incall.IntentActionsActivity, ai.umos.mainscreen.MainScreenActivity]], isMatching=true]
+AppBlockingPackageInfoWrapper [info=AppBlockingPackageInfo [packageName=ai.umos.ambientai, flags=1, minRevisionCode=0, maxRevisionCode=0, signatures=[android.content.pm.Signature@734b0138], activities=[ai.umos.ambientai.HistoryActivity]], isMatching=true]
+**Client Policies**
+**Unprocessed policy services**
+**Allowlist string in resource**
+
+**System allowlist string in resource**
+com.android.systemui,com.google.android.permissioncontroller/com.android.permissioncontroller.permission.ui.GrantPermissionsActivity,com.android.permissioncontroller/com.android.permissioncontroller.permission.ui.GrantPermissionsActivity,android/com.android.internal.app.ResolverActivity,com.android.mtp/com.android.mtp.ReceiverActivity,com.android.server.telecom/com.android.server.telecom.components.UserCallActivity
+**Blocklist string in resource**
+
+**Allowlist map from resource**
+{={}, com.android.permissioncontroller={com.android.permissioncontroller.permission.ui.GrantPermissionsActivity}, com.android.mtp={com.android.mtp.ReceiverActivity}, com.android.systemui={com.android.systemui.car.activity.ActivityBlockingActivity}, android={com.android.internal.app.ResolverActivity}, com.android.server.telecom={com.android.server.telecom.components.UserCallActivity}, com.google.android.permissioncontroller={com.android.permissioncontroller.permission.ui.GrantPermissionsActivity}}
+**Blocklist from resource**
+
+mCurrentDrivingSafetyRegion:android.car.drivingsafetyregion.all
+mTempAllowedActivities:{}
+Car service overlay packages property name: ro.android.car.carservice.overlay.packages
+Car service overlay packages: com.android.car.resources.vendor;com.google.android.car.resources.vendor;
+VendorServiceController:
+  DBG=false
+  VendorServiceInfo:
+  Connections:
+
