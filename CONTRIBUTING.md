@@ -14,7 +14,7 @@
 2. 커밋 메시지는 `type: 한글 설명`입니다. type은 `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`입니다.
 3. push 전에 `python3 scripts/dev.py verify`를 실행합니다. 화면 이동이나 수명주기를 바꿨다면 `python3 scripts/dev.py ui`도 실행합니다.
 4. PR 본문에 변경 내용, 영향받는 모듈, 실행한 검증, 확인하지 못한 항목을 적습니다.
-5. CI의 `verify`와 `ui`가 통과하고 상대 담당이 확인한 뒤 병합합니다. force push는 하지 않습니다.
+5. CI의 `verify`와 `ui`가 통과하고 상대 담당이 확인한 뒤 병합합니다. 문서만 바꾼 PR은 CI가 돌지 않습니다. force push는 하지 않습니다.
 
 ## 공통 계약을 바꿀 때
 

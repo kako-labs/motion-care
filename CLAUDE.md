@@ -28,7 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    gh pr create --base main --title "feat: 프로필 등록 화면 추가" --body-file <본문 파일>
    ```
 
-5. `gh pr checks`로 CI의 `verify`와 `ui`를 확인합니다. 병합은 상대 담당이 확인하고 사용자가 요청한 뒤에 합니다. force push와 `--no-verify`는 쓰지 않습니다.
+5. `gh pr checks`로 CI의 `verify`와 `ui`를 확인합니다. 문서만 바꾼 PR은 CI가 돌지 않습니다. 병합은 상대 담당이 확인하고 사용자가 요청한 뒤에 합니다. force push와 `--no-verify`는 쓰지 않습니다.
 
 `core/*`, Gradle 설정, CI, 스키마, 공개 Repository를 바꾸는 PR은 다른 담당의 작업에 영향을 주므로 본문에 영향 범위를 적습니다. 담당 구분은 `docs/ownership.md`에 있습니다.
 
