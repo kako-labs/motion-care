@@ -4,29 +4,63 @@ import dev.motioncare.core.model.*
 import dev.motioncare.data.trip.internal.*
 import dev.motioncare.data.trip.sample.SampleVehicleDataSource
 import dev.motioncare.data.trip.vehicle.UnavailableVehicleDataSource
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TripSessionControllerTest {
     private class MemoryStore : TripReader, TripWriter {
         private val snapshots = linkedMapOf<TripId, TripSnapshot>()
         override val records = MutableStateFlow<List<TripRecord>>(emptyList())
         var failWrites = false
+        var appendCalls = 0
         override suspend fun get(id: TripId) = snapshots[id]
-        override suspend fun save(snapshot: TripSnapshot) {
+        override suspend fun lastSampleElapsedMs(id: TripId) = snapshots[id]?.samples?.lastOrNull()?.elapsedMs
+        override suspend fun saveTrip(trip: TripRecord) {
             check(!failWrites) { "Storage failed" }
-            snapshots[snapshot.trip.id] = snapshot
-            records.value = snapshots.values.map { it.trip }
+            snapshots[trip.id] = TripSnapshot(trip, snapshots[trip.id]?.samples.orEmpty())
+            publish()
         }
+        override suspend fun appendSamples(trip: TripRecord, samples: List<SpeedSample>) {
+            check(!failWrites) { "Storage failed" }
+            appendCalls++
+            snapshots[trip.id] = TripSnapshot(trip, snapshots[trip.id]?.samples.orEmpty() + samples)
+            publish()
+        }
+        private fun publish() { records.value = snapshots.values.map { it.trip } }
     }
     private val store = MemoryStore()
     private var now = 1_000L
+    private var nanos = 5_000_000_000L
     private var sequence = 0
     private fun controller(source: VehicleDataSource = SampleVehicleDataSource()) =
         TripSessionController(store, store, source, EpochClock { now },
-            TripIdFactory { TripId("trip-${++sequence}") })
+            TripIdFactory { TripId("trip-${++sequence}") }, MonotonicClock { nanos })
+
+    /** A reading observed the given time after the trip started. */
+    private fun reading(afterStartMs: Long, value: Double? = 5.0, quality: Quality = Quality.VALID) =
+        SpeedReading(nanos + afterStartMs * 1_000_000, value, quality)
+
+    private suspend fun TestScope.startRecording(controller: TripSessionController): RecordingFixture {
+        controller.initialize()
+        val id = (controller.start() as CommandResult.Success).tripId
+        val readings = MutableSharedFlow<SpeedReading>(extraBufferCapacity = 64)
+        val job = launch { controller.record(readings) }
+        runCurrent()
+        return RecordingFixture(id, readings, job)
+    }
+    private class RecordingFixture(
+        val id: TripId,
+        val readings: MutableSharedFlow<SpeedReading>,
+        val job: kotlinx.coroutines.Job,
+    )
 
     @Test fun `recording captures ordered samples and preserves origin on completion`() = runTest {
         val controller = controller()
@@ -118,5 +152,80 @@ class TripSessionControllerTest {
         catch (_: UnsupportedOperationException) { }
         assertEquals(DataOrigin.VEHICLE, store.get(id)!!.trip.origin)
         assertTrue(store.get(id)!!.samples.isEmpty())
+    }
+
+    @Test fun `vehicle readings use event time and finish saves what is still pending`() = runTest {
+        val controller = controller()
+        val trip = startRecording(controller)
+        trip.readings.emit(reading(100))
+        trip.readings.emit(reading(200))
+        runCurrent()
+        assertTrue(store.get(trip.id)!!.samples.isEmpty())
+        // Later wall-clock time must not move the observed time of pending readings.
+        now += 60_000
+        controller.finish()
+        runCurrent()
+        val saved = store.get(trip.id)!!
+        assertEquals(listOf(100L, 200L), saved.samples.map { it.elapsedMs })
+        assertEquals(TripStatus.COMPLETED, saved.trip.status)
+        assertTrue(trip.job.isCompleted)
+    }
+
+    @Test fun `readings are written together about once a second`() = runTest {
+        val controller = controller()
+        val trip = startRecording(controller)
+        for (ms in 100L..1000L step 100) trip.readings.emit(reading(ms))
+        runCurrent()
+        assertEquals(1, store.appendCalls)
+        assertEquals(10, store.get(trip.id)!!.samples.size)
+        assertEquals(1L, store.get(trip.id)!!.trip.revision)
+        trip.job.cancel()
+    }
+
+    @Test fun `duplicate backward and pre-start readings are dropped`() = runTest {
+        val controller = controller()
+        val trip = startRecording(controller)
+        trip.readings.emit(reading(-5))
+        trip.readings.emit(reading(100))
+        trip.readings.emit(reading(100))
+        trip.readings.emit(reading(50))
+        trip.readings.emit(reading(200))
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        assertEquals(listOf(100L, 200L), store.get(trip.id)!!.samples.map { it.elapsedMs })
+    }
+
+    @Test fun `unavailable reading is stored as unavailable rather than zero`() = runTest {
+        val controller = controller()
+        val trip = startRecording(controller)
+        trip.readings.emit(reading(100, value = null, quality = Quality.UNAVAILABLE))
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        assertEquals(listOf(SpeedSample(100, null, Quality.UNAVAILABLE)), store.get(trip.id)!!.samples)
+    }
+
+    @Test fun `failed write keeps readings for the next write`() = runTest {
+        val controller = controller()
+        val trip = startRecording(controller)
+        store.failWrites = true
+        trip.readings.emit(reading(1000))
+        runCurrent()
+        assertTrue(trip.job.isActive)
+        assertTrue(store.get(trip.id)!!.samples.isEmpty())
+        store.failWrites = false
+        trip.readings.emit(reading(2000))
+        runCurrent()
+        assertEquals(listOf(1000L, 2000L), store.get(trip.id)!!.samples.map { it.elapsedMs })
+        trip.job.cancel()
+    }
+
+    @Test fun `recording without an active trip ends immediately`() = runTest {
+        val controller = controller()
+        controller.initialize()
+        val job = launch { controller.record(MutableSharedFlow()) }
+        runCurrent()
+        assertTrue(job.isCompleted)
     }
 }

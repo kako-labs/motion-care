@@ -2,6 +2,7 @@ package dev.motioncare.data.trip.storage
 
 import android.content.ContentValues
 import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
 import androidx.core.database.sqlite.transaction
 import dev.motioncare.core.model.*
 import dev.motioncare.data.trip.internal.*
@@ -24,26 +25,22 @@ internal class SqliteTripStore(
 
     suspend fun load() = withContext(io) { mutex.withLock { refresh() } }
 
-    override suspend fun save(snapshot: TripSnapshot) = withContext(io) {
+    override suspend fun saveTrip(trip: TripRecord) = withContext(io) {
+        mutex.withLock {
+            val db = database.writableDatabase
+            db.transaction { writeTrip(db, trip) }
+            refresh()
+        }
+    }
+
+    override suspend fun appendSamples(trip: TripRecord, samples: List<SpeedSample>) = withContext(io) {
         mutex.withLock {
             val db = database.writableDatabase
             db.transaction {
-                val existing = db.rawQuery("SELECT revision FROM trips WHERE id = ?",
-                    arrayOf(snapshot.trip.id.value)).use { if (it.moveToFirst()) it.getLong(0) else null }
-                require(existing == null || snapshot.trip.revision > existing) { "Stale trip revision" }
-                val t = snapshot.trip
-                val values = ContentValues().apply {
-                    put("id", t.id.value); put("started", t.startedAtEpochMs)
-                    put("ended", t.endedAtEpochMs); put("status", t.status.name)
-                    put("vehicle_id", t.vehicleId?.value); put("origin", t.origin.name)
-                    put("revision", t.revision)
-                }
-                if (existing == null) db.insertOrThrow("trips", null, values)
-                else db.update("trips", values, "id = ?", arrayOf(t.id.value))
-                db.delete("speed_samples", "trip_id = ?", arrayOf(t.id.value))
-                snapshot.samples.forEach { sample ->
+                writeTrip(db, trip)
+                samples.forEach { sample ->
                     db.insertOrThrow("speed_samples", null, ContentValues().apply {
-                        put("trip_id", t.id.value); put("elapsed", sample.elapsedMs)
+                        put("trip_id", trip.id.value); put("elapsed", sample.elapsedMs)
                         put("speed", sample.metersPerSecond); put("quality", sample.quality.name)
                     })
                 }
@@ -69,6 +66,28 @@ internal class SqliteTripStore(
             }
             TripSnapshot(trip, samples)
         }
+    }
+
+    override suspend fun lastSampleElapsedMs(id: TripId): Long? = withContext(io) {
+        mutex.withLock {
+            database.readableDatabase
+                .rawQuery("SELECT MAX(elapsed) FROM speed_samples WHERE trip_id = ?", arrayOf(id.value))
+                .use { if (it.moveToFirst() && !it.isNull(0)) it.getLong(0) else null }
+        }
+    }
+
+    private fun writeTrip(db: SQLiteDatabase, trip: TripRecord) {
+        val existing = db.rawQuery("SELECT revision FROM trips WHERE id = ?",
+            arrayOf(trip.id.value)).use { if (it.moveToFirst()) it.getLong(0) else null }
+        require(existing == null || trip.revision > existing) { "Stale trip revision" }
+        val values = ContentValues().apply {
+            put("id", trip.id.value); put("started", trip.startedAtEpochMs)
+            put("ended", trip.endedAtEpochMs); put("status", trip.status.name)
+            put("vehicle_id", trip.vehicleId?.value); put("origin", trip.origin.name)
+            put("revision", trip.revision)
+        }
+        if (existing == null) db.insertOrThrow("trips", null, values)
+        else db.update("trips", values, "id = ?", arrayOf(trip.id.value))
     }
 
     private fun refresh() {

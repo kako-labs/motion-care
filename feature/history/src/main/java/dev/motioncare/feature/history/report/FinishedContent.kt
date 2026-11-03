@@ -6,7 +6,7 @@ import dev.motioncare.core.ui.ScaffoldSection
 
 @Composable
 fun FinishedContent(onDetail: () -> Unit, onFeedback: () -> Unit, onDone: () -> Unit) {
-    ScaffoldSection("샘플 주행 저장 완료") {
+    ScaffoldSection("주행 저장 완료") {
         Text("저장된 원본을 상세에서 확인할 수 있습니다.")
         Button(onClick = onDetail) { Text("주행 상세") }
         TextButton(onClick = onFeedback) { Text("평가 연결 자리") }

@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import dev.motioncare.core.model.TripSnapshot
 import dev.motioncare.core.ui.ScaffoldSection
 
+private const val MAX_SAMPLE_ROWS = 20
+
 @Composable
 fun TripDetailContent(snapshot: TripSnapshot?, loading: Boolean, onBack: () -> Unit, onFeedback: () -> Unit) {
     ScaffoldSection("주행 상세 · 원본 연결 확인") {
@@ -14,7 +16,8 @@ fun TripDetailContent(snapshot: TripSnapshot?, loading: Boolean, onBack: () -> U
             else -> {
                 Text("출처: ${snapshot.trip.origin.name} · ${snapshot.trip.status.name}")
                 Text("샘플 ${snapshot.samples.size}개 · 버전 ${snapshot.trip.revision}")
-                snapshot.samples.forEach { sample ->
+                // Real trips hold thousands of samples; a text row for each would stall the screen.
+                snapshot.samples.takeLast(MAX_SAMPLE_ROWS).forEach { sample ->
                     Text("${sample.elapsedMs} ms · ${sample.metersPerSecond ?: "정보 없음"} m/s · ${sample.quality}")
                 }
                 Text("분석·비교·AI 요약은 기능 구현 단계에서 연결합니다.")

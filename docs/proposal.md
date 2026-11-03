@@ -107,7 +107,7 @@ Pleos Connect 에뮬레이터 v2.1.0(API 34)에서 시험 앱으로 직접 확�
 
 | 기능 | 사용할 SDK·API | 확인 상태 |
 | --- | --- | --- |
-| 속도 | `CarPropertyManager`의 `PERF_VEHICLE_SPEED`, `android.car.permission.CAR_SPEED` | 수신 확인. 10Hz 요청에 초당 약 6.8건, 최대 간격 203ms. Vehicle SDK 2.3.2에는 속도 API가 없어 이 경로를 사용 |
+| 속도 | `CarPropertyManager`의 `PERF_VEHICLE_SPEED`, `android.car.permission.CAR_SPEED` | 앱에서 저장까지 확인. 10Hz 요청에 초당 약 6.4건, 최대 간격 204ms. Vehicle SDK 2.3.2에는 속도 API가 없어 이 경로를 사용. 권한 요청 창에는 위치 정보로 표시됨 |
 | 기어 | `GEAR_SELECTION`, Vehicle SDK 기어 리스너 | 수신 확인 |
 | 조향·브레이크 | Pleos Vehicle SDK 2.3.2 리스너 | 수신 확인. 조향 값의 부호가 입력과 반대로 나와 구현 시 방향 확인 필요 |
 | 주행 중 화면 | Activity의 `distractionOptimized` 선언, 주행 제한 상태 반영 | 미선언 화면은 5km/h부터 가려지고, 선언 화면은 40km/h에서도 표시됨 |
@@ -133,7 +133,7 @@ Pleos Connect 에뮬레이터 v2.1.0(API 34)에서 시험 앱으로 직접 확�
 
 Kotlin, Jetpack Compose로 개발하며 주행, 프로필, 화면 기능을 7개 Gradle 모듈로 나눠 두 사람이 병행 개발합니다. 데이터는 차량 안에 저장하고 핵심 기능은 자체 서버 없이 동작합니다. LLM 요약을 추가할 경우에만 API 키를 앱 밖에 보관하는 중계 함수를 둡니다.
 
-2026-11-03 기준으로 합성 입력의 시작·저장·목록·상세 흐름과 프로필 저장이 동작하며, 단위 테스트 24개와 UI 테스트 2개를 CI에서 실행합니다. 차량 입력, 패턴 분석, 조언, 환경, 평가는 구현 전입니다.
+2026-11-03 기준으로 시작·저장·목록·상세 흐름과 프로필 저장이 동작합니다. Pleos 에뮬레이터에서는 내비가 앞에 있어도 차량 속도가 저장되는 것을 확인했습니다. 단위 테스트 37개와 UI 테스트 2개를 CI에서 실행합니다. 패턴 분석, 조언, 주행 중 안내, 환경, 평가는 구현 전입니다.
 
 ## 6. 기대효과 및 발전 가능성
 

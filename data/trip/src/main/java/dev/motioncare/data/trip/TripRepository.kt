@@ -12,3 +12,11 @@ interface TripRepository {
     suspend fun captureSample(): CommandResult
     suspend fun finish(): CommandResult
 }
+
+/** Used by the recording service in app. Features keep using [TripRepository]. */
+interface VehicleRecorder {
+    /** Stores vehicle signals until the active trip ends or the caller is cancelled. */
+    suspend fun record()
+}
+
+class VehicleTripData(val trips: TripRepository, val recorder: VehicleRecorder)

@@ -11,11 +11,15 @@
 | records | 커밋된 주행 원본 목록 StateFlow |
 | initialize() | 저장소 로드·미완료 기록 복구. 여러 번 호출해도 한 번 초기화 |
 | get(id) | 해당 원본과 샘플, 없으면 null. IO 실패와 없음 구분 |
-| start(vehicleId) | 샘플 주행 생성. 이미 기록 중이면 Rejected |
-| captureSample() | 수동 샘플 한 건 추가. 실제 고빈도 SDK 수집 계약이 아님 |
-| finish() | 종료 원본 저장. 기록 중이 아니면 Rejected |
+| start(vehicleId) | 주행 생성. 이미 기록 중이면 Rejected |
+| captureSample() | 합성 샘플 한 건 추가. 차량 환경에서는 UnsupportedOperationException |
+| finish() | 남은 샘플을 저장하고 주행 종료. 기록 중이 아니면 Rejected |
 
-화면은 `TripReader`·SQL·VehicleDataSource에 접근하지 않습니다. 이들은 데이터 모듈 내부 구현입니다. 조립부는 `createSampleTripRepository(context)`만 호출합니다.
+화면은 `TripReader`·SQL·VehicleDataSource에 접근하지 않습니다. 이들은 데이터 모듈 내부 구현입니다.
+
+같은 파일의 `VehicleRecorder`는 `app`의 `TripRecordingService`만 사용합니다. `record()`는 기록 중인 주행이 끝나거나 호출자가 취소할 때까지 차량 속도를 저장합니다.
+
+조립부는 자동차 기기에서 `createVehicleTripData(context)`, 그 외 기기에서 `createSampleTripRepository(context)`를 호출합니다. 실제 기록은 `motion-care-trips.db`에 저장해 합성 샘플과 섞이지 않습니다.
 
 ### 프로필 · `data/profile/src/main/java/dev/motioncare/data/profile/ProfileRepository.kt`
 
@@ -48,7 +52,7 @@ DrivingViewModel의 busy는 주행 명령에만 적용합니다. 상세 조회�
 
 Application의 AppGraph가 도메인별 Repository를 한 개씩 소유합니다. Activity 재생성은 주행을 끊지 않습니다. 새 프로세스에서 미완료 원본은 INTERRUPTED로 보존합니다. 화면 종료를 자동 운행 종료로 해석하지 않습니다.
 
-주행 원본의 SQLite 이름·스키마 v1은 유지했습니다. 프로필은 별도 파일 `motion-care-profile.db`를 사용하며 스키마 버전을 따로 관리합니다. 트랜잭션 저장 후 목록을 갱신하고 읽기·쓰기는 IO dispatcher에서 처리합니다. 샘플 전체 교체 저장은 작은 뼈대용이며 실차 연속 수집 전 batch·보관 정책을 설계해야 합니다.
+주행 원본의 SQLite 이름·스키마 v1은 유지했습니다. 프로필은 별도 파일 `motion-care-profile.db`를 사용하며 스키마 버전을 따로 관리합니다. 트랜잭션 저장 후 목록을 갱신하고 읽기·쓰기는 IO dispatcher에서 처리합니다. 차량 샘플은 이벤트 시각 기준으로 약 1초마다 묶어 추가 저장하므로, 프로세스가 강제 종료되면 마지막 약 1초의 샘플은 잃을 수 있습니다. 보관 기간 정책은 아직 없습니다.
 
 ## 후속 계약
 
