@@ -67,6 +67,7 @@ python3 scripts/dev.py verify --clean-home
 | 금지된 의존성 | `feature:driving`에서 `:data:profile` 의존을 임시 주입하면 차단 |
 | 다른 모듈의 내부 구현 접근 | `feature:history`에서 두 data 모듈의 DB 클래스 참조 시 컴파일 실패 |
 | 의존성 버전 | 기존 lockfile의 버전 변경 없음. `feature:history`에 내비게이션 항목만 추가 |
+| GitHub Actions | 코드 커밋 `ad5e679`의 [실행](https://github.com/kako-labs/motion-care/actions/runs/41601400955)과 문서 커밋 `85069d5`의 [실행](https://github.com/kako-labs/motion-care/actions/runs/41601931656) 모두 verify·ui 통과 |
 
 ## 아직 별도 검증이 필요한 환경
 
