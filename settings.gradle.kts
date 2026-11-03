@@ -6,4 +6,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "MotionCare"
-include(":app", ":core:model", ":core:ui", ":data:trip", ":feature:driving", ":feature:history")
+include(":app", ":core:model", ":core:ui", ":data:profile", ":data:trip", ":feature:driving", ":feature:history")

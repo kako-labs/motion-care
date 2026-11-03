@@ -59,14 +59,15 @@ UI 테스트 최초 실행은 시스템 이미지를 다운로드하며 하드�
 app/                 앱 조립·내비게이션
 core/model/          Android에 의존하지 않는 데이터 모델
 core/ui/             재사용 화면 요소
-data/trip/          Repository·원본 저장·세션·샘플 입력
+data/profile/       프로필 Repository·저장
+data/trip/          주행 Repository·원본 저장·세션·샘플 입력
 feature/driving/    주행 UI·DrivingViewModel
-feature/history/    목록·상세·출발/종료 UI·각 ViewModel
+feature/history/    목록·상세·프로필·출발/종료 UI·각 ViewModel·기록 쪽 화면 이동
 ```
 
-두 feature는 서로 참조하지 않습니다. 데이터 접근은 `TripRepository`를 통하고 DB·입력 구현은 `internal`로 숨깁니다. `app`이 주입과 화면 이동을 조립합니다. 각각 독립 Gradle 모듈입니다.
+두 feature는 서로 참조하지 않습니다. 데이터 접근은 data 모듈의 Repository를 통하고 DB·입력 구현은 `internal`로 숨깁니다. `app`은 주입과 메인 화면을 조립하고, 기록 쪽 화면 이동은 `feature/history`의 `historyGraph`가 맡습니다. 각각 독립 Gradle 모듈입니다.
 
-모듈은 기능과 책임으로 나눴으며 사람별 개인 모듈이 아닙니다. 현재 분담은 전경연님이 app/data/driving, 송호현님이 history입니다. 공통 모델·UI는 함께 확인하고 전경연님이 통합합니다.
+모듈은 기능과 책임으로 나눴으며 사람별 개인 모듈이 아닙니다. 현재 분담은 전경연님이 app·data/trip·feature/driving, 송호현님이 data/profile·feature/history입니다. 공통 모델·UI는 함께 확인하고 전경연님이 통합합니다.
 
 ## 동료에게 소스 전달
 
@@ -89,4 +90,4 @@ python3 scripts/export_source.py
 - [화면 디자인](docs/design.md): 시안 링크·스타일 기준·Pleos 화면 제약
 - [Pleos 에뮬레이터 측정](docs/pleos-emulator/README.md): 알림·백그라운드·주행 제한 실측
 
-프로필·평점은 아직 화면 연결 자리입니다. 환경 API·패턴 분석·AI 요약·녹음·주행 중 배너는 구현하지 않았습니다. 케어·경로는 메인 기능 완료 후 시간이 남을 때만 진행합니다.
+프로필은 저장소와 목록 조회까지만 연결했고 등록 화면은 구현하지 않았습니다. 평점은 아직 화면 연결 자리입니다. 환경 API·패턴 분석·AI 요약·녹음·주행 중 배너는 구현하지 않았습니다. 케어·경로는 메인 기능 완료 후 시간이 남을 때만 진행합니다.

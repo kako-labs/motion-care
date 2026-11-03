@@ -18,13 +18,16 @@
 
 ## 송호현님
 
+- `feature/history/.../navigation/HistoryNavigation.kt`: 새 화면 경로를 추가하는 위치.
+- `data/profile/.../ProfileRepository.kt`: 프로필·차량·인물 연결·평가·설정 저장을 추가하는 위치.
+- `feature/history/.../profile/ProfileViewModel.kt`: Repository에서 화면까지 연결한 예시.
 - `feature/history/.../HistoryViewModel.kt`: 목록을 받는 방법.
 - `feature/history/.../TripDetailViewModel.kt`: 선택 주행 조회·오류·재시도.
 - `feature/history/.../ui/RecentTrips.kt`: 목록 UI.
 - `feature/history/.../report/TripDetailContent.kt`: 상세 UI.
-- profile/feedback/departure 패키지: 다음 기능을 붙일 자리.
+- feedback/departure 패키지: 다음 기능을 붙일 자리.
 
-UI 개발에는 차량·API 키가 필요하지 않습니다. ViewModel 단위 테스트에서는 같은 TripRepository의 fake를 주입합니다.
+UI 개발에는 차량·API 키가 필요하지 않습니다. ViewModel 단위 테스트에서는 해당 Repository의 fake를 주입합니다.
 
 ## 첫 공동 확인
 

@@ -50,10 +50,11 @@ python3 scripts/dev.py verify --clean-home
 | 위치 | 확인 내용 |
 | --- | --- |
 | core/model/src/test | 단위·없음·원본/시각 불변조건 |
+| data/profile/src/test | 프로필 재시작 유지·순서·이름 검증 |
 | data/trip/src/test | 세션 중복/복구/실패, SQLite 재연결·버전 충돌 |
 | feature/driving/src/test | 초기화 재시도·명령 중복 방지·오류 상태 |
-| feature/history/src/test | 늦은 이전 조회·실패/없음/재시도 |
-| app/src/androidTest | 샘플 입력·Activity 재생성·완료·평가 복귀 |
+| feature/history/src/test | 늦은 이전 조회·실패/없음/재시도, 프로필 로딩·오류·재시도 |
+| app/src/androidTest | 샘플 입력·Activity 재생성·완료·평가 복귀, 프로필 화면 이동 |
 
 ## 결과와 CI
 

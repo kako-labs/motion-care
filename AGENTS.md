@@ -3,9 +3,11 @@
 - Keep work limited to the authorized scaffold or feature scope.
 - Follow the module graph and rationale in docs/architecture.md. Do not split by developer name.
 - UI uses screen-level ViewModels and immutable StateFlow UI state. No shared global busy flag for unrelated screens.
-- Features use TripRepository; they never access database, session, sample, or vehicle implementations.
+- Features use repository interfaces from data modules; they never access database, session, sample, vehicle or external API implementations.
 - Data implementations are internal. Only the repository and composition factory are public.
-- Features must not depend on other features. App owns navigation and dependency wiring.
+- Vehicle SDK and external API calls live only in data modules, with one repository per service. Each data module owns its own database file and schema version.
+- Features must not depend on other features. App owns dependency wiring and the home destination; each feature owns its navigation graph.
+- Declare new Gradle modules in allowedEdges. verifyAll picks up their tests and lint automatically.
 - core:model stays Kotlin/JVM only. core:ui contains reusable presentation components only.
 - Changes to public API, build configuration, schema, navigation or ownership require updating the corresponding docs and coordinating affected owners.
 - Preserve the existing sample database and use explicit migrations for schema changes.

@@ -1,8 +1,10 @@
-# 공개 연결 계약 v0.2
+# 공개 연결 계약 v0.3
 
 ## 데이터 접근
 
-`data/trip/src/main/java/dev/motioncare/data/trip/TripRepository.kt`가 기능에 공개되는 데이터 API입니다.
+기능은 data 모듈의 Repository로만 데이터에 접근합니다. 현재 공개된 Repository는 아래 2개입니다.
+
+### 주행 · `data/trip/src/main/java/dev/motioncare/data/trip/TripRepository.kt`
 
 | API | 의미 |
 | --- | --- |
@@ -14,6 +16,16 @@
 | finish() | 종료 원본 저장. 기록 중이 아니면 Rejected |
 
 화면은 `TripReader`·SQL·VehicleDataSource에 접근하지 않습니다. 이들은 데이터 모듈 내부 구현입니다. 조립부는 `createSampleTripRepository(context)`만 호출합니다.
+
+### 프로필 · `data/profile/src/main/java/dev/motioncare/data/profile/ProfileRepository.kt`
+
+| API | 의미 |
+| --- | --- |
+| people | 저장된 사람 목록 StateFlow. 추가한 순서 |
+| initialize() | 저장소 로드. 여러 번 호출해도 한 번 초기화 |
+| addPerson(displayName) | 앞뒤 공백을 제거해 저장하고 ID가 붙은 프로필 반환. 빈 이름은 IllegalArgumentException |
+
+조립부는 `createProfileRepository(context)`만 호출합니다. 차량·주행별 인물 연결·평가·설정은 기능 착수 시 이 모듈에 추가합니다.
 
 ## 데이터 의미
 
@@ -34,10 +46,10 @@ DrivingViewModel의 busy는 주행 명령에만 적용합니다. 상세 조회�
 
 ## 수명·저장
 
-Application의 AppGraph가 Repository를 한 개 소유합니다. Activity 재생성은 주행을 끊지 않습니다. 새 프로세스에서 미완료 원본은 INTERRUPTED로 보존합니다. 화면 종료를 자동 운행 종료로 해석하지 않습니다.
+Application의 AppGraph가 도메인별 Repository를 한 개씩 소유합니다. Activity 재생성은 주행을 끊지 않습니다. 새 프로세스에서 미완료 원본은 INTERRUPTED로 보존합니다. 화면 종료를 자동 운행 종료로 해석하지 않습니다.
 
-SQLite 이름·스키마 v1은 유지했습니다. 트랜잭션 저장 후 목록을 갱신하고 읽기·쓰기는 IO dispatcher에서 처리합니다. 샘플 전체 교체 저장은 작은 뼈대용이며 실차 연속 수집 전 batch·보관 정책을 설계해야 합니다.
+주행 원본의 SQLite 이름·스키마 v1은 유지했습니다. 프로필은 별도 파일 `motion-care-profile.db`를 사용하며 스키마 버전을 따로 관리합니다. 트랜잭션 저장 후 목록을 갱신하고 읽기·쓰기는 IO dispatcher에서 처리합니다. 샘플 전체 교체 저장은 작은 뼈대용이며 실차 연속 수집 전 batch·보관 정책을 설계해야 합니다.
 
 ## 후속 계약
 
-프로필/평가 관련 최소 모델은 남겨 두었으나 실행 API는 구현하지 않았습니다. [초안](future-contracts.md)은 설계 참고용입니다. 실제 질문·응답자·삭제·단위·지원 조건을 정한 후 기능과 함께 확장합니다. 현재 앱에 구현되지 않은 기능을 빈 성공 응답으로 꾸미지 않습니다.
+차량·인물 연결·평가·설정 관련 최소 모델은 남겨 두었으나 실행 API는 구현하지 않았습니다. [초안](future-contracts.md)은 설계 참고용입니다. 실제 질문·응답자·삭제·단위·지원 조건을 정한 후 기능과 함께 확장합니다. 현재 앱에 구현되지 않은 기능을 빈 성공 응답으로 꾸미지 않습니다.

@@ -10,18 +10,22 @@ plugins {
 
 // One explicit graph. Gradle supplies the actual dependencies; no source regex parsing.
 val allowedEdges = mapOf(
-    ":app" to setOf(":core:model", ":core:ui", ":data:trip", ":feature:driving", ":feature:history"),
+    ":app" to setOf(":core:model", ":core:ui", ":data:profile", ":data:trip", ":feature:driving", ":feature:history"),
     ":core:model" to emptySet(),
     ":core:ui" to emptySet(),
+    ":data:profile" to setOf(":core:model"),
     ":data:trip" to setOf(":core:model"),
     ":feature:driving" to setOf(":core:model", ":core:ui", ":data:trip"),
-    ":feature:history" to setOf(":core:model", ":core:ui", ":data:trip"),
+    ":feature:history" to setOf(":core:model", ":core:ui", ":data:profile", ":data:trip"),
 )
 val verifyArchitecture by tasks.registering {
     group = "verification"
     doLast {
-        subprojects.forEach { module ->
-            val allowed = allowedEdges[module.path].orEmpty()
+        // Folders such as :core have no build file and are not modules.
+        subprojects.filter { it.buildFile.exists() }.forEach { module ->
+            val allowed = checkNotNull(allowedEdges[module.path]) {
+                "Declare ${module.path} in allowedEdges before adding the module"
+            }
             module.configurations.forEach { config ->
                 config.dependencies.withType<ProjectDependency>().forEach { dependency ->
                     check(dependency.path == module.path || dependency.path in allowed) {
@@ -32,17 +36,24 @@ val verifyArchitecture by tasks.registering {
         }
     }
 }
+val verifyAll = tasks.register("verifyAll") {
+    group = "verification"
+    description = "Build the app and run all host tests and Android lint checks."
+    dependsOn(verifyArchitecture, ":app:assembleDebug")
+}
 subprojects {
     dependencyLocking { lockAllConfigurations() }
     tasks.matching { it.name == "preBuild" || it.name == "compileKotlin" }.configureEach {
         dependsOn(rootProject.tasks.named("verifyArchitecture"))
     }
-}
-tasks.register("verifyAll") {
-    group = "verification"
-    description = "Build the app and run all host tests and Android lint checks."
-    dependsOn(verifyArchitecture, ":app:assembleDebug", ":core:model:test")
-    listOf(":app", ":core:ui", ":data:trip", ":feature:driving", ":feature:history").forEach {
-        dependsOn("$it:testDebugUnitTest", "$it:lintDebug")
+    // New modules join verification from their plugin; nothing to remember per module.
+    val module = path
+    pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
+        verifyAll.configure { dependsOn("$module:test") }
+    }
+    listOf("com.android.application", "com.android.library").forEach { plugin ->
+        pluginManager.withPlugin(plugin) {
+            verifyAll.configure { dependsOn("$module:testDebugUnitTest", "$module:lintDebug") }
+        }
     }
 }

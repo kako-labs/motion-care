@@ -48,6 +48,22 @@ python3 scripts/dev.py verify --clean-home
 
 첫 실행은 SDK 설치 action의 기본값에 있던 구형 `tools` 패키지 때문에 실패했습니다. `.github/workflows/android.yml`에 `packages: platform-tools`를 명시한 뒤 두 작업 모두 통과했습니다. 개인 `local.properties`·SDK·Gradle 캐시·에뮬레이터는 저장소에 포함하지 않았습니다.
 
+## 협업 구조 개선 검증
+
+2026-11-03, macOS ARM64 / JDK 17 / Android SDK 35에서 확인했습니다. `data/profile` 모듈 추가, 기록 쪽 화면 이동을 `feature/history`로 이동, 검증 대상 자동화를 다룹니다.
+
+| 검사 | 결과 |
+| --- | --- |
+| 전체 모듈 host 테스트 | 24개, 실패·오류 0 |
+| 전체 Android 모듈 lint | 통과 |
+| Android UI 테스트 | 2개 통과. 기존 전체 흐름과 프로필 화면 이동 |
+| 빌드 결과가 없는 사본에서 verify | 공유 대상 파일만 복사해 통과 |
+| 새 모듈의 검증 포함 | `verifyAll`에 `:data:profile`의 테스트와 lint가 자동 포함 |
+| 미선언 모듈 | 임시 모듈 추가 시 `allowedEdges` 선언 요구로 빌드 실패 |
+| 금지된 의존성 | `feature:driving`에서 `:data:profile` 의존을 임시 주입하면 차단 |
+| 다른 모듈의 내부 구현 접근 | `feature:history`에서 두 data 모듈의 DB 클래스 참조 시 컴파일 실패 |
+| 의존성 버전 | 기존 lockfile의 버전 변경 없음. `feature:history`에 내비게이션 항목만 추가 |
+
 ## 아직 별도 검증이 필요한 환경
 
 Windows/Linux 개인 컴퓨터에서의 설치·실행은 별도 확인이 필요합니다. Linux 검증은 위 GitHub-hosted Ubuntu 실행 결과입니다. 실제 Pleos 시스템·Vehicle SDK·차량 주행 제한은 샘플 테스트로 검증하지 않습니다. Pleos 에뮬레이터에서 별도로 측정한 결과는 [측정 기록](pleos-emulator/README.md)에 있고, 실차는 아직 확인하지 못했습니다.

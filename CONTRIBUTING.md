@@ -10,10 +10,17 @@
 
 요구하는 필드·단위·오류·소비 화면·샘플을 먼저 정리합니다. 공통 모델/Repository 변경을 작은 변경으로 합친 뒤 각 기능을 구현합니다. 소비자가 없는 인터페이스를 미리 대량 생성하지 않습니다.
 
+## 화면·저장·모듈을 추가할 때
+
+- 기록 쪽 새 화면은 `feature/history/.../navigation/HistoryNavigation.kt`의 `historyGraph`에 경로를 추가합니다. `app/.../MainHost.kt`는 고치지 않습니다.
+- 저장이나 외부 API가 필요하면 담당 data 모듈에 Repository를 추가하고 `app/.../AppGraph.kt`에서 조립합니다.
+- 새 Gradle 모듈은 `settings.gradle.kts`와 루트 `build.gradle.kts`의 `allowedEdges`에 선언합니다. 선언하지 않으면 빌드가 실패합니다. 테스트와 lint는 `verifyAll`에 자동으로 포함됩니다.
+- 새 모듈을 추가하거나 모듈 의존성을 바꾸면 아래 의존성 변경 절차로 lockfile도 갱신합니다.
+
 ## 변경 제출 체크리스트
 
 - [ ] 수정 범위와 모듈 소유권이 일치한다.
-- [ ] UI에서 DB·SDK를 직접 호출하지 않는다.
+- [ ] UI에서 DB·SDK·외부 API를 직접 호출하지 않는다.
 - [ ] 로딩·없음·오류·미지원 상태를 구분한다.
 - [ ] 샘플/실제 출처를 보존한다.
 - [ ] 의미 있는 로직/저장/상태 변경을 테스트한다.

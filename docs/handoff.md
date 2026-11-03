@@ -6,6 +6,7 @@
 - 공개 Repository·숨겨진 저장/입력 구현
 - 화면별 ViewModel·StateFlow·Navigation Compose
 - 고정 샘플 입력·원본 저장·재실행 복구
+- 프로필 저장 모듈과 사람 목록 조회. 등록 화면은 후속 구현
 - 모델/저장/상태 테스트·UI 테스트·공유 기기 정의
 - 실행 도구·버전/lockfile·환경 점검·CI·문서
 

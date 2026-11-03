@@ -11,6 +11,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val graph = (application as MotionCareApplication).graph
-        setContent { MaterialTheme { MainHost(graph.trips) } }
+        setContent { MaterialTheme { MainHost(graph.trips, graph.profiles) } }
     }
 }
