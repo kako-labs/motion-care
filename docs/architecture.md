@@ -53,7 +53,9 @@ Navigation Compose의 back stack을 사용합니다. 평가 자리에서 뒤로 
 
 ## 저장·주입
 
-기존 SQLite 스키마와 DB 이름을 유지했습니다. 이번 구조 변경으로 데이터를 초기화하지 않습니다. SqliteTripStore와 DB helper는 data 모듈 internal이라 feature에서 접근하면 컴파일되지 않습니다.
+구조를 바꿀 때 DB 이름을 유지해 데이터를 초기화하지 않았습니다. 주행 DB는 패턴 저장을 위해 v2로 올렸고, 마이그레이션은 테이블만 추가합니다. SqliteTripStore와 DB helper는 data 모듈 internal이라 feature에서 접근하면 컴파일되지 않습니다.
+
+패턴 탐지는 `data:trip` 내부의 `PatternDetector`가 맡습니다. 샘플을 한 건씩 받아 판정하므로, 주행 중 안내를 붙일 때 저장이 끝나기를 기다리지 않아도 됩니다. 탐지 결과는 공개 모델 `Observation`으로 저장하며, 화면은 `TripSnapshot`으로만 읽습니다.
 
 DB 파일은 data 모듈마다 따로 둡니다. 두 사람이 스키마 버전과 마이그레이션 번호를 놓고 충돌하지 않도록 한 선택입니다. 대신 파일 사이에 외래 키와 트랜잭션을 쓸 수 없습니다. 주행 기록을 삭제할 때는 `app`이 각 Repository의 정리 함수를 순서대로 호출하고, 실패하면 삭제 중 상태로 남겨 재시도합니다. 삭제 기능은 아직 구현하지 않았습니다.
 

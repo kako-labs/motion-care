@@ -36,7 +36,29 @@ data class TripRecord(
     }
 }
 
-data class TripSnapshot(val trip: TripRecord, val samples: List<SpeedSample> = emptyList()) {
+enum class DrivingPattern { RAPID_START, HARD_STOP, REPEATED_SPEED_CHANGE }
+
+/** A driving pattern seen in a trip. It describes vehicle motion, not a passenger's symptoms. */
+data class Observation(
+    val pattern: DrivingPattern,
+    val startMs: Long,
+    val endMs: Long,
+    val peakAccelerationMps2: Double,
+    val detectorVersion: String,
+) {
+    init {
+        require(startMs >= 0)
+        require(endMs >= startMs)
+        require(peakAccelerationMps2.isFinite() && peakAccelerationMps2 >= 0)
+        require(detectorVersion.isNotBlank())
+    }
+}
+
+data class TripSnapshot(
+    val trip: TripRecord,
+    val samples: List<SpeedSample> = emptyList(),
+    val observations: List<Observation> = emptyList(),
+) {
     init { require(samples.zipWithNext().all { (a, b) -> a.elapsedMs < b.elapsedMs }) }
 }
 

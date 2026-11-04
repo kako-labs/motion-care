@@ -1,6 +1,7 @@
 package dev.motioncare.data.trip.session
 
 import dev.motioncare.core.model.*
+import dev.motioncare.data.trip.analysis.PatternDetector
 import dev.motioncare.data.trip.internal.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancelAndJoin
@@ -29,6 +30,8 @@ internal class TripSessionController(
     private var lastElapsedMs = -1L
     private var lastWrittenElapsedMs = 0L
     private val pending = mutableListOf<SpeedSample>()
+    private val pendingObservations = mutableListOf<Observation>()
+    private var detector = PatternDetector()
 
     // Called once per application graph; an activity rotation must not interrupt a trip.
     suspend fun initialize() = mutex.withLock {
@@ -53,6 +56,8 @@ internal class TripSessionController(
         lastElapsedMs = -1
         lastWrittenElapsedMs = 0
         pending.clear()
+        pendingObservations.clear()
+        detector = PatternDetector()
         CommandResult.Success(record.id)
     }
 
@@ -72,6 +77,7 @@ internal class TripSessionController(
     override suspend fun finish(): CommandResult = mutex.withLock {
         check(initialized)
         val current = active() ?: return@withLock CommandResult.Rejected("기록 중인 주행이 없습니다.")
+        pendingObservations += detector.finish()
         val flushed = writePending(current)
         writer.saveTrip(flushed.copy(
             status = TripStatus.COMPLETED,
@@ -92,7 +98,9 @@ internal class TripSessionController(
         val current = active() ?: return@withLock
         val elapsed = (reading.elapsedRealtimeNanos - startedAtNanos) / 1_000_000
         if (elapsed < 0 || elapsed <= lastElapsedMs) return@withLock
-        pending += SpeedSample(elapsed, reading.metersPerSecond, reading.quality)
+        val sample = SpeedSample(elapsed, reading.metersPerSecond, reading.quality)
+        pending += sample
+        pendingObservations += detector.add(sample)
         lastElapsedMs = elapsed
         if (elapsed - lastWrittenElapsedMs < WRITE_INTERVAL_MS) return@withLock
         // A failed write keeps the readings pending so the next interval or finish retries them.
@@ -102,11 +110,12 @@ internal class TripSessionController(
     }
 
     private suspend fun writePending(current: TripRecord): TripRecord {
-        if (pending.isEmpty()) return current
+        if (pending.isEmpty() && pendingObservations.isEmpty()) return current
         val updated = current.copy(revision = current.revision + 1)
-        writer.appendSamples(updated, pending.toList())
-        lastWrittenElapsedMs = pending.last().elapsedMs
+        writer.appendSamples(updated, pending.toList(), pendingObservations.toList())
+        pending.lastOrNull()?.let { lastWrittenElapsedMs = it.elapsedMs }
         pending.clear()
+        pendingObservations.clear()
         return updated
     }
 

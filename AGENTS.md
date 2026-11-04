@@ -14,6 +14,7 @@
 - Changes to public API, build configuration, schema, navigation or ownership require updating the corresponding docs and coordinating affected owners.
 - Preserve the existing sample database and use explicit migrations for schema changes.
 - Synthetic data remains labeled. No fabricated medical thresholds, capabilities or fallback real measurements.
+- Base every implementation decision on evidence: values, behavior, copy and approach. Check the team's research in Notion first, then papers, official standards and measured data. Record each source and how far it was verified in docs and Notion. Label anything without evidence as a product or implementation judgment, and never present an assumption as evidence.
 - No vehicle SDK, location, microphone, network permissions or keys without feature scope.
 - Never add absolute personal paths, SDK binaries, AVDs, local.properties, caches or credentials to Git.
 - Run python3 scripts/dev.py verify; run UI tests for navigation or lifecycle changes.

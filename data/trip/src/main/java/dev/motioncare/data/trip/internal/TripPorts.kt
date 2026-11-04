@@ -11,7 +11,11 @@ internal interface TripReader {
 }
 internal interface TripWriter {
     suspend fun saveTrip(trip: TripRecord)
-    suspend fun appendSamples(trip: TripRecord, samples: List<SpeedSample>)
+    suspend fun appendSamples(
+        trip: TripRecord,
+        samples: List<SpeedSample>,
+        observations: List<Observation> = emptyList(),
+    )
 }
 internal interface TripCommands {
     suspend fun start(vehicleId: VehicleId? = null): CommandResult

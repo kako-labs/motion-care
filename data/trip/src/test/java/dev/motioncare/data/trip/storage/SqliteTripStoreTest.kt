@@ -1,5 +1,7 @@
 package dev.motioncare.data.trip.storage
 
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
 import dev.motioncare.core.model.*
 import dev.motioncare.data.trip.local.MotionCareDatabase
 import kotlinx.coroutines.test.runTest
@@ -92,6 +94,73 @@ class SqliteTripStoreTest {
             store.appendSamples(trip().copy(revision = 1),
                 listOf(SpeedSample(10, 1.0, Quality.VALID), SpeedSample(30, 2.0, Quality.VALID)))
             assertEquals(30L, store.lastSampleElapsedMs(trip().id))
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
+    @Test fun `observations are saved with samples and read back in time order`() = runTest {
+        val name = name()
+        val db = MotionCareDatabase(context, name)
+        try {
+            val store = SqliteTripStore(db)
+            store.saveTrip(trip())
+            val late = Observation(DrivingPattern.HARD_STOP, 900, 1000, 2.5, "test-1")
+            val early = Observation(DrivingPattern.RAPID_START, 100, 200, 2.1, "test-1")
+            store.appendSamples(trip().copy(revision = 1), listOf(SpeedSample(10, 1.0, Quality.VALID)), listOf(late, early))
+            assertEquals(listOf(early, late), store.get(trip().id)!!.observations)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
+    @Test fun `samples and observations are written together or not at all`() = runTest {
+        val name = name()
+        val db = MotionCareDatabase(context, name)
+        try {
+            val store = SqliteTripStore(db)
+            store.saveTrip(trip())
+            val observation = Observation(DrivingPattern.RAPID_START, 100, 200, 2.1, "test-1")
+            val sample = SpeedSample(10, 1.0, Quality.VALID)
+            store.appendSamples(trip().copy(revision = 1), listOf(sample), listOf(observation))
+            try {
+                // The repeated sample violates the primary key after the trip row is updated.
+                store.appendSamples(trip().copy(revision = 2), listOf(sample), listOf(observation.copy(startMs = 150)))
+                fail("Expected duplicate sample rejection")
+            } catch (_: android.database.SQLException) { }
+            val saved = store.get(trip().id)!!
+            assertEquals(listOf(observation), saved.observations)
+            assertEquals(1L, saved.trip.revision)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
+    @Test fun `version 1 database upgrades without losing trips`() = runTest {
+        val name = name()
+        val old = object : SQLiteOpenHelper(context, name, null, 1) {
+            override fun onCreate(db: SQLiteDatabase) {
+                db.execSQL("""CREATE TABLE trips (
+                    id TEXT PRIMARY KEY, started INTEGER NOT NULL, ended INTEGER,
+                    status TEXT NOT NULL, vehicle_id TEXT, origin TEXT NOT NULL, revision INTEGER NOT NULL
+                )""")
+                db.execSQL("""CREATE TABLE speed_samples (
+                    trip_id TEXT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+                    elapsed INTEGER NOT NULL, speed REAL, quality TEXT NOT NULL,
+                    PRIMARY KEY (trip_id, elapsed)
+                )""")
+                db.execSQL("INSERT INTO trips VALUES ('trip', 1000, 2000, 'COMPLETED', NULL, 'SYNTHETIC', 3)")
+                db.execSQL("INSERT INTO speed_samples VALUES ('trip', 10, 1.5, 'VALID')")
+            }
+            override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+        old.writableDatabase
+        old.close()
+        val db = MotionCareDatabase(context, name)
+        try {
+            val store = SqliteTripStore(db)
+            store.load()
+            val saved = store.get(TripId("trip"))!!
+            assertEquals(3L, saved.trip.revision)
+            assertEquals(listOf(SpeedSample(10, 1.5, Quality.VALID)), saved.samples)
+            assertTrue(saved.observations.isEmpty())
+            val observation = Observation(DrivingPattern.HARD_STOP, 100, 200, 2.1, "test-1")
+            store.appendSamples(saved.trip.copy(revision = 4), emptyList(), listOf(observation))
+            assertEquals(listOf(observation), store.get(TripId("trip"))!!.observations)
         } finally { db.close(); context.deleteDatabase(name) }
     }
 
