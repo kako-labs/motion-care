@@ -20,18 +20,33 @@
       <div class="home-layout">
         <div class="cockpit-zone">
           <div class="speed-lines"><i></i><i></i><i></i></div>
-          <div class="car" aria-label="5인승 차량 좌석 배치">
-            <div class="car-shell">
-              <div class="windshield"></div><div class="dash"></div><div class="console"></div>
-              <div class="seating">
-                <div class="front-row">
-                  <div class="seat filled"><div><div class="avatar">🧑🏻</div><b>민준</b><small>운전석</small></div></div>
-                  <div class="seat"><div><span class="empty-plus">＋</span><span class="empty-label">앞좌석</span></div></div>
-                </div>
-                <div class="rear-row">
-                  <div class="seat"><div><span class="empty-plus">＋</span><span class="empty-label">뒷좌석</span></div></div>
-                  <div class="seat"><div><span class="empty-plus">＋</span><span class="empty-label">뒷좌석</span></div></div>
-                  <div class="seat filled"><div><div class="avatar">👧🏻</div><b>서아</b><small>뒷좌석</small></div></div>
+          <div class="people-dock panel">
+            <div class="dock-title"><b>등록 프로필</b><small>프로필을 좌석으로 끌어 놓으세요</small></div>
+            <div class="dock-people" id="peopleDock"></div>
+          </div>
+          <div class="car-stage">
+            <div class="car" aria-label="5인승 차량 좌석 배치">
+              <div class="car-shell">
+                <i class="wheel wheel-rl"></i><i class="wheel wheel-fl"></i><i class="wheel wheel-rr"></i><i class="wheel wheel-fr"></i>
+                <div class="rear-deck"><span></span></div>
+                <div class="hood"><span class="hood-line"></span></div>
+                <div class="headlamp headlamp-top"></div><div class="headlamp headlamp-bottom"></div>
+                <div class="car-glass">
+                  <div class="rear-glass"></div><div class="windshield"></div>
+                  <div class="cabin">
+                    <div class="seating">
+                      <div class="rear-row">
+                        <button class="seat" data-seat="rear-left" aria-label="뒷좌석 왼쪽"></button>
+                        <button class="seat" data-seat="rear-center" aria-label="뒷좌석 가운데"></button>
+                        <button class="seat" data-seat="rear-right" aria-label="뒷좌석 오른쪽"></button>
+                      </div>
+                      <div class="console"><span></span></div>
+                      <div class="front-row">
+                        <button class="seat" data-seat="front-passenger" aria-label="앞좌석"></button>
+                        <button class="seat driver-seat" data-seat="driver" aria-label="운전석"></button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -49,7 +64,7 @@
       </div>
     </section>
     <section class="screen" id="screen-profiles">
-      <div class="screen-head"><div><div class="kicker">Profiles</div><h1>프로필을 선택하세요</h1><p class="desc">운전자와 동승자에게 서로 다른 정보를 보여줍니다.</p></div></div>
+      <div class="screen-head"><div><div class="kicker">Profiles</div><h1>프로필을 선택하세요</h1><p class="desc">세부 정보와 최근 한줄 평을 확인할 사람을 선택하세요.</p></div></div>
       <div class="profile-select" id="profileSelect"></div>
     </section>
     <section class="screen" id="screen-profile-detail">
