@@ -17,9 +17,11 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.*
 import dev.motioncare.data.profile.ProfileRepository
+import dev.motioncare.data.trip.GuidanceSettings
 import dev.motioncare.data.trip.TripRepository
 import dev.motioncare.feature.driving.DrivingViewModel
 import dev.motioncare.feature.driving.ui.ActiveContent
+import dev.motioncare.feature.driving.ui.GuidanceSwitch
 import dev.motioncare.feature.history.departure.ReadyContent
 import dev.motioncare.feature.history.navigation.HistoryRoutes
 import dev.motioncare.feature.history.navigation.historyGraph
@@ -39,6 +41,7 @@ fun MainHost(
     trips: TripRepository,
     profiles: ProfileRepository,
     vehicleConnected: Boolean,
+    guidance: GuidanceSettings?,
     onRecordingStarted: () -> Unit,
 ) {
     val navigation = rememberNavController()
@@ -74,6 +77,10 @@ fun MainHost(
                         }
                         val active = drivingState.active
                         val finished = drivingState.finishedId
+                        if (guidance != null && finished == null) {
+                            val enabled by guidance.enabled.collectAsStateWithLifecycle()
+                            GuidanceSwitch(enabled, guidance::setEnabled)
+                        }
                         when {
                             active != null -> ActiveContent(active, drivingState.busy, vehicleConnected, driving::capture, driving::finish)
                             finished != null -> FinishedContent(

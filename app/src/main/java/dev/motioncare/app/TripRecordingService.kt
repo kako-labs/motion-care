@@ -12,6 +12,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import dev.motioncare.R
+import dev.motioncare.feature.driving.guidance.NotificationGuidancePresenter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +42,7 @@ class TripRecordingService : Service() {
 
     private suspend fun record() {
         try {
-            (application as MotionCareApplication).graph.recorder?.record()
+            (application as MotionCareApplication).graph.recorder?.record(NotificationGuidancePresenter(this, R.drawable.ic_launcher))
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {

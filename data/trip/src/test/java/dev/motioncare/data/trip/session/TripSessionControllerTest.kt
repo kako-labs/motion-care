@@ -1,6 +1,7 @@
 package dev.motioncare.data.trip.session
 
 import dev.motioncare.core.model.*
+import dev.motioncare.data.trip.GuidancePresenter
 import dev.motioncare.data.trip.internal.*
 import dev.motioncare.data.trip.sample.SampleVehicleDataSource
 import dev.motioncare.data.trip.vehicle.UnavailableVehicleDataSource
@@ -26,7 +27,7 @@ class TripSessionControllerTest {
         override suspend fun saveTrip(trip: TripRecord) {
             check(!failWrites) { "Storage failed" }
             val saved = snapshots[trip.id]
-            snapshots[trip.id] = TripSnapshot(trip, saved?.samples.orEmpty(), saved?.observations.orEmpty(), saved?.steering.orEmpty())
+            snapshots[trip.id] = TripSnapshot(trip, saved?.samples.orEmpty(), saved?.observations.orEmpty(), saved?.steering.orEmpty(), saved?.guidance.orEmpty())
             publish()
         }
         override suspend fun appendSamples(
@@ -34,12 +35,13 @@ class TripSessionControllerTest {
             samples: List<SpeedSample>,
             observations: List<Observation>,
             steering: List<SteeringSample>,
+            guidance: List<GuidanceEvent>,
         ) {
             check(!failWrites) { "Storage failed" }
             appendCalls++
             val saved = snapshots[trip.id]
             snapshots[trip.id] = TripSnapshot(trip, saved?.samples.orEmpty() + samples,
-                saved?.observations.orEmpty() + observations, saved?.steering.orEmpty() + steering)
+                saved?.observations.orEmpty() + observations, saved?.steering.orEmpty() + steering, saved?.guidance.orEmpty() + guidance)
             publish()
         }
         private fun publish() { records.value = snapshots.values.map { it.trip } }
@@ -362,6 +364,79 @@ class TripSessionControllerTest {
         controller.finish()
         runCurrent()
         assertTrue(store.get(second.id)!!.observations.isEmpty())
+    }
+
+    private suspend fun TestScope.startRecordingWithGuidance(
+        controller: TripSessionController,
+        enabled: () -> Boolean = { true },
+        show: (DrivingPattern) -> Boolean,
+    ): RecordingFixture {
+        controller.initialize()
+        val id = (controller.start() as CommandResult.Success).tripId
+        val readings = MutableSharedFlow<SpeedReading>(extraBufferCapacity = 256)
+        val job = launch { controller.record(readings, kotlinx.coroutines.flow.emptyFlow(), GuidancePresenter(show), enabled) }
+        runCurrent()
+        return RecordingFixture(id, readings, job)
+    }
+
+    /** Speeds up and slows down at about 1.3 m/s2 long enough to repeat the pattern three times. */
+    private suspend fun RecordingFixture.driveRepeatedChanges() {
+        var ms = 0L
+        var speed = 10.0
+        for (phase in 0 until 11) {
+            val step = if (phase % 2 == 0) 0.26 else -0.26
+            repeat(15) {
+                ms += 200
+                speed += step
+                readings.emit(reading(ms, value = speed))
+            }
+        }
+        // Steady driving gives the card a calm moment.
+        repeat(30) {
+            ms += 200
+            readings.emit(reading(ms, value = speed))
+        }
+    }
+
+    @Test fun `a repeated pattern shows a card and saves the result with the trip`() = runTest {
+        val controller = controller()
+        val cards = mutableListOf<DrivingPattern>()
+        val trip = startRecordingWithGuidance(controller) { cards += it; true }
+        trip.driveRepeatedChanges()
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        assertEquals(listOf(DrivingPattern.REPEATED_SPEED_CHANGE), cards)
+        val saved = store.get(trip.id)!!
+        assertEquals(listOf(GuidanceOutcome.SHOWN), saved.guidance.map { it.outcome })
+        assertTrue(saved.observations.any { it.pattern == DrivingPattern.REPEATED_SPEED_CHANGE })
+    }
+
+    @Test fun `guidance turned off keeps recording and saves why no card appeared`() = runTest {
+        val controller = controller()
+        val cards = mutableListOf<DrivingPattern>()
+        val trip = startRecordingWithGuidance(controller, enabled = { false }) { cards += it; true }
+        trip.driveRepeatedChanges()
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        assertTrue(cards.isEmpty())
+        val saved = store.get(trip.id)!!
+        assertEquals(setOf(GuidanceOutcome.SKIPPED_OFF), saved.guidance.map { it.outcome }.toSet())
+        assertFalse(saved.samples.isEmpty())
+    }
+
+    @Test fun `a failing card does not stop recording`() = runTest {
+        val controller = controller()
+        val trip = startRecordingWithGuidance(controller) { error("notification service died") }
+        trip.driveRepeatedChanges()
+        runCurrent()
+        assertTrue(trip.job.isActive)
+        controller.finish()
+        runCurrent()
+        val saved = store.get(trip.id)!!
+        assertEquals(listOf(GuidanceOutcome.FAILED), saved.guidance.map { it.outcome })
+        assertFalse(saved.samples.isEmpty())
     }
 
     @Test fun `recording without an active trip ends immediately`() = runTest {

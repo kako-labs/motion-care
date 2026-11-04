@@ -143,6 +143,81 @@ class SqliteTripStoreTest {
         } finally { db.close(); context.deleteDatabase(name) }
     }
 
+    @Test fun `guidance results are saved and read back in time order`() = runTest {
+        val name = name()
+        val db = MotionCareDatabase(context, name)
+        try {
+            val store = SqliteTripStore(db)
+            store.load()
+            val first = TripRecord(TripId("trip"), 1000, origin = DataOrigin.VEHICLE)
+            store.saveTrip(first)
+            val later = GuidanceEvent(900, 800, DrivingPattern.HARD_STOP, GuidanceOutcome.SKIPPED_INTERVAL)
+            val earlier = GuidanceEvent(500, 400, DrivingPattern.REPEATED_SWAY, GuidanceOutcome.SHOWN)
+            store.appendSamples(first.copy(revision = 2), emptyList(), emptyList(), emptyList(), listOf(later, earlier))
+            assertEquals(listOf(earlier, later), store.get(TripId("trip"))!!.guidance)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
+    @Test fun `the same guidance result twice at one time does not block saving`() = runTest {
+        val name = name()
+        val db = MotionCareDatabase(context, name)
+        try {
+            val store = SqliteTripStore(db)
+            store.load()
+            val first = TripRecord(TripId("trip"), 1000, origin = DataOrigin.VEHICLE)
+            store.saveTrip(first)
+            val event = GuidanceEvent(500, 400, DrivingPattern.REPEATED_SWAY, GuidanceOutcome.SKIPPED_INTERVAL)
+            store.appendSamples(first.copy(revision = 2), emptyList(), emptyList(), emptyList(), listOf(event, event))
+            assertEquals(2, store.get(TripId("trip"))!!.guidance.size)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
+    @Test fun `version 3 database upgrades keeping steering and adds guidance`() = runTest {
+        val name = name()
+        val old = object : SQLiteOpenHelper(context, name, null, 3) {
+            override fun onCreate(db: SQLiteDatabase) {
+                db.execSQL("""CREATE TABLE trips (
+                    id TEXT PRIMARY KEY, started INTEGER NOT NULL, ended INTEGER,
+                    status TEXT NOT NULL, vehicle_id TEXT, origin TEXT NOT NULL, revision INTEGER NOT NULL
+                )""")
+                db.execSQL("""CREATE TABLE speed_samples (
+                    trip_id TEXT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+                    elapsed INTEGER NOT NULL, speed REAL, quality TEXT NOT NULL,
+                    PRIMARY KEY (trip_id, elapsed)
+                )""")
+                db.execSQL("""CREATE TABLE observations (
+                    trip_id TEXT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+                    pattern TEXT NOT NULL, start_ms INTEGER NOT NULL, end_ms INTEGER NOT NULL,
+                    peak_mps2 REAL NOT NULL, detector_version TEXT NOT NULL,
+                    PRIMARY KEY (trip_id, pattern, start_ms)
+                )""")
+                db.execSQL("""CREATE TABLE steering_samples (
+                    trip_id TEXT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+                    elapsed INTEGER NOT NULL, degrees REAL NOT NULL,
+                    PRIMARY KEY (trip_id, elapsed)
+                )""")
+                db.execSQL("INSERT INTO trips VALUES ('trip', 1000, 2000, 'COMPLETED', NULL, 'VEHICLE', 3)")
+                db.execSQL("INSERT INTO observations VALUES ('trip', 'HARD_STOP', 100, 200, 2.1, 'pattern-v1')")
+                db.execSQL("INSERT INTO steering_samples VALUES ('trip', 10, 5.0)")
+            }
+            override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+        old.writableDatabase
+        old.close()
+        val db = MotionCareDatabase(context, name)
+        try {
+            val store = SqliteTripStore(db)
+            store.load()
+            val saved = store.get(TripId("trip"))!!
+            assertEquals(listOf(DrivingPattern.HARD_STOP), saved.observations.map { it.pattern })
+            assertEquals(listOf(SteeringSample(10, 5.0)), saved.steering)
+            assertTrue(saved.guidance.isEmpty())
+            store.appendSamples(saved.trip.copy(revision = 4), emptyList(), emptyList(), emptyList(),
+                listOf(GuidanceEvent(20, 10, DrivingPattern.HARD_STOP, GuidanceOutcome.SHOWN)))
+            assertEquals(1, store.get(TripId("trip"))!!.guidance.size)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
     @Test fun `version 2 database upgrades keeping observations and adds steering`() = runTest {
         val name = name()
         val old = object : SQLiteOpenHelper(context, name, null, 2) {
@@ -176,8 +251,10 @@ class SqliteTripStoreTest {
             val saved = store.get(TripId("trip"))!!
             assertEquals(listOf(DrivingPattern.HARD_STOP), saved.observations.map { it.pattern })
             assertTrue(saved.steering.isEmpty())
-            store.appendSamples(saved.trip.copy(revision = 4), emptyList(), emptyList(), listOf(SteeringSample(10, 1.0)))
+            store.appendSamples(saved.trip.copy(revision = 4), emptyList(), emptyList(), listOf(SteeringSample(10, 1.0)),
+                listOf(GuidanceEvent(20, 10, DrivingPattern.HARD_STOP, GuidanceOutcome.SHOWN)))
             assertEquals(listOf(SteeringSample(10, 1.0)), store.get(TripId("trip"))!!.steering)
+            assertEquals(1, store.get(TripId("trip"))!!.guidance.size)
         } finally { db.close(); context.deleteDatabase(name) }
     }
 
