@@ -7,8 +7,9 @@ import kotlin.math.max
 internal const val PATTERN_DETECTOR_VERSION = "pattern-v1"
 
 /**
- * Starting values to tune against real signals. They describe vehicle motion only and are
- * not motion sickness limits. Change [PATTERN_DETECTOR_VERSION] when they change.
+ * Lines that separate observed vehicle motion, not motion sickness limits. Each value and its source is
+ * listed in docs/detection-thresholds.md; update that table with any change here, and change
+ * [PATTERN_DETECTOR_VERSION] once observations have been stored.
  */
 internal data class PatternLimits(
     val stoppedBelowMps: Double = 0.5,
@@ -19,10 +20,10 @@ internal data class PatternLimits(
     val rapidStartMps2: Double = 2.0,
     val rapidStartWindowMs: Long = 3_000,
     val hardStopMps2: Double = 2.0,
-    val hardStopWindowMs: Long = 3_000,
-    val swingMps2: Double = 0.8,
+    val hardStopWindowMs: Long = 5_000,
+    val swingMps2: Double = 0.9,
     val swingWindowMs: Long = 30_000,
-    val swingCount: Int = 4,
+    val swingCount: Int = 3,
 )
 
 /** Finds patterns one sample at a time so the same code can serve live guidance and saved trips. */

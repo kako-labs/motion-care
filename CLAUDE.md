@@ -73,7 +73,7 @@ data:* ───────► core:model
 - **화면 패턴:** `*Route` 컴포저블이 ViewModel을 만들고 상태를 `*Content`에 넘깁니다. 도메인 거부는 `CommandResult.Rejected`, 저장 실패는 예외로 전달되며 ViewModel이 화면 상태로 바꿉니다.
 - **주행 기록:** `TripSessionController`가 기록 중인 주행을 하나로 유지합니다. 새 프로세스에서 미완료 기록은 `INTERRUPTED`가 되고, `SqliteTripStore`는 오래된 revision의 저장을 거부합니다. `UnavailableVehicleDataSource`는 차량 입력이 없을 때 합성값으로 대체되지 않도록 예외를 던집니다.
 - **차량 기록:** `AppGraph`는 자동차 기기에서만 `createVehicleTripData`를 조립합니다. 주행이 시작되면 `TripRecordingService`가 `VehicleRecorder.record()`를 돌리고, 속도는 이벤트 시각 기준으로 약 1초마다 묶어 추가 저장합니다. 단위 테스트로 잡히지 않는 이 흐름은 `docs/pleos-emulator/tools/recording_e2e.py`로 확인합니다.
-- **패턴 탐지:** `TripSessionController`가 차량 샘플을 `PatternDetector`에 한 건씩 넘기고, 찾은 `Observation`을 샘플과 같은 트랜잭션으로 저장합니다. 합성 샘플 주행은 탐지하지 않습니다. 기준값은 실제 신호로 조정할 시작값이며 멀미 기준이 아닙니다(`docs/contracts.md`).
+- **패턴 탐지:** `TripSessionController`가 차량 샘플을 `PatternDetector`에 한 건씩 넘기고, 찾은 `Observation`을 샘플과 같은 트랜잭션으로 저장합니다. 합성 샘플 주행은 탐지하지 않습니다. 기준값의 출처와 한계는 `docs/detection-thresholds.md`에 있으며 멀미 기준이 아닙니다.
 
 ## Pleos 제약
 

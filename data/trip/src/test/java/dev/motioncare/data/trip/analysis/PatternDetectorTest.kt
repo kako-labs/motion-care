@@ -3,6 +3,8 @@ package dev.motioncare.data.trip.analysis
 import dev.motioncare.core.model.*
 import org.junit.Assert.*
 import org.junit.Test
+import kotlin.math.PI
+import kotlin.math.sin
 import kotlin.random.Random
 
 class PatternDetectorTest {
@@ -23,6 +25,14 @@ class PatternDetectorTest {
             elapsed += stepMs
         }
         return samples
+    }
+
+    /** Builds 5 Hz samples of a sinusoidal acceleration, as used in motion sickness experiments. */
+    private fun oscillate(frequencyHz: Double, peakMps2: Double, seconds: Int): List<SpeedSample> {
+        val omega = 2 * PI * frequencyHz
+        return (0..seconds * 5).map { i ->
+            SpeedSample(i * stepMs, 12.0 + peakMps2 / omega * sin(omega * i * 0.2), Quality.VALID)
+        }
     }
 
     private fun detect(samples: List<SpeedSample>): List<Observation> {
@@ -64,6 +74,26 @@ class PatternDetectorTest {
         assertEquals(emptyList<Observation>(), detect(drive(0.0 to 60.0, 10.0 to 60.0, 13.0 to 30.0, 40.0 to 30.0)))
     }
 
+    @Test fun `a start just over the limit is a rapid start and one just under is not`() {
+        assertEquals(listOf(DrivingPattern.RAPID_START), detect(drive(0.0 to 0.0, 2.0 to 0.0, 5.0 to 22.68, 40.0 to 22.68)).patterns())
+        assertEquals(emptyList<Observation>(), detect(drive(0.0 to 0.0, 2.0 to 0.0, 5.0 to 20.52, 40.0 to 20.52)))
+    }
+
+    @Test fun `a stop just over the limit is a hard stop and one just under is not`() {
+        assertEquals(listOf(DrivingPattern.HARD_STOP), detect(drive(0.0 to 30.24, 10.0 to 30.24, 14.0 to 0.0, 20.0 to 0.0)).patterns())
+        assertEquals(emptyList<Observation>(), detect(drive(0.0 to 27.36, 10.0 to 27.36, 14.0 to 0.0, 20.0 to 0.0)))
+    }
+
+    @Test fun `braking about four seconds before the stop is a hard stop`() {
+        // Most drivers reach their peak deceleration within about 5 s of stopping.
+        val found = detect(drive(0.0 to 40.0, 10.0 to 40.0, 12.0 to 12.0, 17.0 to 0.0, 22.0 to 0.0))
+        assertEquals(listOf(DrivingPattern.HARD_STOP), found.patterns())
+    }
+
+    @Test fun `braking long before the stop is not a hard stop`() {
+        assertEquals(emptyList<Observation>(), detect(drive(0.0 to 40.0, 10.0 to 40.0, 12.0 to 12.0, 24.0 to 0.0, 30.0 to 0.0)))
+    }
+
     @Test fun `stopping again after a short creep does not count the same braking twice`() {
         // The second stop is gentle, but the first braking is still inside the look-back window.
         val found = detect(drive(0.0 to 20.0, 5.0 to 20.0, 6.5 to 0.0, 7.2 to 5.0, 8.0 to 0.0, 14.0 to 0.0))
@@ -93,6 +123,28 @@ class PatternDetectorTest {
         assertTrue(found.isNotEmpty())
         assertEquals(setOf(DrivingPattern.REPEATED_SPEED_CHANGE), found.patterns().toSet())
         assertTrue(found.first().endMs > found.first().startMs)
+    }
+
+    @Test fun `accelerating and braking twice in a row is repeated`() {
+        val found = detect(drive(0.0 to 30.0, 5.0 to 30.0, 8.0 to 40.0, 11.0 to 30.0, 14.0 to 40.0, 17.0 to 30.0, 40.0 to 30.0))
+        assertEquals(listOf(DrivingPattern.REPEATED_SPEED_CHANGE), found.patterns())
+    }
+
+    @Test fun `accelerating braking and accelerating again is not repeated yet`() {
+        assertEquals(emptyList<Observation>(), detect(drive(0.0 to 30.0, 5.0 to 30.0, 8.0 to 40.0, 11.0 to 30.0, 14.0 to 40.0, 40.0 to 40.0)))
+    }
+
+    @Test fun `motion at the conditions tested in sickness experiments is repeated`() {
+        // Peak 1.0 m/s2 along the direction of travel at 0.2 Hz and at 0.06 Hz.
+        assertEquals(setOf(DrivingPattern.REPEATED_SPEED_CHANGE), detect(oscillate(0.2, 1.0, 60)).patterns().toSet())
+        assertEquals(setOf(DrivingPattern.REPEATED_SPEED_CHANGE), detect(oscillate(0.06, 1.0, 90)).patterns().toSet())
+    }
+
+    @Test fun `swings under the limit are not repeated`() {
+        assertEquals(emptyList<Observation>(), detect(oscillate(0.2, 0.5, 60)))
+        // 0.85 m/s2 for 3 s each way.
+        val points = (0..10).map { it * 3.0 to if (it % 2 == 0) 30.0 else 39.18 }.toTypedArray()
+        assertEquals(emptyList<Observation>(), detect(drive(*points)))
     }
 
     @Test fun `one speed change and back is not repeated`() {

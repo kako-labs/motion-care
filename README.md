@@ -95,5 +95,6 @@ python3 scripts/export_source.py
 - [기획서 초안](docs/proposal.md): 공모전 접수양식 항목별 초안과 제출 전 확인 항목
 - [화면 디자인](docs/design.md): 시안 링크·스타일 기준·Pleos 화면 제약
 - [Pleos 에뮬레이터 측정](docs/pleos-emulator/README.md): 알림·백그라운드·주행 제한 실측
+- [탐지 기준의 근거](docs/detection-thresholds.md): 운전 패턴 기준값의 출처·실측·한계
 
 프로필은 저장소와 목록 조회까지만 연결했고 등록 화면은 구현하지 않았습니다. 평점은 아직 화면 연결 자리입니다. 환경 API·AI 요약·녹음·주행 중 배너는 구현하지 않았습니다. 케어·경로는 메인 기능 완료 후 시간이 남을 때만 진행합니다.
