@@ -3,6 +3,7 @@ package dev.motioncare.data.trip
 import android.content.Context
 import android.os.SystemClock
 import dev.motioncare.core.model.*
+import dev.motioncare.data.trip.guidance.StoredGuidanceSettings
 import dev.motioncare.data.trip.internal.*
 import dev.motioncare.data.trip.local.MotionCareDatabase
 import dev.motioncare.data.trip.sample.SampleVehicleDataSource
@@ -27,7 +28,9 @@ fun createVehicleTripData(context: Context): VehicleTripData {
     val store = SqliteTripStore(MotionCareDatabase(app, "motion-care-trips.db"))
     val controller = controller(store, UnavailableVehicleDataSource())
     val repository = DefaultTripRepository(store, controller)
-    return VehicleTripData(repository, DefaultVehicleRecorder(repository, controller, CarSpeedSource(app), SdkSteeringSource(app)))
+    val guidance = StoredGuidanceSettings(app)
+    return VehicleTripData(repository,
+        DefaultVehicleRecorder(repository, controller, CarSpeedSource(app), SdkSteeringSource(app), guidance), guidance)
 }
 
 private fun controller(store: SqliteTripStore, source: VehicleDataSource) = TripSessionController(
@@ -64,9 +67,10 @@ internal class DefaultVehicleRecorder(
     private val controller: TripSessionController,
     private val signals: VehicleSignalSource,
     private val steering: SteeringSignalSource,
+    private val guidance: GuidanceSettings,
 ) : VehicleRecorder {
-    override suspend fun record() {
+    override suspend fun record(presenter: GuidancePresenter) {
         repository.initialize()
-        controller.record(signals.speeds(), steering.steering())
+        controller.record(signals.speeds(), steering.steering(), presenter) { guidance.enabled.value }
     }
 }

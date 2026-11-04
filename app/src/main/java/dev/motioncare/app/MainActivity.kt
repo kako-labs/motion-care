@@ -19,6 +19,7 @@ class MainActivity : ComponentActivity() {
                     trips = graph.trips,
                     profiles = graph.profiles,
                     vehicleConnected = graph.vehicleConnected,
+                    guidance = graph.guidance,
                     onRecordingStarted = {
                         ContextCompat.startForegroundService(this, Intent(this, TripRecordingService::class.java))
                     },

@@ -4,6 +4,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import dev.motioncare.core.model.DataOrigin
 import dev.motioncare.core.model.DrivingPattern
+import dev.motioncare.core.model.GuidanceOutcome
 import dev.motioncare.core.model.Observation
 import dev.motioncare.core.model.TripSnapshot
 import dev.motioncare.core.ui.ScaffoldSection
@@ -34,6 +35,17 @@ internal fun steeringNote(snapshot: TripSnapshot): String? = when {
     else -> "좌우 움직임은 조향각과 속도로 추정한 값입니다."
 }
 
+/** A trip with no card, a trip with guidance off and a sample trip must read differently. */
+internal fun guidanceSummary(snapshot: TripSnapshot): String? {
+    if (snapshot.trip.origin != DataOrigin.VEHICLE) return null
+    val shown = snapshot.guidance.count { it.outcome == GuidanceOutcome.SHOWN }
+    return when {
+        shown > 0 -> "주행 중 안내 ${shown}회"
+        snapshot.guidance.any { it.outcome == GuidanceOutcome.SKIPPED_OFF } -> "주행 중 안내 꺼짐"
+        else -> "주행 중 안내 없음"
+    }
+}
+
 @Composable
 fun TripDetailContent(snapshot: TripSnapshot?, loading: Boolean, onBack: () -> Unit, onFeedback: () -> Unit) {
     ScaffoldSection("주행 상세 · 원본 연결 확인") {
@@ -45,6 +57,7 @@ fun TripDetailContent(snapshot: TripSnapshot?, loading: Boolean, onBack: () -> U
                 Text("샘플 ${snapshot.samples.size}개 · 버전 ${snapshot.trip.revision}")
                 Text(observationSummary(snapshot.observations))
                 steeringNote(snapshot)?.let { Text(it) }
+                guidanceSummary(snapshot)?.let { Text(it) }
                 // Real trips hold thousands of samples; a text row for each would stall the screen.
                 snapshot.samples.takeLast(MAX_SAMPLE_ROWS).forEach { sample ->
                     Text("${sample.elapsedMs} ms · ${sample.metersPerSecond ?: "정보 없음"} m/s · ${sample.quality}")

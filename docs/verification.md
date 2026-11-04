@@ -116,6 +116,24 @@ python3 scripts/dev.py verify --clean-home
 
 실차 조향 신호, 실제 차량의 축거·조향비, App Market의 `CAR_DRIVE` 승인은 확인하지 못했습니다.
 
+## 주행 중 안내 카드 검증
+
+2026-11-04, macOS ARM64 / JDK 17 / Android SDK 35에서 확인했습니다.
+
+| 검사 | 결과 |
+| --- | --- |
+| 전체 모듈 host 테스트 | 133개, 실패·오류 0 |
+| 전체 Android 모듈 lint | 통과 |
+| Android UI 테스트 | 2개 통과 |
+| v1·v2·v3 DB 업그레이드 | Robolectric에서 기존 기록을 유지하고 안내 결과 저장 가능. v3 경로는 조건을 빼면 실패하는 것을 확인 |
+| 표시 실패 | 단위 테스트에서 `FAILED`로 기록되고 기록 저장은 계속되며, 다음 카드를 막지 않음 |
+| Pleos 에뮬레이터 종단 시험 | 내비 위 표시, 대기·생략 저장, 상세 표시, 약 15초 뒤 제거, 스위치 끄기와 유지 통과. [결과](pleos-emulator/README.md#앱의-안내-카드) |
+| 분석 도구와 앱의 판정 | 앞뒤 12건은 시각·값까지 일치. 좌우 2건은 패턴 일치 |
+| 공개 주행 데이터 측정 | VED 3,255시간에 규칙 적용. [결과](guidance-card.md#빈도-측정) |
+| 의존성 | `feature:driving`에 `core-ktx` 직접 선언. lockfile 변경 없음 |
+
+실차 신호와 시점, App Market의 `CATEGORY_MESSAGE` 승인, 소리, 경로 안내 화면을 가리는지, 카드의 효과는 확인하지 못했습니다. 알림 권한을 거부했을 때의 `FAILED`는 단위 테스트로만 확인했습니다. 실제 화면에서 본 문구는 5개 중 정차 직전 문구 하나입니다.
+
 ## 아직 별도 검증이 필요한 환경
 
 Windows/Linux 개인 컴퓨터에서의 설치·실행은 별도 확인이 필요합니다. Linux 검증은 위 GitHub-hosted Ubuntu 실행 결과입니다. 실제 Pleos 시스템·Vehicle SDK·차량 주행 제한은 샘플 테스트로 검증하지 않습니다. Pleos 에뮬레이터에서 별도로 측정한 결과는 [측정 기록](pleos-emulator/README.md)에 있고, 실차는 아직 확인하지 못했습니다.

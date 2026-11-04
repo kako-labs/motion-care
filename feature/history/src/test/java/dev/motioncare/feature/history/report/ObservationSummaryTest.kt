@@ -43,4 +43,25 @@ class ObservationSummaryTest {
     @Test fun `a synthetic trip shows no steering note`() {
         assertNull(steeringNote(snapshot(DataOrigin.SYNTHETIC, emptyList())))
     }
+
+    private fun guided(origin: DataOrigin, vararg outcomes: GuidanceOutcome) = TripSnapshot(
+        TripRecord(TripId("trip"), 0, origin = origin),
+        guidance = outcomes.map { GuidanceEvent(1, 0, DrivingPattern.HARD_STOP, it) },
+    )
+
+    @Test fun `shown cards are counted and skipped ones are not`() {
+        assertEquals("주행 중 안내 1회", guidanceSummary(guided(DataOrigin.VEHICLE, GuidanceOutcome.SHOWN, GuidanceOutcome.SKIPPED_INTERVAL)))
+    }
+
+    @Test fun `a vehicle trip without cards says none were shown`() {
+        assertEquals("주행 중 안내 없음", guidanceSummary(guided(DataOrigin.VEHICLE)))
+    }
+
+    @Test fun `guidance turned off is told apart from none needed`() {
+        assertEquals("주행 중 안내 꺼짐", guidanceSummary(guided(DataOrigin.VEHICLE, GuidanceOutcome.SKIPPED_OFF)))
+    }
+
+    @Test fun `a synthetic trip shows no guidance line`() {
+        assertNull(guidanceSummary(guided(DataOrigin.SYNTHETIC)))
+    }
 }

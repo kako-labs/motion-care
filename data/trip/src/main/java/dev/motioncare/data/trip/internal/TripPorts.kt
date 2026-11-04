@@ -16,6 +16,7 @@ internal interface TripWriter {
         samples: List<SpeedSample>,
         observations: List<Observation> = emptyList(),
         steering: List<SteeringSample> = emptyList(),
+        guidance: List<GuidanceEvent> = emptyList(),
     )
 }
 internal interface TripCommands {

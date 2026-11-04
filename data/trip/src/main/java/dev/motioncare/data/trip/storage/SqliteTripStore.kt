@@ -38,6 +38,7 @@ internal class SqliteTripStore(
         samples: List<SpeedSample>,
         observations: List<Observation>,
         steering: List<SteeringSample>,
+        guidance: List<GuidanceEvent>,
     ) = withContext(io) {
         mutex.withLock {
             val db = database.writableDatabase
@@ -59,6 +60,12 @@ internal class SqliteTripStore(
                 steering.forEach { sample ->
                     db.insertOrThrow("steering_samples", null, ContentValues().apply {
                         put("trip_id", trip.id.value); put("elapsed", sample.elapsedMs); put("degrees", sample.degrees)
+                    })
+                }
+                guidance.forEach { event ->
+                    db.insertOrThrow("guidance_events", null, ContentValues().apply {
+                        put("trip_id", trip.id.value); put("elapsed", event.elapsedMs); put("observed", event.observedMs)
+                        put("pattern", event.pattern.name); put("outcome", event.outcome.name)
                     })
                 }
             }
@@ -95,7 +102,13 @@ internal class SqliteTripStore(
                 arrayOf(id.value)).use { c ->
                 buildList { while (c.moveToNext()) add(SteeringSample(c.getLong(0), c.getDouble(1))) }
             }
-            TripSnapshot(trip, samples, observations, steering)
+            val guidance = db.rawQuery("SELECT elapsed, observed, pattern, outcome FROM guidance_events WHERE trip_id = ? ORDER BY elapsed, rowid",
+                arrayOf(id.value)).use { c ->
+                buildList { while (c.moveToNext()) {
+                    add(GuidanceEvent(c.getLong(0), c.getLong(1), DrivingPattern.valueOf(c.getString(2)), GuidanceOutcome.valueOf(c.getString(3))))
+                } }
+            }
+            TripSnapshot(trip, samples, observations, steering, guidance)
         }
     }
 

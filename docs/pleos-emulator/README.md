@@ -81,6 +81,23 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 
 저장된 샘플을 보면 에뮬레이터 속도는 입력 순간 계단처럼 바뀝니다. 약 200ms 간격 때문에 1초 구간이 0.8초로 계산되면 10km/h ÷ 0.8초 = 3.47m/s²가 됩니다. 이 시험은 저장과 표시 흐름을 확인한 것이며, 실제 차량 신호에서의 정확도는 말해 주지 않습니다. 기준값의 근거는 [탐지 기준의 근거](../detection-thresholds.md)에 있습니다.
 
+### 앱의 안내 카드
+
+실제 앱을 설치하고 내비를 앞에 띄운 채 약 145초 주행했습니다. 입력은 위 패턴 탐지 시험에 조향 구간을 더한 것입니다(샘플 1,171건, 조향 62건). 규칙과 근거는 [안내 카드의 근거](../guidance-card.md)에 있습니다.
+
+| 항목 | 결과 | 증거 |
+| --- | --- | --- |
+| 표시 | 정차 직전 큰 감속이 89.5초에 3번째로 관찰된 뒤, 출발과 정차가 이어지는 동안 기다렸다가 116.8초에 40km/h 주행 중 표시. 제목과 문구 모두 한 줄 | [85_guidance_card](shots/85_guidance_card.png) |
+| 생략 | 기다리는 동안 3번째가 된 빠른 출발(94.7초)과 반복 가감속(105.6초)은 표시하지 않고 `SKIPPED_INTERVAL`로 저장 | |
+| 제거 | 카드는 표시 후 약 15초에 활성 알림 목록에서 제거됨. 약 56초 뒤 화면에는 카드와 종 배지가 없음 | |
+| 상세 | "주행 중 안내 1회" 표시 | [87_guidance_detail](shots/87_guidance_detail.png) |
+| 끄기 | 시작 화면의 스위치를 끄면 앱을 다시 켜도 유지됨. 같은 주행에서 카드가 뜨지 않고 `SKIPPED_OFF` 3건 저장, 상세에 "주행 중 안내 꺼짐" 표시 | [86_guidance_switch](shots/86_guidance_switch.png) |
+
+- **수명 설정:** `setTimeoutAfter(15초)`는 시험 앱에서도 P 기어와 D 기어 40km/h 모두 약 15초 뒤 알림을 제거했습니다.
+- **그룹 요약:** 기록 알림과 카드가 함께 있으면 시스템이 `ranker_group` 요약 알림을 만듭니다. 이 요약은 카드가 사라져도 `channel=guidance`로 활성 목록에 남고, 기록이 끝나면 없어집니다. 그래서 `recording_e2e.py`는 채널이 아니라 문구로 카드를 찾습니다.
+- **본 문구:** 실제 화면에서 본 문구는 정차 직전 문구 하나입니다. 나머지 4개는 단위 테스트로 길이만 확인했습니다.
+- **값의 흔들림:** 같은 입력의 다른 실행에서 최고 가속도 6.17m/s²가 한 번 저장됐습니다. 에뮬레이터 속도가 계단처럼 바뀌어 계산 구간이 짧을 때 값이 커지는 것으로 보이며, 재현해 확인하지는 않았습니다.
+
 ### 백그라운드 기록
 
 | 조건 | 결과 | 증거 |
@@ -133,7 +150,7 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | [logs](logs) | 측정 로그 `soak_*.log`, 앱 차단 서비스 덤프 `cpm.txt`, Virtual Console 응답 `state.json`·`catalog.json`, AVD 설정 `avd-config.ini` |
 | [probe](probe) | 시험 앱 소스. 앱 빌드에 포함되지 않는 독립 Gradle 프로젝트 |
 | [tools/soak.py](tools/soak.py) | 측정 로그 집계 |
-| [tools/recording_e2e.py](tools/recording_e2e.py) | 앱의 권한 요청부터 저장까지 자동 시험. 켜 둔 에뮬레이터와 디버그 APK 필요. `ANDROID_SERIAL`로 기기 지정 |
+| [tools/recording_e2e.py](tools/recording_e2e.py) | 앱의 권한 요청부터 안내 카드와 저장까지 자동 시험. 켜 둔 에뮬레이터와 디버그 APK 필요. `ANDROID_SERIAL`로 기기 지정 |
 | [tools/steering_probe.py](tools/steering_probe.py) | 일반 앱이 조향을 받는 경로와 권한을 측정. 시험 앱 필요 |
 
 저장소에 넣지 않은 것:

@@ -53,11 +53,13 @@ Navigation Compose의 back stack을 사용합니다. 평가 자리에서 뒤로 
 
 ## 저장·주입
 
-구조를 바꿀 때 DB 이름을 유지해 데이터를 초기화하지 않았습니다. 주행 DB는 패턴과 조향 저장을 위해 v3으로 올렸고, 마이그레이션은 테이블만 추가합니다. SqliteTripStore와 DB helper는 data 모듈 internal이라 feature에서 접근하면 컴파일되지 않습니다.
+구조를 바꿀 때 DB 이름을 유지해 데이터를 초기화하지 않았습니다. 주행 DB는 패턴·조향·안내 결과 저장을 위해 v4로 올렸고, 마이그레이션은 테이블만 추가합니다. SqliteTripStore와 DB helper는 data 모듈 internal이라 feature에서 접근하면 컴파일되지 않습니다.
 
-패턴 탐지는 `data:trip` 내부의 `PatternDetector`가 맡습니다. 샘플을 한 건씩 받아 판정하므로, 주행 중 안내를 붙일 때 저장이 끝나기를 기다리지 않아도 됩니다. 탐지 결과는 공개 모델 `Observation`으로 저장하며, 화면은 `TripSnapshot`으로만 읽습니다.
+패턴 탐지는 `data:trip` 내부의 `PatternDetector`가 맡습니다. 샘플을 한 건씩 받아 판정하므로, 주행 중 안내가 저장이 끝나기를 기다리지 않습니다. 탐지 결과는 공개 모델 `Observation`으로 저장하며, 화면은 `TripSnapshot`으로만 읽습니다.
 
 좌우 움직임은 `LateralDetector`가 맡고, 반복 판정은 앞뒤와 같은 `SwingTracker`를 씁니다. 조향은 Vehicle SDK로만 읽을 수 있어(`CarPropertyManager`의 조향 권한은 `signature|privileged`) `data:trip`이 이 SDK에 의존합니다. 저장소는 `settings.gradle.kts`에서 해당 그룹으로만 제한했습니다. 조향이 끊겨도 속도 기록은 계속되고, 마지막 값으로 판정을 이어가지 않습니다.
+
+주행 중 안내는 판단과 표시를 나눕니다. `data:trip`의 `GuidancePolicy`는 표시 방법을 모른 채 카드의 표시·대기·생략만 정하고, `feature:driving`의 `NotificationGuidancePresenter`가 `GuidancePresenter` 인터페이스로 알림을 띄웁니다. `app`의 `TripRecordingService`가 둘을 연결합니다. App Market이 메시지 카드를 막으면 표시 구현만 바꾸면 됩니다. 표시가 실패해도 기록 저장은 계속됩니다.
 
 DB 파일은 data 모듈마다 따로 둡니다. 두 사람이 스키마 버전과 마이그레이션 번호를 놓고 충돌하지 않도록 한 선택입니다. 대신 파일 사이에 외래 키와 트랜잭션을 쓸 수 없습니다. 주행 기록을 삭제할 때는 `app`이 각 Repository의 정리 함수를 순서대로 호출하고, 실패하면 삭제 중 상태로 남겨 재시도합니다. 삭제 기능은 아직 구현하지 않았습니다.
 

@@ -54,6 +54,21 @@ data class Observation(
     }
 }
 
+enum class GuidanceOutcome { SHOWN, SKIPPED_INTERVAL, SKIPPED_OFF, SKIPPED_EXPIRED, FAILED }
+
+/** What happened to one in-drive card. Times are measured from the start of the trip. */
+data class GuidanceEvent(
+    val elapsedMs: Long,
+    val observedMs: Long,
+    val pattern: DrivingPattern,
+    val outcome: GuidanceOutcome,
+) {
+    init {
+        require(elapsedMs >= 0)
+        require(observedMs >= 0)
+    }
+}
+
 /** A steering wheel angle in degrees, as the vehicle reports it. */
 data class SteeringSample(val elapsedMs: Long, val degrees: Double) {
     init {
@@ -67,6 +82,7 @@ data class TripSnapshot(
     val samples: List<SpeedSample> = emptyList(),
     val observations: List<Observation> = emptyList(),
     val steering: List<SteeringSample> = emptyList(),
+    val guidance: List<GuidanceEvent> = emptyList(),
 ) {
     init { require(samples.zipWithNext().all { (a, b) -> a.elapsedMs < b.elapsedMs }) }
 }
