@@ -109,7 +109,7 @@ class CardWatch(threading.Thread):
             # Only the active list counts. Look for the text, not the channel: while the recording notification
             # is up the system keeps a group summary that carries the guidance channel after the card is gone.
             active = shell("dumpsys notification --noredact").split("mArchive=")[0]
-            found = re.search(r"android\.text=String \(([^)]*있어요)\)", active)
+            found = re.search(r"android\.text=String \(([^)]*보세요)\)", active)
             if found:
                 now = time.time()
                 if self.first is None:

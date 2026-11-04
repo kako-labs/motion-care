@@ -23,13 +23,13 @@ private const val NOTIFICATION_ID = 2
 // The system shows the card for about 9 s. Removing it soon after keeps old notes out of the bell.
 private const val CARD_LIFETIME_MS = 15_000L
 
-/** What was observed, not what to do. See docs/guidance-card.md for why cards give no instructions. */
+/** One recommended action for the pattern that repeated. Sources and limits are in docs/guidance-card.md. */
 internal fun guidanceCopy(pattern: DrivingPattern): String = when (pattern) {
-    DrivingPattern.RAPID_START -> "출발 직후 속도 변화가 반복되고 있어요"
-    DrivingPattern.HARD_STOP -> "정차 직전 속도 변화가 반복되고 있어요"
-    DrivingPattern.REPEATED_SPEED_CHANGE -> "가속과 감속이 반복되고 있어요"
-    DrivingPattern.FAST_TURN -> "회전 구간의 좌우 움직임이 반복되고 있어요"
-    DrivingPattern.REPEATED_SWAY -> "좌우 움직임이 반복되고 있어요"
+    DrivingPattern.RAPID_START -> "출발 후 몇 초 동안 천천히 속도를 높여보세요"
+    DrivingPattern.HARD_STOP -> "정지 지점보다 조금 일찍 감속해보세요"
+    DrivingPattern.REPEATED_SPEED_CHANGE -> "앞차와의 간격을 확보해 속도 변화를 줄여보세요"
+    DrivingPattern.FAST_TURN -> "커브에 진입하기 전에 미리 속도를 줄여보세요"
+    DrivingPattern.REPEATED_SWAY -> "핸들을 조금 더 부드럽게 돌려보세요"
 }
 
 /**

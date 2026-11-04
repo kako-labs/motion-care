@@ -20,11 +20,25 @@ class GuidanceCopyTest {
         assertEquals(copies.size, copies.toSet().size)
     }
 
-    @Test fun `cards say what was observed and never give orders or medical claims`() {
+    @Test fun `each card recommends an action for the pattern that repeated`() {
+        val subject = mapOf(
+            DrivingPattern.RAPID_START to "출발",
+            DrivingPattern.HARD_STOP to "정지",
+            DrivingPattern.REPEATED_SPEED_CHANGE to "앞차",
+            DrivingPattern.FAST_TURN to "커브",
+            DrivingPattern.REPEATED_SWAY to "핸들",
+        )
         DrivingPattern.entries.forEach { pattern ->
             val copy = guidanceCopy(pattern)
-            assertTrue(copy, copy.endsWith("있어요"))
-            listOf("해보세요", "하세요", "멀미", "위험", "운전자", "습관").forEach { word ->
+            assertTrue(copy, copy.endsWith("보세요"))
+            assertTrue("$pattern says: $copy", subject.getValue(pattern) in copy)
+        }
+    }
+
+    @Test fun `cards never give orders or medical claims`() {
+        DrivingPattern.entries.forEach { pattern ->
+            val copy = guidanceCopy(pattern)
+            listOf("하세요", "마세요", "멀미", "위험", "운전자", "습관").forEach { word ->
                 assertFalse("$copy contains $word", word in copy)
             }
         }
