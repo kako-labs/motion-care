@@ -96,6 +96,31 @@ def app_screen():
     time.sleep(4)
 
 
+class CardWatch(threading.Thread):
+    """Notes when the guidance card is posted and takes one screenshot while it is up."""
+
+    def __init__(self, stop):
+        super().__init__(daemon=True)
+        self.stop_event = stop
+        self.first, self.last, self.text = None, None, None
+
+    def run(self):
+        while not self.stop_event.is_set():
+            # Only the active list counts. Look for the text, not the channel: while the recording notification
+            # is up the system keeps a group summary that carries the guidance channel after the card is gone.
+            active = shell("dumpsys notification --noredact").split("mArchive=")[0]
+            found = re.search(r"android\.text=String \(([^)]*있어요)\)", active)
+            if found:
+                now = time.time()
+                if self.first is None:
+                    self.first = now
+                    self.text = found.group(1)
+                    time.sleep(1)
+                    shot("84_guidance_card")
+                self.last = now
+            self.stop_event.wait(1)
+
+
 def service_state():
     out = shell(f"dumpsys activity services {PKG}")
     running = "TripRecordingService" in out
@@ -114,7 +139,7 @@ def main():
     time.sleep(2)
     app_screen()
     shot("80_ready")
-    print("ready screen:", [t for t in texts() if "운행" in t or "개발" in t or "샘플" in t])
+    print("ready screen:", [t for t in texts() if "운행" in t or "개발" in t or "샘플" in t or "안내" in t])
 
     print("\n--- deny")
     print("tap start:", tap("운행 기록 시작"))
@@ -168,11 +193,20 @@ def main():
         profile += [(40, 30)] * 3 + [(40, -30)] * 3  # left and right
     profile += [(40, 0)] * 3
     profile += [(v, 0) for v in range(40, -1, -5)]  # gentle stop
+    card_stop = threading.Event()
+    card = CardWatch(card_stop)
+    card.start()
     started = time.time()
     for speed, steering in profile:
         http("PUT", f"/vehicle/controls?speed={speed}&accelerator={15 if speed else 0}&brake=0&steering={steering}")
         time.sleep(1)
     print(f"drove {time.time() - started:.0f}s, top 60 km/h, steps {len(profile)}")
+    time.sleep(16)
+    card_stop.set()
+    if card.first:
+        print(f"card first seen {card.first - started:.0f}s after driving began, active for about {card.last - card.first:.0f}s: {card.text}")
+    else:
+        print("card never seen")
     shot("84_nav_driving")
     print("service mid-drive:", service_state())
     print("top activity:", re.findall(r"topResumedActivity=\S+ \S+ (\S+)", shell("dumpsys activity activities"))[:1])
@@ -191,7 +225,7 @@ def main():
     print("tap detail:", tap("주행 상세"))
     time.sleep(3)
     shot("87_detail")
-    print("detail:", [t for t in texts() if "출처" in t or "샘플" in t or "패턴" in t or "좌우" in t][:4])
+    print("detail:", [t for t in texts() if "출처" in t or "샘플" in t or "패턴" in t or "좌우" in t or "안내" in t][:5])
     time.sleep(1)
 
     print("\n--- saved data")
@@ -223,6 +257,8 @@ def main():
         print("steering degrees min/max:", min(r[1] for r in steering), max(r[1] for r in steering))
     for row in db.execute("SELECT pattern, start_ms, end_ms, round(peak_mps2, 2), detector_version FROM observations ORDER BY start_ms"):
         print("observation:", row)
+    for row in db.execute("SELECT elapsed, observed, pattern, outcome FROM guidance_events ORDER BY elapsed, rowid"):
+        print("guidance:", row)
     print("screenshots:", OUT)
     stop.set()
     adb("forward", "--remove", f"tcp:{PORT}")

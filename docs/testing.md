@@ -51,9 +51,9 @@ python3 scripts/dev.py verify --clean-home
 | --- | --- |
 | core/model/src/test | 단위·없음·원본/시각·관찰 값 불변조건 |
 | data/profile/src/test | 프로필 재시작 유지·순서·이름 검증 |
-| data/trip/src/test | 세션 중복/복구/실패, 차량 속도·조향 저장, 조향 실패 시 속도 기록 유지, 앞뒤·좌우 패턴 탐지, SQLite 재연결·버전 충돌·이전 버전 업그레이드 |
-| feature/driving/src/test | 초기화 재시도·명령 중복 방지·오류 상태 |
-| feature/history/src/test | 늦은 이전 조회·실패/없음/재시도, 프로필 로딩·오류·재시도, 패턴 요약과 조향 안내 문구 |
+| data/trip/src/test | 세션 중복/복구/실패, 차량 속도·조향 저장, 조향 실패 시 속도 기록 유지, 앞뒤·좌우 패턴 탐지, 안내 표시·대기·생략 규칙과 ON/OFF 저장, SQLite 재연결·버전 충돌·이전 버전 업그레이드 |
+| feature/driving/src/test | 초기화 재시도·명령 중복 방지·오류 상태, 안내 문구의 길이와 금지 표현 |
+| feature/history/src/test | 늦은 이전 조회·실패/없음/재시도, 프로필 로딩·오류·재시도, 패턴 요약과 조향·주행 중 안내 요약 문구 |
 | app/src/androidTest | 샘플 입력·Activity 재생성·완료·평가 복귀, 프로필 화면 이동 |
 
 ## 결과와 CI
@@ -73,4 +73,4 @@ SDK 설치 action에는 `packages: platform-tools`를 명시합니다. 기본값
 - dependency lock 오류: 임의로 lockfile을 삭제하지 않고 버전 변경 여부를 확인합니다. 변경 작업일 때만 --write-locks 사용.
 - 사내 프록시: 조직의 정상 프록시 설정 사용. 개인 토큰·프록시 비밀번호를 저장소에 넣지 않습니다.
 
-실차 SDK·차량 표시면·자동 시동·권한의 검증은 별도이며 일반 Android UI 테스트로 대체하지 않습니다. Pleos 에뮬레이터 설치와 측정 방법은 [측정 기록](pleos-emulator/README.md)을 따릅니다. 차량 속도 기록은 CI에서 돌지 않으므로, 입력·서비스·권한·탐지를 바꾸면 켜 둔 Pleos 에뮬레이터에서 `python3 docs/pleos-emulator/tools/recording_e2e.py`를 실행합니다. 이 도구는 앱을 설치하고 차량 신호를 바꾸므로, 다른 작업이 쓰는 기기를 고르지 않도록 `ANDROID_SERIAL`로 기기를 지정합니다. 탐지 값을 바꾸면 [탐지 기준의 근거](detection-thresholds.md)의 방법으로 다시 측정합니다.
+실차 SDK·차량 표시면·자동 시동·권한의 검증은 별도이며 일반 Android UI 테스트로 대체하지 않습니다. Pleos 에뮬레이터 설치와 측정 방법은 [측정 기록](pleos-emulator/README.md)을 따릅니다. 차량 속도 기록은 CI에서 돌지 않으므로, 입력·서비스·권한·탐지를 바꾸면 켜 둔 Pleos 에뮬레이터에서 `python3 docs/pleos-emulator/tools/recording_e2e.py`를 실행합니다. 이 도구는 앱을 설치하고 차량 신호를 바꾸므로, 다른 작업이 쓰는 기기를 고르지 않도록 `ANDROID_SERIAL`로 기기를 지정합니다. 탐지 값을 바꾸면 [탐지 기준의 근거](detection-thresholds.md)의 방법으로, 안내 규칙을 바꾸면 [안내 카드의 근거](guidance-card.md)의 방법으로 다시 측정합니다.
