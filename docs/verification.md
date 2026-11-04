@@ -93,7 +93,7 @@ python3 scripts/dev.py verify --clean-home
 | Android UI 테스트 | 2개 통과 |
 | v1 DB 업그레이드 | Robolectric에서 기존 주행을 유지하고 관찰 저장 가능 |
 | Pleos 에뮬레이터 종단 시험 | 관찰 저장과 상세 화면 표시 통과. [결과](pleos-emulator/README.md#패턴-탐지) |
-| 분석 도구와 앱의 판정 | 에뮬레이터 주행의 관찰 12건이 시각·값까지 Python 판정과 일치 |
+| 분석 도구와 앱의 판정 | 에뮬레이터 주행의 관찰 11건이 시각·값까지 Python 판정과 일치 |
 | 공개 주행 데이터 측정 | VED 3,790시간. [결과](detection-thresholds.md#실측) |
 
 실제 차량 신호에서의 탐지 정확도, 소음이 섞인 신호의 기준값, 실기기의 v1 파일 업그레이드는 확인하지 못했습니다.

@@ -2,6 +2,8 @@
 """End-to-end check of vehicle recording on the Pleos emulator.
 
 Start the emulator and build the debug APK first. Screenshots go to a temporary folder.
+Set ANDROID_SERIAL when more than one device is attached. This script installs an app and drives the
+vehicle signals, so it must never run against an emulator that belongs to other work.
 """
 import os
 import pathlib
@@ -9,6 +11,7 @@ import re
 import sqlite3
 import statistics
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -16,11 +19,27 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 SDK = pathlib.Path(os.environ.get("ANDROID_HOME", pathlib.Path.home() / "Library/Android/sdk"))
-ADB = [str(SDK / "platform-tools/adb"), "-s", "emulator-5554"]
+ADB_BIN = str(SDK / "platform-tools/adb")
 PKG = "dev.motioncare.scaffold"
 APK = str(pathlib.Path(__file__).resolve().parents[3] / "app/build/outputs/apk/debug/app-debug.apk")
 OUT = pathlib.Path(tempfile.mkdtemp(prefix="recording-e2e-"))
-BASE = "http://127.0.0.1:8088"
+
+
+def choose_serial():
+    serial = os.environ.get("ANDROID_SERIAL")
+    if serial:
+        return serial
+    listing = subprocess.run([ADB_BIN, "devices"], capture_output=True, text=True, timeout=30).stdout
+    devices = [line.split()[0] for line in listing.splitlines()[1:] if line.endswith("device")]
+    if len(devices) != 1:
+        sys.exit(f"Set ANDROID_SERIAL to choose one of the attached devices: {devices}")
+    return devices[0]
+
+
+ADB = [ADB_BIN, "-s", choose_serial()]
+# A free host port keeps this run from taking over another session's forward.
+PORT = subprocess.run(ADB + ["forward", "tcp:0", "tcp:8088"], capture_output=True, text=True, check=True, timeout=30).stdout.strip()
+BASE = f"http://127.0.0.1:{PORT}"
 
 
 def adb(*args, check=False):
@@ -85,7 +104,7 @@ def service_state():
 
 
 def main():
-    subprocess.run(ADB + ["forward", "tcp:8088", "tcp:8088"], capture_output=True)
+    print("device:", ADB[-1], "avd:", adb("emu", "avd", "name").split()[0], "console port:", PORT)
     stop = threading.Event()
     threading.Thread(target=heartbeat, args=(stop,), daemon=True).start()
     time.sleep(2)
@@ -195,6 +214,7 @@ def main():
         print("observation:", row)
     print("screenshots:", OUT)
     stop.set()
+    adb("forward", "--remove", f"tcp:{PORT}")
 
 
 if __name__ == "__main__":
