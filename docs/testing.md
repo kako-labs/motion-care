@@ -52,7 +52,7 @@ python3 scripts/dev.py verify --clean-home
 | core/model/src/test | 단위·없음·원본/시각·관찰 값 불변조건 |
 | data/profile/src/test | 프로필 재시작 유지·순서·이름 검증 |
 | data/trip/src/test | 세션 중복/복구/실패, 차량 속도·조향 저장, 조향 실패 시 속도 기록 유지, 앞뒤·좌우 패턴 탐지, 안내 표시·대기·생략 규칙과 ON/OFF 저장, SQLite 재연결·버전 충돌·이전 버전 업그레이드 |
-| feature/driving/src/test | 초기화 재시도·명령 중복 방지·오류 상태, 안내 문구의 길이와 금지 표현 |
+| feature/driving/src/test | 초기화 재시도·명령 중복 방지·오류 상태, 안내 문구의 길이, 패턴별 권장 형식, 금지 표현 |
 | feature/history/src/test | 늦은 이전 조회·실패/없음/재시도, 프로필 로딩·오류·재시도, 패턴 요약과 조향·주행 중 안내 요약 문구 |
 | app/src/androidTest | 샘플 입력·Activity 재생성·완료·평가 복귀, 프로필 화면 이동 |
 
