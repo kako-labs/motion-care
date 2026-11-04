@@ -1,5 +1,12 @@
 # Motion Care
 
+## 현재 작업 브랜치 빠른 시작
+
+- Windows 새 노트북 설정: [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md)
+- 가상 데이터 HTML UI: [demo/mock-data-ui/index.html](demo/mock-data-ui/index.html)
+- 기능 브랜치: `feature/history-ui-v2`
+
+
 차량 앱 공모전의 **협업용 Android 앱**입니다. 자동차 기기에서는 차량 속도로 운행을 자동 감지하고 속도·조향 패턴과 내비 위 안내 결과를 저장합니다. 운전자·동승자 프로필, 출발 조언, 완료 평가, 사람별 운행 분석이 같은 TripId에 연결됩니다. 일반 기기에서는 합성 입력 구조로 개발할 수 있으며 AI 생성은 후속 영역입니다.
 
 KAKO Labs의 비공개 저장소: [kako-labs/motion-care](https://github.com/kako-labs/motion-care). 초대받은 GitHub 계정으로 접근합니다.
