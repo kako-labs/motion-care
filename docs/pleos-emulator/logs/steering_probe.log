@@ -1,0 +1,41 @@
+device emulator-5556 avd pleos port 63927
+--- declared permissions on the system
+   android.car.permission.READ_CAR_STEERING signature|privileged
+   android.car.permission.CONTROL_STEERING_WHEEL signature|privileged
+
+--- install WITHOUT grants, as a real install would be
+Success
+--- permission and steering state
+   speed config=null
+   speed registered=false
+   perm android.car.permission.READ_CAR_STEERING=-1
+   perm android.car.permission.READ_STEERING_STATE=-1
+   perm pleos.car.permission.READ_CAR_STEERING=-1
+   perm android.car.permission.CAR_SPEED=-1
+   steering config=null
+   steering registered=false
+   sdk steering -0.0 now=2793532504412
+   sdk steering -0.0 now=2793537313954
+   sdk distance failed ai.pleos.playground.vehicle.callback.exception.a: ERROR_NOT_SUPPORTED_PROPERTY
+  grants: [('android.car.permission.READ_CAR_STEERING', 'false'), ('android.car.permission.CAR_SPEED', 'false'), ('android.car.permission.CAR_SPEED', 'false')]
+
+--- try runtime grants
+   android.car.permission.READ_CAR_STEERING => Exception occurred while executing 'grant':
+java.lang.SecurityException: Permission android.car.permission.READ_CAR_STEE
+   android.car.permission.READ_STEERING_STATE => Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: android.car.permissi
+   pleos.car.permission.READ_CAR_STEERING => Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: pleos.car.permission
+   android.car.permission.CAR_SPEED => ok
+  grants: [('android.car.permission.READ_CAR_STEERING', 'false'), ('android.car.permission.CAR_SPEED', 'false'), ('android.car.permission.CAR_SPEED', 'true')]
+
+--- run with what could be granted
+  console state steering fields: ['"steering_deg":0', '"steering":true', '"steering":"SDV_MOTION_STEERING_WHEEL_BASE_STEERINGWHEELBASE_ACTUAL_ANGLE"', '"desired_steering":"SDV_MOTION_STEERING_WHEEL_BASE_STEERINGWHEELBASE_DESIRED_ANGLE"', '"steering_deg":[-540'
+--- after grants: permission and registration
+   sdk registered
+--- car steering: 0 events
+--- sdk steering: 25 events
+   first values: [-0.0, -0.0, -0.0, -5.0, -10.0, -20.0, -40.0, -80.0, -40.0, -20.0, -10.0, -5.0, -0.0, 5.0, 10.0, 20.0, 40.0, 80.0, 40.0, 20.0, 10.0, 5.0, -0.0, -12.0, -0.0]
+   min/max: -80.0 80.0
+   gap ms median/p95/max: 1009 2876 3083
+--- sent: [0, 5, 10, 20, 40, 80, 40, 20, 10, 5, 0, -5, -10, -20, -40, -80, -40, -20, -10, -5, 0]

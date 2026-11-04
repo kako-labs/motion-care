@@ -2,6 +2,7 @@
 
 The default limits must match PatternLimits in the app. check_port.py compares the two.
 """
+import math
 from collections import deque
 from dataclasses import dataclass
 
@@ -119,3 +120,88 @@ class Detector:
             self.accels.clear()
             self.speeds.clear()
             self.speeds.append((now, speed))
+
+
+@dataclass(frozen=True)
+class LateralLimits:
+    wheelbase_m: float = 3.0
+    steering_ratio: float = 14.26
+    max_gap_ms: float = 1000
+    window_ms: float = 1000
+    min_span_ms: float = 500
+    fast_turn: float = 2.0
+    turn_end_ratio: float = 0.5
+    swing: float = 0.9
+    swing_window_ms: float = 30000
+    swing_count: int = 3
+
+
+def lateral_acceleration(speed, degrees, limits=LateralLimits()):
+    return speed * speed * math.tan(math.radians(degrees / limits.steering_ratio)) / limits.wheelbase_m
+
+
+class LateralDetector:
+    """Port of data/trip/.../analysis/LateralDetector.kt."""
+
+    def __init__(self, limits=LateralLimits()):
+        self.l = limits
+        self.recent = deque()
+        self.swing_times = deque()
+        self.swing_dir = 0
+        self.swing_peak = 0.0
+        self.turn_start = None
+        self.turn_dir = 0
+        self.turn_peak = 0.0
+
+    def add(self, now, speed, degrees):
+        found = []
+        if self.recent and now - self.recent[-1][0] > self.l.max_gap_ms:
+            found += self.finish()
+        self.recent.append((now, lateral_acceleration(speed, degrees, self.l)))
+        while now - self.recent[0][0] > self.l.window_ms:
+            self.recent.popleft()
+        if now - self.recent[0][0] < self.l.min_span_ms:
+            return found
+        value = sum(v for _, v in self.recent) / len(self.recent)
+        self._swing(now, value, found)
+        self._turn(now, value, found)
+        return found
+
+    def finish(self):
+        found = self._close(self.recent[-1][0]) if self.recent else []
+        self.recent.clear()
+        self.swing_times.clear()
+        self.swing_dir = 0
+        self.swing_peak = 0.0
+        return found
+
+    def _swing(self, now, value, found):
+        l = self.l
+        direction = 1 if value >= l.swing else -1 if value <= -l.swing else self.swing_dir
+        if direction != self.swing_dir:
+            if self.swing_dir != 0:
+                self.swing_times.append(now)
+            self.swing_dir = direction
+        while self.swing_times and now - self.swing_times[0] > l.swing_window_ms:
+            self.swing_times.popleft()
+        self.swing_peak = 0.0 if not self.swing_times else max(self.swing_peak, abs(value))
+        if len(self.swing_times) >= l.swing_count:
+            found.append(("REPEATED_SWAY", self.swing_times[0], now, self.swing_peak))
+            self.swing_times.clear()
+            self.swing_peak = 0.0
+
+    def _turn(self, now, value, found):
+        l = self.l
+        direction = 1 if value >= 0 else -1
+        if self.turn_start is not None and (direction != self.turn_dir or abs(value) < l.fast_turn * l.turn_end_ratio):
+            found += self._close(now)
+        if self.turn_start is None and abs(value) >= l.fast_turn:
+            self.turn_start, self.turn_dir, self.turn_peak = now, direction, 0.0
+        if self.turn_start is not None:
+            self.turn_peak = max(self.turn_peak, abs(value))
+
+    def _close(self, end):
+        if self.turn_start is None:
+            return []
+        start, self.turn_start = self.turn_start, None
+        return [("FAST_TURN", start, end, self.turn_peak)]

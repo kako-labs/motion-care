@@ -11,15 +11,17 @@ import sqlite3
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from detector import Detector
+from detector import Detector, LateralDetector
 
+LATERAL = {"FAST_TURN", "REPEATED_SWAY"}
 KINDS = ("RAPID_START", "HARD_STOP", "REPEATED_SPEED_CHANGE")
 
 
 def compare_with_app(db_path):
     db = sqlite3.connect(db_path)
     samples = db.execute("SELECT elapsed, speed FROM speed_samples ORDER BY elapsed").fetchall()
-    stored = sorted(db.execute("SELECT pattern, start_ms, end_ms, peak_mps2 FROM observations").fetchall())
+    observed = sorted(db.execute("SELECT pattern, start_ms, end_ms, peak_mps2 FROM observations").fetchall())
+    stored = [row for row in observed if row[0] not in LATERAL]
     detector = Detector()
     found = [x for elapsed, speed in samples for x in detector.add(elapsed, speed)] + detector.finish()
     found.sort()
@@ -27,6 +29,30 @@ def compare_with_app(db_path):
         a[:3] == b[:3] and abs(a[3] - b[3]) < 1e-9 for a, b in zip(found, stored)
     )
     print(f"port vs app: stored={len(stored)} port={len(found)} identical={same}")
+    return same and compare_lateral(db, samples, observed)
+
+
+def compare_lateral(db, samples, observed):
+    """Steering is timed on arrival, so the order against speed events can differ by a sample."""
+    steering = db.execute("SELECT elapsed, degrees FROM steering_samples ORDER BY elapsed").fetchall()
+    if not steering:
+        print("lateral: no steering samples")
+        return True
+    detector = LateralDetector()
+    found, index, degrees = [], 0, None
+    for elapsed, speed in samples:
+        while index < len(steering) and steering[index][0] <= elapsed:
+            degrees = steering[index][1]
+            index += 1
+        if speed is not None and degrees is not None:
+            found += detector.add(elapsed, speed, degrees)
+    found += detector.finish()
+    stored = sorted(row for row in observed if row[0] in LATERAL)
+    found.sort()
+    same = [x[0] for x in found] == [x[0] for x in stored] and all(
+        abs(a[1] - b[1]) <= 400 and abs(a[3] - b[3]) < 0.3 for a, b in zip(found, stored)
+    )
+    print(f"lateral port vs app: stored={len(stored)} port={len(found)} matching={same}")
     return same
 
 

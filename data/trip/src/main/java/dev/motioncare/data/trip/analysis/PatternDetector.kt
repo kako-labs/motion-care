@@ -1,7 +1,6 @@
 package dev.motioncare.data.trip.analysis
 
 import dev.motioncare.core.model.*
-import kotlin.math.abs
 import kotlin.math.max
 
 internal const val PATTERN_DETECTOR_VERSION = "pattern-v1"
@@ -32,9 +31,7 @@ internal class PatternDetector(private val limits: PatternLimits = PatternLimits
 
     private val speeds = ArrayDeque<Point>()
     private val accelerations = ArrayDeque<Point>()
-    private val swingTimes = ArrayDeque<Long>()
-    private var swingDirection = 0
-    private var swingPeak = 0.0
+    private val swing = SwingTracker(DrivingPattern.REPEATED_SPEED_CHANGE, limits.swingMps2, limits.swingWindowMs, limits.swingCount)
     private var stopped: Boolean? = null
     private var startedAtMs: Long? = null
     private var startPeak = 0.0
@@ -51,7 +48,7 @@ internal class PatternDetector(private val limits: PatternLimits = PatternLimits
             accelerations.addLast(Point(now, acceleration))
             while (now - accelerations.first().elapsedMs > limits.hardStopWindowMs) accelerations.removeFirst()
             trackStart(now, acceleration, found)
-            trackSwing(now, acceleration, found)
+            swing.add(now, acceleration)?.let { found += it }
         }
         trackStopState(now, speed, acceleration, found)
         return found
@@ -62,9 +59,7 @@ internal class PatternDetector(private val limits: PatternLimits = PatternLimits
         val found = speeds.lastOrNull()?.let { closeStart(it.elapsedMs) }.orEmpty()
         speeds.clear()
         accelerations.clear()
-        swingTimes.clear()
-        swingDirection = 0
-        swingPeak = 0.0
+        swing.reset()
         stopped = null
         startedAtMs = null
         startPeak = 0.0
@@ -90,25 +85,6 @@ internal class PatternDetector(private val limits: PatternLimits = PatternLimits
         startedAtMs = null
         if (startPeak < limits.rapidStartMps2) return emptyList()
         return listOf(Observation(DrivingPattern.RAPID_START, started, endMs, startPeak, PATTERN_DETECTOR_VERSION))
-    }
-
-    private fun trackSwing(now: Long, acceleration: Double, found: MutableList<Observation>) {
-        val direction = when {
-            acceleration >= limits.swingMps2 -> 1
-            acceleration <= -limits.swingMps2 -> -1
-            else -> swingDirection
-        }
-        if (direction != swingDirection) {
-            if (swingDirection != 0) swingTimes.addLast(now)
-            swingDirection = direction
-        }
-        while (swingTimes.isNotEmpty() && now - swingTimes.first() > limits.swingWindowMs) swingTimes.removeFirst()
-        swingPeak = if (swingTimes.isEmpty()) 0.0 else max(swingPeak, abs(acceleration))
-        if (swingTimes.size >= limits.swingCount) {
-            found += Observation(DrivingPattern.REPEATED_SPEED_CHANGE, swingTimes.first(), now, swingPeak, PATTERN_DETECTOR_VERSION)
-            swingTimes.clear()
-            swingPeak = 0.0
-        }
     }
 
     private fun trackStopState(now: Long, speed: Double, acceleration: Double?, found: MutableList<Observation>) {

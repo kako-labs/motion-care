@@ -9,6 +9,7 @@ junit = "4.13.2"
 robolectric = "4.14.1"
 
 [libraries]
+pleos-vehicle = { module = "ai.pleos.playground:Vehicle", version = "2.3.2" }
 coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version = "2.9.0" }
 compose-ui-test = { module = "androidx.compose.ui:ui-test-junit4" }

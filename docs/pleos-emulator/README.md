@@ -77,6 +77,8 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 
 같은 입력을 반복하면 반복 가감속 횟수는 2~3회로 달라집니다. 입력 시점과 수신 간격이 매번 조금씩 다르기 때문입니다.
 
+조향을 포함한 주행(약 167초, 속도 1,075건, 조향 57건)에서는 40km/h에서 핸들 60°를 5초 유지한 구간이 빠른 회전 1회(추정 3.03m/s², 계산값과 일치)로, ±30°를 3초씩 번갈아 바꾼 구간이 반복 좌우 움직임 1회(추정 1.51m/s²)로 저장됐습니다. [84_steering_detail](shots/84_steering_detail.png)
+
 저장된 샘플을 보면 에뮬레이터 속도는 입력 순간 계단처럼 바뀝니다. 약 200ms 간격 때문에 1초 구간이 0.8초로 계산되면 10km/h ÷ 0.8초 = 3.47m/s²가 됩니다. 이 시험은 저장과 표시 흐름을 확인한 것이며, 실제 차량 신호에서의 정확도는 말해 주지 않습니다. 기준값의 근거는 [탐지 기준의 근거](../detection-thresholds.md)에 있습니다.
 
 ### 백그라운드 기록
@@ -94,7 +96,10 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 - **속도 수치:** 단위는 m/s이고 설정 범위는 10~20Hz입니다. 10Hz로 요청해 초당 6.8건을 받았고, 간격은 중앙값 133.5ms, p95 200ms, 최대 203ms였습니다.
 - **정확도:** 에뮬레이터 신호에는 잡음이 없어 실차 정확도는 알 수 없습니다.
 - **기어:** `GEAR_SELECTION` 속성과 SDK 리스너 모두 동작했습니다.
-- **조향:** SDK 값의 부호가 Virtual Console 입력과 반대입니다(8을 넣으면 -8.0).
+- **조향 경로:** `PERF_STEERING_ANGLE`을 `CarPropertyManager`로 읽는 `android.car.permission.READ_CAR_STEERING`은 `signature|privileged`라 일반 앱에 부여되지 않습니다(`pm grant`도 거부). Vehicle SDK의 `registerSteeringWheelAngle`은 `pleos.car.permission.CAR_DRIVE`를 선언하면 별도 부여 없이 동작합니다. 튜토리얼의 `pleos.car.permission.READ_CAR_STEERING`은 시스템에 없는 권한이며, SDK의 `@RequiresPermission` 주석은 `CAR_DRIVE`를 요구하고, 문서도 이 주석을 따르라고 안내합니다. [로그](logs/steering_probe.log)
+- **조향 값:** 핸들 각도(도)로, Virtual Console 범위는 −470~500입니다. 부호는 입력과 반대입니다(8을 넣으면 -8.0). 크기는 입력과 같습니다.
+- **조향 이벤트:** 값이 바뀔 때만 오고 이벤트 시각이 없습니다. 같은 값을 다시 보내면 오지 않습니다. 구독 직후 현재 값이 한 번 옵니다.
+- **차량 치수:** `CarInfo`는 VIN과 CRN만 줍니다. 축거·조향비·요레이트·횡가속도 API는 SDK에서 찾지 못했습니다.
 - **주행 거리:** `registerTripInstantaneousDrivingDistance`는 `ERROR_NOT_SUPPORTED_PROPERTY`를 반환했습니다.
 - **SDK 버전:** 문서에 있는 Vehicle 2.3.1은 저장소에서 404이고, 받을 수 있는 버전은 2.0.3과 2.3.2입니다.
 
@@ -128,7 +133,8 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | [logs](logs) | 측정 로그 `soak_*.log`, 앱 차단 서비스 덤프 `cpm.txt`, Virtual Console 응답 `state.json`·`catalog.json`, AVD 설정 `avd-config.ini` |
 | [probe](probe) | 시험 앱 소스. 앱 빌드에 포함되지 않는 독립 Gradle 프로젝트 |
 | [tools/soak.py](tools/soak.py) | 측정 로그 집계 |
-| [tools/recording_e2e.py](tools/recording_e2e.py) | 앱의 권한 요청부터 저장까지 자동 시험. 켜 둔 에뮬레이터와 디버그 APK 필요 |
+| [tools/recording_e2e.py](tools/recording_e2e.py) | 앱의 권한 요청부터 저장까지 자동 시험. 켜 둔 에뮬레이터와 디버그 APK 필요. `ANDROID_SERIAL`로 기기 지정 |
+| [tools/steering_probe.py](tools/steering_probe.py) | 일반 앱이 조향을 받는 경로와 권한을 측정. 시험 앱 필요 |
 
 저장소에 넣지 않은 것:
 

@@ -26,14 +26,20 @@ class TripSessionControllerTest {
         override suspend fun saveTrip(trip: TripRecord) {
             check(!failWrites) { "Storage failed" }
             val saved = snapshots[trip.id]
-            snapshots[trip.id] = TripSnapshot(trip, saved?.samples.orEmpty(), saved?.observations.orEmpty())
+            snapshots[trip.id] = TripSnapshot(trip, saved?.samples.orEmpty(), saved?.observations.orEmpty(), saved?.steering.orEmpty())
             publish()
         }
-        override suspend fun appendSamples(trip: TripRecord, samples: List<SpeedSample>, observations: List<Observation>) {
+        override suspend fun appendSamples(
+            trip: TripRecord,
+            samples: List<SpeedSample>,
+            observations: List<Observation>,
+            steering: List<SteeringSample>,
+        ) {
             check(!failWrites) { "Storage failed" }
             appendCalls++
             val saved = snapshots[trip.id]
-            snapshots[trip.id] = TripSnapshot(trip, saved?.samples.orEmpty() + samples, saved?.observations.orEmpty() + observations)
+            snapshots[trip.id] = TripSnapshot(trip, saved?.samples.orEmpty() + samples,
+                saved?.observations.orEmpty() + observations, saved?.steering.orEmpty() + steering)
             publish()
         }
         private fun publish() { records.value = snapshots.values.map { it.trip } }
@@ -257,6 +263,101 @@ class TripSessionControllerTest {
         val second = startRecording(controller)
         // Already moving when recording starts, so this is not a start from a stop.
         for (ms in 0L..3000L step 200) second.readings.emit(reading(ms, value = 15.0))
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        assertTrue(store.get(second.id)!!.observations.isEmpty())
+    }
+
+    private fun steeringAt(afterStartMs: Long, degrees: Double) = SteeringReading(nanos + afterStartMs * 1_000_000, degrees)
+
+    private suspend fun TestScope.startRecordingWithSteering(
+        controller: TripSessionController,
+        steering: kotlinx.coroutines.flow.Flow<SteeringReading>,
+    ): RecordingFixture {
+        controller.initialize()
+        val id = (controller.start() as CommandResult.Success).tripId
+        val readings = MutableSharedFlow<SpeedReading>(extraBufferCapacity = 64)
+        val job = launch { controller.record(readings, steering) }
+        runCurrent()
+        return RecordingFixture(id, readings, job)
+    }
+
+    @Test fun `steering is saved and a fast turn is found from steering and speed`() = runTest {
+        val controller = controller()
+        val steering = MutableSharedFlow<SteeringReading>(extraBufferCapacity = 64)
+        val trip = startRecordingWithSteering(controller, steering)
+        steering.emit(steeringAt(100, 0.0))
+        runCurrent()
+        for (ms in 200L..2000L step 200) trip.readings.emit(reading(ms, value = 11.1))
+        runCurrent()
+        steering.emit(steeringAt(2100, 60.0))
+        runCurrent()
+        for (ms in 2200L..6000L step 200) trip.readings.emit(reading(ms, value = 11.1))
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        val saved = store.get(trip.id)!!
+        assertEquals(listOf(SteeringSample(100, 0.0), SteeringSample(2100, 60.0)), saved.steering)
+        assertEquals(listOf(DrivingPattern.FAST_TURN), saved.observations.map { it.pattern })
+    }
+
+    @Test fun `without steering no left or right pattern is reported`() = runTest {
+        val controller = controller()
+        val trip = startRecording(controller)
+        for (ms in 200L..6000L step 200) trip.readings.emit(reading(ms, value = 11.1))
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        val saved = store.get(trip.id)!!
+        assertTrue(saved.steering.isEmpty())
+        assertTrue(saved.observations.isEmpty())
+    }
+
+    @Test fun `steering failure keeps speed recording and stops using the old angle`() = runTest {
+        val controller = controller()
+        val trip = startRecordingWithSteering(controller, kotlinx.coroutines.flow.flow {
+            emit(steeringAt(100, 60.0))
+            throw IllegalStateException("steering service died")
+        })
+        for (ms in 200L..6000L step 200) trip.readings.emit(reading(ms, value = 11.1))
+        runCurrent()
+        assertTrue(trip.job.isActive)
+        controller.finish()
+        runCurrent()
+        val saved = store.get(trip.id)!!
+        assertEquals(30, saved.samples.size)
+        assertTrue(saved.observations.none { it.pattern == DrivingPattern.FAST_TURN })
+        assertEquals(listOf(SteeringSample(100, 60.0)), saved.steering)
+    }
+
+    @Test fun `steering events at the same time do not block saving`() = runTest {
+        val controller = controller()
+        val steering = MutableSharedFlow<SteeringReading>(extraBufferCapacity = 64)
+        val trip = startRecordingWithSteering(controller, steering)
+        steering.emit(steeringAt(100, 1.0))
+        steering.emit(steeringAt(100, 2.0))
+        steering.emit(steeringAt(90, 3.0))
+        runCurrent()
+        trip.readings.emit(reading(1000))
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        assertEquals(listOf(SteeringSample(100, 1.0)), store.get(trip.id)!!.steering)
+        assertEquals(1, store.get(trip.id)!!.samples.size)
+    }
+
+    @Test fun `a new trip does not inherit the steering angle`() = runTest {
+        val controller = controller()
+        val steering = MutableSharedFlow<SteeringReading>(extraBufferCapacity = 64)
+        val first = startRecordingWithSteering(controller, steering)
+        steering.emit(steeringAt(100, 60.0))
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        first.job.join()
+        val second = startRecording(controller)
+        for (ms in 200L..6000L step 200) second.readings.emit(reading(ms, value = 11.1))
         runCurrent()
         controller.finish()
         runCurrent()
