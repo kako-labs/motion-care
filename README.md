@@ -4,6 +4,7 @@
 
 - Windows 새 노트북 설정: [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md)
 - 가상 데이터 HTML UI: [demo/mock-data-ui/index.html](demo/mock-data-ui/index.html)
+- 파일 하나로 공유하는 HTML: [demo/motion-care-demo.html](demo/motion-care-demo.html)
 - 기능 브랜치: `feature/history-ui-v2`
 
 
