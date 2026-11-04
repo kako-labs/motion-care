@@ -173,7 +173,9 @@ class FgService : Service() {
             val callback = object : CarPropertyManager.CarPropertyEventCallback {
                 override fun onChangeEvent(value: CarPropertyValue<*>) {
                     val now = SystemClock.elapsedRealtime()
-                    if (value.propertyId == VehiclePropertyIds.PERF_VEHICLE_SPEED) {
+                    if (value.propertyId == VehiclePropertyIds.PERF_STEERING_ANGLE) {
+                        Log.i(TAG, "car steering ${value.value} status=${value.status} ts=${value.timestamp} now=${SystemClock.elapsedRealtimeNanos()}")
+                    } else if (value.propertyId == VehiclePropertyIds.PERF_VEHICLE_SPEED) {
                         Log.i(TAG, "speed ${value.value} status=${value.status} dtMs=${now - lastSpeedAt}")
                         lastSpeedAt = now
                     } else {
@@ -191,6 +193,16 @@ class FgService : Service() {
             Log.i(TAG, "speed registered=$speedOk")
             val gearOk = manager.registerCallback(callback, VehiclePropertyIds.GEAR_SELECTION, 0f)
             Log.i(TAG, "gear registered=$gearOk")
+            for (name in listOf("android.car.permission.READ_CAR_STEERING", "android.car.permission.READ_STEERING_STATE", "pleos.car.permission.READ_CAR_STEERING", "android.car.permission.CAR_SPEED")) {
+                Log.i(TAG, "perm $name=${checkSelfPermission(name)}")
+            }
+            try {
+                Log.i(TAG, "steering config=${manager.getCarPropertyConfig(VehiclePropertyIds.PERF_STEERING_ANGLE)}")
+                val steeringOk = manager.registerCallback(callback, VehiclePropertyIds.PERF_STEERING_ANGLE, 10f)
+                Log.i(TAG, "steering registered=$steeringOk")
+            } catch (e: Exception) {
+                Log.e(TAG, "steering property failed: $e")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "car property failed: $e")
         }
@@ -204,7 +216,7 @@ class FgService : Service() {
             handler.postDelayed({
                 try {
                     instance.getSteeringWheel().registerSteeringWheelAngle(object : SteeringWheelAngleListener {
-                        override fun onSteeringWheelAngleUpdated(p0: Float?) { Log.i(TAG, "sdk steering $p0") }
+                        override fun onSteeringWheelAngleUpdated(p0: Float?) { Log.i(TAG, "sdk steering $p0 now=${SystemClock.elapsedRealtimeNanos()}") }
                         override fun onFailed(p0: Exception) { Log.e(TAG, "sdk steering failed $p0") }
                     })
                     instance.getGear().registerGearSelection(object : GearSelectionListener {

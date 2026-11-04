@@ -30,6 +30,7 @@ dependencies {
     implementation(libs.coroutines.android)
     testImplementation(libs.coroutines.test)
     implementation(libs.core.ktx)
+    implementation(libs.pleos.vehicle)
     testImplementation(libs.robolectric)
     testImplementation(libs.junit)
 }

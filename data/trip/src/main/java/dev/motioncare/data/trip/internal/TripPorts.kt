@@ -15,6 +15,7 @@ internal interface TripWriter {
         trip: TripRecord,
         samples: List<SpeedSample>,
         observations: List<Observation> = emptyList(),
+        steering: List<SteeringSample> = emptyList(),
     )
 }
 internal interface TripCommands {
@@ -29,12 +30,17 @@ internal interface VehicleDataSource {
 internal interface VehicleSignalSource {
     fun speeds(): Flow<SpeedReading>
 }
+internal interface SteeringSignalSource {
+    fun steering(): Flow<SteeringReading>
+}
 /** One speed event. The time comes from the same clock as [MonotonicClock]. */
 internal data class SpeedReading(
     val elapsedRealtimeNanos: Long,
     val metersPerSecond: Double?,
     val quality: Quality,
 )
+/** One steering change, timed by [MonotonicClock] when it arrives because the SDK gives no event time. */
+internal data class SteeringReading(val elapsedRealtimeNanos: Long, val degrees: Double)
 internal fun interface EpochClock { fun nowMs(): Long }
 internal fun interface MonotonicClock { fun nowNanos(): Long }
 internal fun interface TripIdFactory { fun next(): TripId }

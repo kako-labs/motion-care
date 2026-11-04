@@ -36,7 +36,7 @@ data class TripRecord(
     }
 }
 
-enum class DrivingPattern { RAPID_START, HARD_STOP, REPEATED_SPEED_CHANGE }
+enum class DrivingPattern { RAPID_START, HARD_STOP, REPEATED_SPEED_CHANGE, FAST_TURN, REPEATED_SWAY }
 
 /** A driving pattern seen in a trip. It describes vehicle motion, not a passenger's symptoms. */
 data class Observation(
@@ -54,10 +54,19 @@ data class Observation(
     }
 }
 
+/** A steering wheel angle in degrees, as the vehicle reports it. */
+data class SteeringSample(val elapsedMs: Long, val degrees: Double) {
+    init {
+        require(elapsedMs >= 0)
+        require(degrees.isFinite())
+    }
+}
+
 data class TripSnapshot(
     val trip: TripRecord,
     val samples: List<SpeedSample> = emptyList(),
     val observations: List<Observation> = emptyList(),
+    val steering: List<SteeringSample> = emptyList(),
 ) {
     init { require(samples.zipWithNext().all { (a, b) -> a.elapsedMs < b.elapsedMs }) }
 }

@@ -156,14 +156,21 @@ def main():
     time.sleep(3)
     http("PUT", "/vehicle/gear?gear=Drive")
     profile = []
-    profile += list(range(0, 61, 2))          # steady acceleration
-    profile += [60] * 20                      # cruise
-    profile += [60, 55, 50, 45, 40, 30, 20, 10, 0, 0, 0]  # stop
+    profile += [(v, 0) for v in range(0, 61, 2)]    # steady acceleration
+    profile += [(60, 0)] * 20                       # cruise
+    profile += [(v, 0) for v in (60, 55, 50, 45, 40, 30, 20, 10, 0, 0, 0)]  # stop
     for _ in range(4):
-        profile += [0, 10, 20, 30, 20, 10, 0]  # stop and go
+        profile += [(v, 0) for v in (0, 10, 20, 30, 20, 10, 0)]  # stop and go
+    profile += [(v, 0) for v in range(0, 41, 5)]    # gentle start for the steering part
+    profile += [(40, 0)] * 4
+    profile += [(40, 60)] * 5 + [(40, 0)] * 5       # a fast turn
+    for _ in range(3):
+        profile += [(40, 30)] * 3 + [(40, -30)] * 3  # left and right
+    profile += [(40, 0)] * 3
+    profile += [(v, 0) for v in range(40, -1, -5)]  # gentle stop
     started = time.time()
-    for speed in profile:
-        http("PUT", f"/vehicle/controls?speed={speed}&accelerator={15 if speed else 0}&brake=0&steering=0")
+    for speed, steering in profile:
+        http("PUT", f"/vehicle/controls?speed={speed}&accelerator={15 if speed else 0}&brake=0&steering={steering}")
         time.sleep(1)
     print(f"drove {time.time() - started:.0f}s, top 60 km/h, steps {len(profile)}")
     shot("84_nav_driving")
@@ -184,7 +191,7 @@ def main():
     print("tap detail:", tap("주행 상세"))
     time.sleep(3)
     shot("87_detail")
-    print("detail:", [t for t in texts() if "출처" in t or "샘플" in t or "패턴" in t][:3])
+    print("detail:", [t for t in texts() if "출처" in t or "샘플" in t or "패턴" in t or "좌우" in t][:4])
     time.sleep(1)
 
     print("\n--- saved data")
@@ -210,6 +217,10 @@ def main():
         print("speed km/h min/max:", round(min(speeds) * 3.6, 1), round(max(speeds) * 3.6, 1))
         print("quality:", {q: sum(1 for r in rows if r[2] == q) for q in {r[2] for r in rows}})
         print("strictly increasing:", all(g > 0 for g in gaps))
+    steering = db.execute("SELECT elapsed, degrees FROM steering_samples ORDER BY elapsed").fetchall()
+    print("steering samples:", len(steering))
+    if steering:
+        print("steering degrees min/max:", min(r[1] for r in steering), max(r[1] for r in steering))
     for row in db.execute("SELECT pattern, start_ms, end_ms, round(peak_mps2, 2), detector_version FROM observations ORDER BY start_ms"):
         print("observation:", row)
     print("screenshots:", OUT)

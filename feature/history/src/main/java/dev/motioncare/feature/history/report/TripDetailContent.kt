@@ -2,6 +2,7 @@ package dev.motioncare.feature.history.report
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import dev.motioncare.core.model.DataOrigin
 import dev.motioncare.core.model.DrivingPattern
 import dev.motioncare.core.model.Observation
 import dev.motioncare.core.model.TripSnapshot
@@ -22,6 +23,15 @@ private fun label(pattern: DrivingPattern) = when (pattern) {
     DrivingPattern.RAPID_START -> "빠른 출발"
     DrivingPattern.HARD_STOP -> "정차 직전 큰 감속"
     DrivingPattern.REPEATED_SPEED_CHANGE -> "반복 가감속"
+    DrivingPattern.FAST_TURN -> "빠른 회전"
+    DrivingPattern.REPEATED_SWAY -> "반복 좌우 움직임"
+}
+
+/** Left and right motion is estimated, and a missing signal must not read as "nothing happened". */
+internal fun steeringNote(snapshot: TripSnapshot): String? = when {
+    snapshot.trip.origin != DataOrigin.VEHICLE -> null
+    snapshot.steering.isEmpty() -> "조향 정보가 없어 좌우 움직임은 판정하지 않았습니다."
+    else -> "좌우 움직임은 조향각과 속도로 추정한 값입니다."
 }
 
 @Composable
@@ -34,6 +44,7 @@ fun TripDetailContent(snapshot: TripSnapshot?, loading: Boolean, onBack: () -> U
                 Text("출처: ${snapshot.trip.origin.name} · ${snapshot.trip.status.name}")
                 Text("샘플 ${snapshot.samples.size}개 · 버전 ${snapshot.trip.revision}")
                 Text(observationSummary(snapshot.observations))
+                steeringNote(snapshot)?.let { Text(it) }
                 // Real trips hold thousands of samples; a text row for each would stall the screen.
                 snapshot.samples.takeLast(MAX_SAMPLE_ROWS).forEach { sample ->
                     Text("${sample.elapsedMs} ms · ${sample.metersPerSecond ?: "정보 없음"} m/s · ${sample.quality}")

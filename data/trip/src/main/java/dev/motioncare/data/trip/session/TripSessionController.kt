@@ -1,12 +1,14 @@
 package dev.motioncare.data.trip.session
 
 import dev.motioncare.core.model.*
+import dev.motioncare.data.trip.analysis.LateralDetector
 import dev.motioncare.data.trip.analysis.PatternDetector
 import dev.motioncare.data.trip.internal.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -32,6 +34,10 @@ internal class TripSessionController(
     private val pending = mutableListOf<SpeedSample>()
     private val pendingObservations = mutableListOf<Observation>()
     private var detector = PatternDetector()
+    private var lateral = LateralDetector()
+    private val pendingSteering = mutableListOf<SteeringSample>()
+    private var lastSteeringElapsedMs = -1L
+    private var steeringDegrees: Double? = null
 
     // Called once per application graph; an activity rotation must not interrupt a trip.
     suspend fun initialize() = mutex.withLock {
@@ -58,6 +64,10 @@ internal class TripSessionController(
         pending.clear()
         pendingObservations.clear()
         detector = PatternDetector()
+        lateral = LateralDetector()
+        pendingSteering.clear()
+        lastSteeringElapsedMs = -1
+        steeringDegrees = null
         CommandResult.Success(record.id)
     }
 
@@ -78,6 +88,7 @@ internal class TripSessionController(
         check(initialized)
         val current = active() ?: return@withLock CommandResult.Rejected("기록 중인 주행이 없습니다.")
         pendingObservations += detector.finish()
+        pendingObservations += lateral.finish()
         val flushed = writePending(current)
         writer.saveTrip(flushed.copy(
             status = TripStatus.COMPLETED,
@@ -88,10 +99,35 @@ internal class TripSessionController(
     }
 
     /** Stores readings until the active trip ends or the caller is cancelled. */
-    suspend fun record(readings: Flow<SpeedReading>) = coroutineScope {
+    suspend fun record(readings: Flow<SpeedReading>, steering: Flow<SteeringReading> = emptyFlow()) = coroutineScope {
         val collecting = launch { readings.collect { accept(it) } }
+        val steeringJob = launch { collectSteering(steering) }
         reader.records.first { records -> records.none { it.status == TripStatus.RECORDING } }
         collecting.cancelAndJoin()
+        steeringJob.cancelAndJoin()
+    }
+
+    // A steering failure ends left and right analysis only. Speed keeps recording.
+    private suspend fun collectSteering(steering: Flow<SteeringReading>) {
+        try {
+            steering.collect { acceptSteering(it) }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            mutex.withLock {
+                steeringDegrees = null
+                pendingObservations += lateral.finish()
+            }
+        }
+    }
+
+    private suspend fun acceptSteering(reading: SteeringReading) = mutex.withLock {
+        active() ?: return@withLock
+        val elapsed = (reading.elapsedRealtimeNanos - startedAtNanos) / 1_000_000
+        steeringDegrees = reading.degrees
+        if (elapsed < 0 || elapsed <= lastSteeringElapsedMs) return@withLock
+        pendingSteering += SteeringSample(elapsed, reading.degrees)
+        lastSteeringElapsedMs = elapsed
     }
 
     private suspend fun accept(reading: SpeedReading) = mutex.withLock {
@@ -101,6 +137,9 @@ internal class TripSessionController(
         val sample = SpeedSample(elapsed, reading.metersPerSecond, reading.quality)
         pending += sample
         pendingObservations += detector.add(sample)
+        val speed = sample.metersPerSecond?.takeIf { sample.quality == Quality.VALID }
+        val degrees = steeringDegrees
+        pendingObservations += if (speed != null && degrees != null) lateral.add(elapsed, speed, degrees) else lateral.finish()
         lastElapsedMs = elapsed
         if (elapsed - lastWrittenElapsedMs < WRITE_INTERVAL_MS) return@withLock
         // A failed write keeps the readings pending so the next interval or finish retries them.
@@ -110,12 +149,13 @@ internal class TripSessionController(
     }
 
     private suspend fun writePending(current: TripRecord): TripRecord {
-        if (pending.isEmpty() && pendingObservations.isEmpty()) return current
+        if (pending.isEmpty() && pendingObservations.isEmpty() && pendingSteering.isEmpty()) return current
         val updated = current.copy(revision = current.revision + 1)
-        writer.appendSamples(updated, pending.toList(), pendingObservations.toList())
+        writer.appendSamples(updated, pending.toList(), pendingObservations.toList(), pendingSteering.toList())
         pending.lastOrNull()?.let { lastWrittenElapsedMs = it.elapsedMs }
         pending.clear()
         pendingObservations.clear()
+        pendingSteering.clear()
         return updated
     }
 

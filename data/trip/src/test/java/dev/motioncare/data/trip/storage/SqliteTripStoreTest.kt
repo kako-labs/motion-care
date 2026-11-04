@@ -130,6 +130,57 @@ class SqliteTripStoreTest {
         } finally { db.close(); context.deleteDatabase(name) }
     }
 
+    @Test fun `steering is saved with samples and read back in time order`() = runTest {
+        val name = name()
+        val db = MotionCareDatabase(context, name)
+        try {
+            val store = SqliteTripStore(db)
+            store.load()
+            val first = TripRecord(TripId("trip"), 1000, origin = DataOrigin.VEHICLE)
+            store.saveTrip(first)
+            store.appendSamples(first.copy(revision = 2), emptyList(), emptyList(), listOf(SteeringSample(20, -5.0), SteeringSample(10, 3.5)))
+            assertEquals(listOf(SteeringSample(10, 3.5), SteeringSample(20, -5.0)), store.get(TripId("trip"))!!.steering)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
+    @Test fun `version 2 database upgrades keeping observations and adds steering`() = runTest {
+        val name = name()
+        val old = object : SQLiteOpenHelper(context, name, null, 2) {
+            override fun onCreate(db: SQLiteDatabase) {
+                db.execSQL("""CREATE TABLE trips (
+                    id TEXT PRIMARY KEY, started INTEGER NOT NULL, ended INTEGER,
+                    status TEXT NOT NULL, vehicle_id TEXT, origin TEXT NOT NULL, revision INTEGER NOT NULL
+                )""")
+                db.execSQL("""CREATE TABLE speed_samples (
+                    trip_id TEXT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+                    elapsed INTEGER NOT NULL, speed REAL, quality TEXT NOT NULL,
+                    PRIMARY KEY (trip_id, elapsed)
+                )""")
+                db.execSQL("""CREATE TABLE observations (
+                    trip_id TEXT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+                    pattern TEXT NOT NULL, start_ms INTEGER NOT NULL, end_ms INTEGER NOT NULL,
+                    peak_mps2 REAL NOT NULL, detector_version TEXT NOT NULL,
+                    PRIMARY KEY (trip_id, pattern, start_ms)
+                )""")
+                db.execSQL("INSERT INTO trips VALUES ('trip', 1000, 2000, 'COMPLETED', NULL, 'VEHICLE', 3)")
+                db.execSQL("INSERT INTO observations VALUES ('trip', 'HARD_STOP', 100, 200, 2.1, 'pattern-v1')")
+            }
+            override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+        old.writableDatabase
+        old.close()
+        val db = MotionCareDatabase(context, name)
+        try {
+            val store = SqliteTripStore(db)
+            store.load()
+            val saved = store.get(TripId("trip"))!!
+            assertEquals(listOf(DrivingPattern.HARD_STOP), saved.observations.map { it.pattern })
+            assertTrue(saved.steering.isEmpty())
+            store.appendSamples(saved.trip.copy(revision = 4), emptyList(), emptyList(), listOf(SteeringSample(10, 1.0)))
+            assertEquals(listOf(SteeringSample(10, 1.0)), store.get(TripId("trip"))!!.steering)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
     @Test fun `version 1 database upgrades without losing trips`() = runTest {
         val name = name()
         val old = object : SQLiteOpenHelper(context, name, null, 1) {

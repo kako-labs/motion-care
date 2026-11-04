@@ -9,6 +9,7 @@ import dev.motioncare.data.trip.sample.SampleVehicleDataSource
 import dev.motioncare.data.trip.session.TripSessionController
 import dev.motioncare.data.trip.storage.SqliteTripStore
 import dev.motioncare.data.trip.vehicle.CarSpeedSource
+import dev.motioncare.data.trip.vehicle.SdkSteeringSource
 import dev.motioncare.data.trip.vehicle.UnavailableVehicleDataSource
 import java.util.UUID
 import kotlinx.coroutines.sync.Mutex
@@ -26,7 +27,7 @@ fun createVehicleTripData(context: Context): VehicleTripData {
     val store = SqliteTripStore(MotionCareDatabase(app, "motion-care-trips.db"))
     val controller = controller(store, UnavailableVehicleDataSource())
     val repository = DefaultTripRepository(store, controller)
-    return VehicleTripData(repository, DefaultVehicleRecorder(repository, controller, CarSpeedSource(app)))
+    return VehicleTripData(repository, DefaultVehicleRecorder(repository, controller, CarSpeedSource(app), SdkSteeringSource(app)))
 }
 
 private fun controller(store: SqliteTripStore, source: VehicleDataSource) = TripSessionController(
@@ -62,9 +63,10 @@ internal class DefaultVehicleRecorder(
     private val repository: TripRepository,
     private val controller: TripSessionController,
     private val signals: VehicleSignalSource,
+    private val steering: SteeringSignalSource,
 ) : VehicleRecorder {
     override suspend fun record() {
         repository.initialize()
-        controller.record(signals.speeds())
+        controller.record(signals.speeds(), steering.steering())
     }
 }

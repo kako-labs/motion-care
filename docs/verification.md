@@ -98,6 +98,24 @@ python3 scripts/dev.py verify --clean-home
 
 실제 차량 신호에서의 탐지 정확도, 소음이 섞인 신호의 기준값, 실기기의 v1 파일 업그레이드는 확인하지 못했습니다.
 
+## 조향 기반 좌우 움직임 검증
+
+2026-11-04, macOS ARM64 / JDK 17 / Android SDK 35에서 확인했습니다.
+
+| 검사 | 결과 |
+| --- | --- |
+| 전체 모듈 host 테스트 | 100개, 실패·오류 0 |
+| 전체 Android 모듈 lint | 통과 |
+| Android UI 테스트 | 2개 통과. 일반 기기에서 SDK를 불러오지 않음 |
+| v1·v2 DB 업그레이드 | Robolectric에서 기존 기록을 유지하고 조향 저장 가능 |
+| 조향 끊김 | 단위 테스트에서 속도 기록이 계속되고, 마지막 조향값으로 판정하지 않음 |
+| 권한 경로 | 에뮬레이터에서 `CarPropertyManager`는 불가, SDK는 `CAR_DRIVE` 선언만으로 동작. [기록](pleos-emulator/README.md#차량-신호) |
+| Pleos 에뮬레이터 종단 시험 | 조향 저장과 빠른 회전·반복 좌우 움직임 판정, 상세 화면 표시 통과. [결과](pleos-emulator/README.md#패턴-탐지) |
+| 분석 도구와 앱의 판정 | 앞뒤 12건은 시각·값까지 일치. 좌우 2건은 패턴이 일치하고 시각 차이 400ms 이내 |
+| 의존성 | Vehicle SDK와 하위 의존성(Hilt·Dagger·Gson 등) 추가. 기존 버전 변경은 UI 테스트 런타임의 `jsr305` 2.0.2→3.0.2 한 건 |
+
+실차 조향 신호, 실제 차량의 축거·조향비, App Market의 `CAR_DRIVE` 승인은 확인하지 못했습니다.
+
 ## 아직 별도 검증이 필요한 환경
 
 Windows/Linux 개인 컴퓨터에서의 설치·실행은 별도 확인이 필요합니다. Linux 검증은 위 GitHub-hosted Ubuntu 실행 결과입니다. 실제 Pleos 시스템·Vehicle SDK·차량 주행 제한은 샘플 테스트로 검증하지 않습니다. Pleos 에뮬레이터에서 별도로 측정한 결과는 [측정 기록](pleos-emulator/README.md)에 있고, 실차는 아직 확인하지 못했습니다.
