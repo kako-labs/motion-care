@@ -14,9 +14,9 @@ fun ActiveContent(
     onFinish: () -> Unit,
 ) {
     if (vehicleConnected) {
-        ScaffoldSection("운행 기록 중") {
-            Text("차량 속도를 기록하고 있습니다. 주행 중에는 이 화면이 가려질 수 있습니다.")
-            OutlinedButton(onClick = onFinish, enabled = !busy) { Text("운행 기록 종료") }
+        ScaffoldSection("자동 운행 기록 중") {
+            Text("모션케어는 내비게이션을 방해하지 않고 백그라운드에서 차량 속도를 기록해요.")
+            Text("정차 상태가 이어지면 기록도 자동으로 마무리돼요.")
         }
     } else {
         ScaffoldSection("샘플 주행 기록 중") {

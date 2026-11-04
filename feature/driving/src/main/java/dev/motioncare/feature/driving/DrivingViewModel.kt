@@ -18,22 +18,20 @@ class DrivingViewModel(private val repository: TripRepository) : ViewModel() {
     init {
         viewModelScope.launch {
             repository.records.collect { records ->
-                mutableState.update { it.copy(active = records.firstOrNull { trip ->
-                    trip.status == TripStatus.RECORDING
-                }) }
+                mutableState.update { state ->
+                    val active = records.firstOrNull { trip -> trip.status == TripStatus.RECORDING }
+                    val automaticallyFinished = state.active?.takeIf { active == null }?.id
+                    state.copy(active = active, finishedId = automaticallyFinished ?: state.finishedId)
+                }
             }
         }
         initialize()
     }
-    fun initialize() = perform {
-        repository.initialize()
-        mutableState.update { it.copy(ready = true) }
-    }
+    fun initialize() = perform { repository.initialize(); mutableState.update { it.copy(ready = true) } }
     fun start() = perform { handle(repository.start()) }
     fun capture() = perform { handle(repository.captureSample()) }
     fun finish() = perform {
-        val result = repository.finish()
-        handle(result)
+        val result = repository.finish(); handle(result)
         if (result is CommandResult.Success) mutableState.update { it.copy(finishedId = result.tripId) }
     }
     fun dismissFinished() { mutableState.update { it.copy(finishedId = null) } }

@@ -19,6 +19,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 private const val WRITE_INTERVAL_MS = 1_000L
+private const val START_SPEED_MPS = 1.0
+private const val START_CONFIRMATION_MS = 3_000L
+private const val STOP_SPEED_MPS = 0.35
+private const val END_CONFIRMATION_MS = 60_000L
 
 internal class TripSessionController(
     private val reader: TripReader,
@@ -108,6 +112,52 @@ internal class TripSessionController(
         CommandResult.Success(current.id)
     }
 
+    /** Monitors speed continuously, creating and finishing trips without an in-app start button. */
+    suspend fun monitor(
+        readings: Flow<SpeedReading>,
+        steering: Flow<SteeringReading> = emptyFlow(),
+        presenter: GuidancePresenter? = null,
+        guidanceEnabled: () -> Boolean = { true },
+    ) = coroutineScope {
+        var movingSinceNanos: Long? = null
+        var stoppedSinceNanos: Long? = null
+        val steeringJob = launch { collectSteering(steering) }
+        try {
+            readings.collect { reading ->
+                val speed = reading.metersPerSecond.takeIf { reading.quality == Quality.VALID }
+                val recording = mutex.withLock { active() != null }
+                if (!recording) {
+                    stoppedSinceNanos = null
+                    if (speed != null && speed >= START_SPEED_MPS) {
+                        val since = movingSinceNanos ?: reading.elapsedRealtimeNanos.also { movingSinceNanos = it }
+                        if ((reading.elapsedRealtimeNanos - since) / 1_000_000 >= START_CONFIRMATION_MS) {
+                            start()
+                            mutex.withLock {
+                                guidance = presenter?.let { GuidancePolicy(guidanceEnabled, it::show) }
+                            }
+                            movingSinceNanos = null
+                            accept(reading)
+                        }
+                    } else {
+                        movingSinceNanos = null
+                    }
+                } else {
+                    accept(reading)
+                    if (speed != null && speed <= STOP_SPEED_MPS) {
+                        val since = stoppedSinceNanos ?: reading.elapsedRealtimeNanos.also { stoppedSinceNanos = it }
+                        if ((reading.elapsedRealtimeNanos - since) / 1_000_000 >= END_CONFIRMATION_MS) {
+                            finish()
+                            stoppedSinceNanos = null
+                        }
+                    } else {
+                        stoppedSinceNanos = null
+                    }
+                }
+            }
+        } finally {
+            steeringJob.cancelAndJoin()
+        }
+    }
     /** Stores readings until the active trip ends or the caller is cancelled. */
     suspend fun record(
         readings: Flow<SpeedReading>,
@@ -145,7 +195,6 @@ internal class TripSessionController(
         pendingSteering += SteeringSample(elapsed, reading.degrees)
         lastSteeringElapsedMs = elapsed
     }
-
     private suspend fun accept(reading: SpeedReading) = mutex.withLock {
         val current = active() ?: return@withLock
         val elapsed = (reading.elapsedRealtimeNanos - startedAtNanos) / 1_000_000

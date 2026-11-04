@@ -17,7 +17,7 @@
 
 화면은 `TripReader`·SQL·VehicleDataSource에 접근하지 않습니다. 이들은 데이터 모듈 내부 구현입니다.
 
-같은 파일의 `VehicleRecorder`는 `app`의 `TripRecordingService`만 사용합니다. `record(presenter)`는 기록 중인 주행이 끝나거나 호출자가 취소할 때까지 차량 속도를 저장하고, 카드를 띄울 때 `GuidancePresenter`를 호출합니다.
+같은 파일의 `VehicleRecorder`는 `app`의 `TripRecordingService`만 사용합니다. 유효 속도가 1.0m/s 이상으로 3초 이어지면 운행을 자동 생성하고, 0.35m/s 이하가 60초 이어지면 자동 완료합니다. 미지원·누락 속도는 0으로 추정하지 않습니다. 기록 중에는 속도와 조향을 저장하고 카드 조건이 맞으면 `GuidancePresenter`를 호출합니다.
 
 조립부는 자동차 기기에서 `createVehicleTripData(context)`, 그 외 기기에서 `createSampleTripRepository(context)`를 호출합니다. 실제 기록은 `motion-care-trips.db`에 저장해 합성 샘플과 섞이지 않습니다.
 
@@ -25,12 +25,17 @@
 
 | API | 의미 |
 | --- | --- |
-| people | 저장된 사람 목록 StateFlow. 추가한 순서 |
+| people | 저장된 사람과 이동 선호 목록 StateFlow. 추가한 순서 |
+| seating | 다음 운행에 적용할 현재 좌석 배치 StateFlow |
+| participants | 운행 시작 시 고정한 운전자·동승자·좌석 스냅샷 StateFlow |
+| feedback | 운행별·동승자별 편안함 평가 StateFlow |
 | initialize() | 저장소 로드. 여러 번 호출해도 한 번 초기화 |
-| addPerson(displayName) | 앞뒤 공백을 제거해 저장하고 ID가 붙은 프로필 반환. 빈 이름은 IllegalArgumentException |
+| addPerson / updatePerson | 사람 등록·이름·구분·민감도·불편 상황·휴식/온도 선호 저장 |
+| placePerson / clearSeat | 좌석 배치 변경. 어린이는 운전석에 배치하지 않음 |
+| assignCurrentSeating(tripId) | 현재 좌석을 해당 운행의 참여자 스냅샷으로 저장 |
+| saveFeedback | 1~5점 평가·선택 이유·직접/보호자 응답을 동승자별 저장 |
 
-조립부는 `createProfileRepository(context)`만 호출합니다. 차량·주행별 인물 연결·평가·설정은 기능 착수 시 이 모듈에 추가합니다.
-
+조립부는 `createProfileRepository(context)`만 호출합니다. `TripRecordingService`는 차량 운행이 자동 시작되는 시점에 `assignCurrentSeating`을 호출하므로 화면이 뒤에 있어도 운행 원본과 참여자 스냅샷이 같은 TripId로 연결됩니다. 참여자 저장 실패는 차량 원본 기록을 중단시키지 않습니다.
 ## 데이터 의미
 
 - 모델 정의: `core/model/src/main/java/dev/motioncare/core/model/`.
@@ -86,8 +91,8 @@ DrivingViewModel의 busy는 주행 명령에만 적용합니다. 상세 조회�
 
 Application의 AppGraph가 도메인별 Repository를 한 개씩 소유합니다. Activity 재생성은 주행을 끊지 않습니다. 새 프로세스에서 미완료 원본은 INTERRUPTED로 보존합니다. 화면 종료를 자동 운행 종료로 해석하지 않습니다.
 
-주행 원본의 스키마는 v4입니다. 이전 파일은 `observations`, `steering_samples`, `guidance_events` 테이블만 추가하고 기존 주행과 샘플을 유지합니다. 프로필은 별도 파일 `motion-care-profile.db`를 사용하며 스키마 버전을 따로 관리합니다. 트랜잭션 저장 후 목록을 갱신하고 읽기·쓰기는 IO dispatcher에서 처리합니다. 차량 샘플·관찰·조향·안내 결과는 약 1초마다 같은 트랜잭션으로 묶어 추가 저장하므로, 프로세스가 강제 종료되면 마지막 약 1초의 값은 잃을 수 있습니다. 보관 기간 정책은 아직 없습니다.
+주행 원본의 스키마는 v4입니다. 이전 파일은 `observations`, `steering_samples`, `guidance_events` 테이블을 순차 추가하고 기존 주행과 샘플을 유지합니다. 프로필은 별도 파일 `motion-care-profile.db`의 스키마 v2를 사용합니다. v1의 사람 행은 명시적 마이그레이션으로 유지하고, v2에는 이동 선호·현재 좌석·운행 참여자·동승자 평가를 저장합니다. 프로필 수정은 UPDATE로 처리해 연결된 좌석·참여자·평가를 보존합니다. 트랜잭션 저장 후 목록을 갱신하고 읽기·쓰기는 IO dispatcher에서 처리합니다. 차량 샘플·관찰·조향·안내 결과는 약 1초마다 같은 트랜잭션으로 묶어 추가 저장하므로, 프로세스가 강제 종료되면 마지막 약 1초의 값은 잃을 수 있습니다. 보관 기간 정책은 아직 없습니다.
 
-## 후속 계약
+## 분석·표시 계약
 
-차량·인물 연결·평가·설정 관련 최소 모델은 남겨 두었으나 실행 API는 구현하지 않았습니다. [초안](future-contracts.md)은 설계 참고용입니다. 실제 질문·응답자·삭제·단위·지원 조건을 정한 후 기능과 함께 확장합니다. 현재 앱에 구현되지 않은 기능을 빈 성공 응답으로 꾸미지 않습니다.
+거리와 10분당 패턴 빈도는 `Quality.VALID` 속도 샘플만 사용합니다. 인접 표본 간격이 5초를 넘으면 그 구간은 거리와 유효 분석 시간에서 모두 제외하고, 유효 분석 시간이 1분 미만이면 정규화 빈도를 표시하지 않습니다. 조언 비교는 선택된 운전자의 완료 운행만 사용합니다. 이 값은 차량 움직임 관찰치이며 탑승자의 멀미 여부나 원인을 뜻하지 않습니다.

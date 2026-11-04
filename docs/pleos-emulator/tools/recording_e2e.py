@@ -141,8 +141,7 @@ def main():
     shot("80_ready")
     print("ready screen:", [t for t in texts() if "운행" in t or "개발" in t or "샘플" in t or "안내" in t])
 
-    print("\n--- deny")
-    print("tap start:", tap("운행 기록 시작"))
+    print("\n--- deny automatic recording permissions")
     time.sleep(3)
     shot("81_permission")
     print("dialog:", texts()[:8])
@@ -157,8 +156,9 @@ def main():
     print("after deny:", [t for t in texts() if "권한" in t or "운행" in t])
     print("trips db exists:", "motion-care-trips.db" in shell(f"run-as {PKG} --user 10 ls databases 2>&1"))
 
-    print("\n--- allow")
-    print("tap start:", tap("운행 기록 시작"))
+    print("\n--- allow automatic recording permissions")
+    shell(f"pm clear --user 10 {PKG}")
+    app_screen()
     time.sleep(3)
     print("dialog:", texts()[:8])
     allow_ids = ("com.android.permissioncontroller:id/permission_allow_button",
@@ -172,7 +172,7 @@ def main():
             break
     time.sleep(2)
     shot("83_recording")
-    print("recording screen:", [t for t in texts() if "운행" in t])
+    print("recording screen:", [t for t in texts() if "운행" in t or "자동" in t])
     print("service:", service_state())
     print("grants:", re.findall(r"(android\.car\.permission\.CAR_SPEED|android\.permission\.POST_NOTIFICATIONS): granted=(\w+)", shell(f"dumpsys package {PKG}")))
 
@@ -214,10 +214,10 @@ def main():
     print("\n--- finish while parked")
     http("PUT", "/vehicle/controls?speed=0&accelerator=0&brake=30&steering=0")
     http("PUT", "/vehicle/gear?gear=Park")
-    time.sleep(3)
+    print("waiting 65s for automatic trip completion")
+    time.sleep(65)
     app_screen()
     shot("85_back_in_app")
-    print("tap finish:", tap("운행 기록 종료"))
     time.sleep(3)
     print("service after finish:", service_state())
     shot("86_finished")

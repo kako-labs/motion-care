@@ -71,6 +71,6 @@ internal class DefaultVehicleRecorder(
 ) : VehicleRecorder {
     override suspend fun record(presenter: GuidancePresenter) {
         repository.initialize()
-        controller.record(signals.speeds(), steering.steering(), presenter) { guidance.enabled.value }
+        controller.monitor(signals.speeds(), steering.steering(), presenter) { guidance.enabled.value }
     }
 }

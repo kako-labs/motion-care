@@ -44,7 +44,9 @@ flowchart TD
 - DrivingViewModel: 초기화·기록 중 상태·명령 처리·완료 ID.
 - HistoryViewModel: 기록 목록 관찰, 구독 수명에 맞춰 StateFlow 유지.
 - TripDetailViewModel: 선택 ID의 로딩/본문/없음/오류, 재시도. 이전 조회가 늦게 끝나도 새 선택을 덮어쓰지 않음.
-- ProfileViewModel: 사람 목록 관찰, 로딩·오류·재시도.
+- DepartureViewModel: 사람·좌석·운전자별 출발 조언을 함께 관찰.
+- PersonDetailViewModel: 한 사람의 운전 분석·동승 선호·평가 이력을 관찰.
+- AdviceViewModel / TripExperienceViewModel: 조언 근거와 운행 상세·완료 평가를 동일한 저장 원본에서 계산.
 - app: 메인 화면과 객체 조립. 상세의 busy 상태를 주행 명령과 공유하지 않음.
 
 Navigation Compose의 back stack을 사용합니다. 평가 자리에서 뒤로 가면 이전 상세로 복귀하며, 각 상세 ViewModel은 해당 destination에 묶입니다. DrivingViewModel은 앱의 기록 UI 흐름 수명을 갖습니다.
@@ -65,13 +67,15 @@ DB 파일은 data 모듈마다 따로 둡니다. 두 사람이 스키마 버전�
 
 AppGraph는 명시적 생성자 주입으로 Repository를 조립합니다. 프로젝트가 작고 생성 지점이 하나여서 DI 프레임워크는 추가하지 않았습니다. 공식 문서는 Hilt를 권장하면서 수동 주입 방법도 설명합니다. 의존성 수명 관리가 복잡해지면 Hilt 도입을 검토할 수 있습니다.
 
+프로필 DB v2는 기존 사람 행을 유지하는 명시적 마이그레이션을 사용하고, 현재 좌석과 운행별 좌석 스냅샷을 분리합니다. 운행 도중 현재 좌석이 바뀌어도 과거 운행 참여자는 바뀌지 않습니다.
+
 현재 SQLiteOpenHelper는 스키마가 작은 샘플 원본 저장 구현을 보존한 선택입니다. Room이 필수라는 뜻도, 자체 데이터 프레임워크를 만들겠다는 뜻도 아닙니다. 프로필·삭제·마이그레이션 기능을 확장할 때 기존 데이터 보존 계획과 함께 저장 구현을 선택합니다.
 
 ## 차량 환경에서 확인한 조건
 
 [에뮬레이터 측정 기록](pleos-emulator/README.md)에서 구조에 영향을 주는 내용입니다. 실차에서는 확인하지 못했습니다.
 
-- **주행 기록:** 일반 서비스는 앱이 뒤로 가고 60초 뒤 종료되므로 `TripRecordingService`(포그라운드)에서 돌립니다. Repository가 Application 범위의 AppGraph에 있어 서비스와 화면이 같은 객체를 씁니다.
+- **주행 기록:** 일반 서비스는 앱이 뒤로 가고 60초 뒤 종료되므로 `TripRecordingService`(포그라운드)에서 돌립니다. 차량 속도로 운행 시작·종료를 자동 감지하며 시작 시 현재 좌석을 해당 TripId의 참여자 스냅샷으로 저장합니다. Repository가 Application 범위의 AppGraph에 있어 서비스와 화면이 같은 객체를 씁니다.
 - **기기 구분:** AppGraph는 자동차 기기에서만 차량 입력을 조립합니다. 그 외 기기는 `android.car` 클래스를 불러오지 않고 합성 샘플로 동작합니다.
 - **주행 중 화면:** Activity에 `distractionOptimized`를 선언해야 가려지지 않습니다. 선언한 화면 아래에 일반 화면이 있으면 가려지는데, 현재 Activity가 하나뿐이라 이 문제는 생기지 않습니다. 현재 Manifest에는 아직 선언이 없습니다.
 - **창 변화:** Pleos 문서에 따르면 앱은 화면 분할과 다른 앱 실행으로 앞뒤로 자주 오갑니다. 화면 종료를 운행 종료로 해석하지 않는 현재 원칙을 유지합니다.

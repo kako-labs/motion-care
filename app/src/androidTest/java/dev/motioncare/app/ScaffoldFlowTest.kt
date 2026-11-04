@@ -20,28 +20,28 @@ class ScaffoldFlowTest {
         node.performClick()
     }
 
-    @Test fun profileScreenReadsTheProfileStoreAndReturnsHome() {
-        click("프로필 연결 자리")
-        awaitText("등록된 사람이 없습니다.")
-        click("돌아가기")
-        awaitText("샘플 주행 시작")
+    @Test fun departureScreenSurvivesActivityRecreationWithoutAStartButton() {
+        awaitText("출발 전 안내")
+        compose.onAllNodesWithText("운행 시작", substring = true).assertCountEquals(0)
+
+        compose.activityRule.scenario.recreate()
+
+        awaitText("출발 전 안내")
+        compose.onNodeWithText("전체 기록").assertExists()
     }
 
-    @Test fun sampleTripSurvivesRecreationAndFeedbackReturnsToItsDetail() {
-        click("샘플 주행 시작")
-        for (version in 1..3) {
-            click("샘플 신호 추가")
-            awaitText("원본 버전: $version")
-        }
-        compose.activityRule.scenario.recreate()
-        awaitText("원본 버전: 3")
-        click("샘플 주행 종료")
-        click("주행 상세")
-        awaitText("샘플 3개")
-        click("평가 연결 자리")
-        awaitText("연결된 주행:")
-        click("돌아가기")
-        awaitText("샘플 3개")
-        compose.onNodeWithText("출처: SYNTHETIC · COMPLETED").assertExists()
+    @Test fun aPersonCanBeAddedAndOpenedAsAnIndividualProfile() {
+        awaitText("출발 전 안내")
+        click("＋ 사람 추가")
+        compose.onNode(hasSetTextAction()).performTextInput("테스트 운전자")
+        click("추가")
+        awaitText("테스트 운전자")
+
+        val people = compose.onAllNodesWithText("테스트 운전자").fetchSemanticsNodes()
+        compose.onAllNodesWithText("테스트 운전자")[people.lastIndex].performClick()
+
+        awaitText("운전할 때")
+        compose.onNodeWithText("동승할 때").assertExists()
+        compose.onNodeWithText("최근 운행").assertExists()
     }
 }

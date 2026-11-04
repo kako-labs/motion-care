@@ -1,8 +1,7 @@
 package dev.motioncare.feature.history.profile
 
 import androidx.lifecycle.viewModelScope
-import dev.motioncare.core.model.PersonId
-import dev.motioncare.core.model.PersonProfile
+import dev.motioncare.core.model.*
 import dev.motioncare.data.profile.ProfileRepository
 import java.io.IOException
 import kotlinx.coroutines.*
@@ -21,9 +20,17 @@ class ProfileViewModelTest {
 
     private class FakeRepository : ProfileRepository {
         override val people = MutableStateFlow<List<PersonProfile>>(emptyList())
+        override val seating = MutableStateFlow(SeatingPlan())
+        override val participants = MutableStateFlow<List<TripParticipants>>(emptyList())
+        override val feedback = MutableStateFlow<List<TripFeedback>>(emptyList())
         var failInitialize = false
         override suspend fun initialize() { if (failInitialize) throw IOException("disk") }
-        override suspend fun addPerson(displayName: String) = error("Not used by this screen yet")
+        override suspend fun addPerson(displayName: String, kind: PersonKind) = error("Not used")
+        override suspend fun updatePerson(profile: PersonProfile) = error("Not used")
+        override suspend fun placePerson(personId: PersonId, seat: SeatPosition) = error("Not used")
+        override suspend fun clearSeat(seat: SeatPosition) = error("Not used")
+        override suspend fun assignCurrentSeating(tripId: TripId) = error("Not used")
+        override suspend fun saveFeedback(feedback: TripFeedback) = error("Not used")
     }
 
     @Test fun `screen starts loading then shows an empty list`() = runTest(dispatcher) {

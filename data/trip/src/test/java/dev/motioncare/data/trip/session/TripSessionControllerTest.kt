@@ -446,4 +446,54 @@ class TripSessionControllerTest {
         runCurrent()
         assertTrue(job.isCompleted)
     }
+    @Test fun `monitor starts after sustained movement and finishes after sustained stop`() = runTest {
+        val controller = controller()
+        controller.initialize()
+        val readings = MutableSharedFlow<SpeedReading>(extraBufferCapacity = 16)
+        val job = launch { controller.monitor(readings) }
+        runCurrent()
+
+        readings.emit(reading(0, 2.0))
+        readings.emit(reading(1_000, 2.0))
+        readings.emit(reading(2_000, 2.0))
+        runCurrent()
+        assertTrue(store.records.value.isEmpty())
+
+        readings.emit(reading(3_000, 2.0))
+        runCurrent()
+        val id = store.records.value.single().id
+        assertEquals(TripStatus.RECORDING, store.get(id)!!.trip.status)
+
+        readings.emit(reading(4_000, 0.0))
+        readings.emit(reading(64_000, 0.0))
+        runCurrent()
+        val saved = store.get(id)!!
+        assertEquals(TripStatus.COMPLETED, saved.trip.status)
+        assertEquals(listOf(3_000L, 4_000L, 64_000L), saved.samples.map { it.elapsedMs })
+        job.cancel()
+    }
+
+    @Test fun `monitor ignores unavailable speed and a brief stop`() = runTest {
+        val controller = controller()
+        controller.initialize()
+        val readings = MutableSharedFlow<SpeedReading>(extraBufferCapacity = 20)
+        val job = launch { controller.monitor(readings) }
+        runCurrent()
+
+        readings.emit(reading(0, null, Quality.UNAVAILABLE))
+        readings.emit(reading(5_000, null, Quality.UNAVAILABLE))
+        readings.emit(reading(6_000, 2.0))
+        readings.emit(reading(9_000, 2.0))
+        runCurrent()
+        val id = store.records.value.single().id
+
+        readings.emit(reading(10_000, 0.0))
+        readings.emit(reading(20_000, 2.0))
+        readings.emit(reading(21_000, 0.0))
+        readings.emit(reading(81_000, 0.0))
+        runCurrent()
+
+        assertEquals(TripStatus.COMPLETED, store.get(id)!!.trip.status)
+        job.cancel()
+    }
 }
