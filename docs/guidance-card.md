@@ -1,6 +1,6 @@
 # 주행 중 안내 카드의 근거
 
-`GuidanceLimits`의 값과 `guidanceCopy`의 문구마다 출처와 확인 수준을 적습니다. 값을 바꾸면 이 문서와 [`detection-limits/measure_guidance.py`](detection-limits/measure_guidance.py)의 `Rule`을 함께 고칩니다.
+`GuidanceLimits`의 값, `guidanceCopy`의 문구, `GuidanceSoundPlayer`의 소리 규칙마다 출처와 확인 수준을 적습니다. 값을 바꾸면 이 문서와 [`detection-limits/measure_guidance.py`](detection-limits/measure_guidance.py)의 `Rule`을 함께 고칩니다.
 
 ## 먼저 알아 둘 점
 
@@ -57,6 +57,39 @@
 
 처음 병합한 카드(PR #7)는 움직임만 전하는 관찰 문구였습니다. G02-F04를 확인하지 못한 판단이어서 같은 날 권장 문구로 바꾸고, 접수 초안([proposal.md](proposal.md))도 행동 하나를 권하는 내용으로 되돌렸습니다.
 
+## 소리
+
+카드가 뜨면 소리를 한 번 냅니다. 시작 화면의 "안내 소리"에서 알림음과 음성 중 고르고, "주행 중 안내"를 끄면 카드와 소리가 함께 꺼집니다. 소리는 부가 기능이라 재생하지 못해도 카드는 그대로 뜹니다.
+
+```text
+카드 표시 ─ 통화·내비 음성·음성 비서가 재생 중인가? ─ 예: 소리만 생략
+   │
+   ├─ 오디오 포커스 거부 ─────────────── 소리만 생략
+   └─ 재생
+        ├─ 포커스를 잃음 ─────────────── 즉시 멈춤
+        ├─ 내비 음성 등이 새로 시작됨 ─── 즉시 멈춤
+        ├─ 음성 실패 ──────────────────── 알림음으로 대체
+        └─ 끝남 또는 15초 경과 ─────────── 포커스 반납
+```
+
+| 항목 | 현재 | 유형 | 근거 |
+| --- | --- | --- | --- |
+| 알림음과 음성을 운전자가 선택 | 기본은 알림음 | 제품 판단 | 2차 회의가 "음성은 별로일 것 같다"에서 알림음 방향으로 정리됐고 "운전자가 선택" 안도 나옴. 2026-11-05 주행 담당 결정 |
+| 음성 엔진 | Pleos TextToSpeech SDK 3.3.1, `ON_DEVICE`, 한국어 | 문서·실측 | 온디바이스 모드는 앱 등록이 필요 없다고 문서에 적혀 있고, 에뮬레이터에서 등록과 인터넷 권한 없이 재생됨. 카드 문구 하나에 약 3초, 첫 재생은 약 4.5초 |
+| 알림음의 앞 묵음 | 180ms | Pleos 문서 | 음성 안내 재생 앞에 150~200ms 묵음을 오디오 데이터에 넣도록 권장. 음성은 SDK가 재생해 앱에서 넣을 수 없음 |
+| 알림음 | 784Hz→1047Hz 두 음, 0.46초 | 제품 판단 | 회의의 "또롱". 파일 없이 코드로 생성. 연구 근거 없음 |
+| 오디오 용도 | `USAGE_NOTIFICATION` | 문서·제품 판단 | Pleos 표에서 NOTIFICATION 문맥. 내비·안전 용도로 위장하지 않음. SDK 기본값은 미디어(측정) |
+| 포커스 | `GAIN_TRANSIENT_MAY_DUCK`, 재생 전 요청, 끝나면 반납 | Pleos 문서 | 오디오 포커스 가이드가 재생 전 요청과 공존 문맥의 `MAY_DUCK`을 요구. SDK는 포커스를 잡지 않음(측정) |
+| 포커스를 잃으면 멈춤 | 모든 손실 | 실측·Pleos 문서 | 다른 앱이 독점 포커스를 가져가도 TTS는 끝까지 재생됨(측정). 가이드는 Gleo 음성 명령 중 즉시 멈춤을 요구 |
+| 통화·내비 음성·음성 비서와 겹치지 않음 | 시작 전 확인, 재생 중 감시 | 실측·제품 판단 | 내비 음성이나 통화 포커스가 있어도 포커스가 허용되고 내비 음성과 함께 재생됨(측정). 포커스만으로 막히지 않아 앱에서 확인. 턴 안내를 가리면 안 된다는 제품 판단 |
+| 재생 시간 제한 | 15초 | 구현 판단 | 서비스가 끝을 알리지 않아도 포커스를 돌려주기 위함 |
+| 음성 실패 시 | 알림음 | 구현 판단 | 선택지 도감의 "TTS 불가 시 대체" 방침. 사전 녹음 대신 이미 있는 알림음을 씀 |
+
+- **음성과 알림음의 효과:** Larsson·Niemand(2015)의 시뮬레이터 실험(14명, 메뉴 탐색)에서 압축 음성은 시선 횟수와 시간을 줄였고, 음악적 알림음은 줄이지 못했습니다. 메뉴 탐색 실험이고 압축 음성이라 우리 카드에 그대로 옮기지 않습니다. 우리 소리가 시선을 줄이는지는 시험하지 않았습니다.
+- **재생 결과는 저장하지 않음:** `SHOWN`은 카드 기준입니다. 소리의 시작·생략·멈춤은 logcat의 `GuidanceSound` 태그에만 남습니다.
+- **SDK 일부를 뺌:** 서버 모드 로그인용 `universal-access`를 의존성에서 제외했습니다. 온디바이스 모드는 이 라이브러리 없이 동작했고(측정), 빼면 Material·네이티브 라이브러리가 들어오지 않아 시험 앱 APK가 25MB에서 5.3MB로 줄고 16KB 정렬 lint 오류도 사라집니다. 서버 모드를 쓰려면 다시 넣어야 합니다.
+- **인터넷 권한 제거:** SDK가 추가하는 `INTERNET`을 Manifest에서 지웠습니다. 온디바이스 모드는 권한 없이 재생됐습니다(측정).
+
 ## 기록
 
 `TripSnapshot.guidance`에 `GuidanceEvent`로 저장합니다. 샘플과 같은 트랜잭션입니다. `guidance_events` 테이블에는 일부러 기본 키를 두지 않았습니다. 기록용 값이 겹쳤다고 주행 저장이 실패하면 안 되기 때문입니다.
@@ -102,6 +135,9 @@ python3 -I docs/detection-limits/measure_guidance.py <VED_*_week.csv 폴더> <�
 | 오버레이로 내비 위에 직접 그리기 | 일반 사용자가 권한을 줄 설정 화면이 없음(측정). P12 작업 카드도 우회를 금지 |
 | 일반 알림 | 내비 위에 뜨지 않음(측정) |
 | 움직임만 전하는 관찰 문구 | 팀 명세의 "행동 하나"와 다르고, 무엇을 바꾸면 좋을지 알려 주지 않음 |
+| 알림 채널의 소리 | 채널 소리를 지정해도 재생 기록이 없음(측정) |
+| Android 표준 TTS API | Pleos 음성 서비스를 지정하면 초기화가 실패함(측정). 문서가 안내하는 경로도 아님 |
+| TTS 서버·하이브리드 모드 | 서버 모드는 앱 등록 없이 오류. 등록에 필요한 SDK 접근 신청이 문서상 아직 준비 중이고 인터넷 권한과 로그인 라이브러리가 필요함 |
 
 ## 출처와 확인 수준
 
@@ -114,15 +150,24 @@ python3 -I docs/detection-limits/measure_guidance.py <VED_*_week.csv 폴더> <�
 | [Kim 외 (2018), IMWUT](https://doi.org/10.1145/3287053) | 운전자 29명, 말 걸기 좋은 시점 분류 정확도 0.74 | 초록만. 음성 서비스 맥락 |
 | Bosetti 외 (2014) | 사람 운전 가감속 분포 | [탐지 문서](detection-thresholds.md) 참고 |
 | Notion 최종 기획 §7, §10.3, §12, §15, §17, 화면별 기능 분해 G02-F04, P12 작업 카드 | 표현 단계, 교통 상황 한계, 10분당 단위, 권장 문구, 조언 시점, 카드 내용, 조작 없음, 표시 결과 기록, 우회 금지 | 팀 문서 |
-| Pleos 에뮬레이터 측정: [메시지 카드](pleos-emulator/README.md#메시지-카드로-안내-띄우기), [앱의 안내 카드](pleos-emulator/README.md#앱의-안내-카드) | 카드 표시, 수명, 길이 제한, 끄기 | v2.1.0 측정. 실차 아님 |
+| Pleos 에뮬레이터 측정: [메시지 카드](pleos-emulator/README.md#메시지-카드로-안내-띄우기), [앱의 안내 카드](pleos-emulator/README.md#앱의-안내-카드), [소리와 음성](pleos-emulator/README.md#소리와-음성) | 카드 표시, 수명, 길이 제한, 끄기, 소리 재생과 겹침 | v2.1.0 측정. 실차 아님 |
+| [Pleos TextToSpeech SDK](https://document.pleos.ai/en/docs/pleos-only/connect-sdk-pleos/TextToSpeech/intro), [권한](https://document.pleos.ai/en/docs/pleos-only/connect-sdk-pleos/TextToSpeech/declaring-permissions), [지원 언어](https://document.pleos.ai/en/docs/pleos-only/connect-sdk-pleos/TextToSpeech/set-locale) | 모드 3종과 등록 조건, `TTS_SERVICE` 권한, 한국어 지원 | 공식 문서 |
+| [Pleos 오디오 포커스 가이드](https://document.pleos.ai/en/docs/pleos-only/vehicle-app-developer-guide/audio-focus-development-guide/audio-focus-development) | 재생 전 포커스 요청, 공존 문맥의 `MAY_DUCK`, 문맥과 용도의 대응 | 공식 문서. 상호작용 표는 이미지라 글로 설명된 칸만 확인 |
+| [Pleos 음성 안내 앞 묵음 가이드](https://document.pleos.ai/en/docs/pleos-only/vehicle-app-developer-guide/voice-guidance-preroll-silence-guide) | 150~200ms 묵음을 오디오 데이터에 넣기 | 공식 문서 |
+| [Larsson·Niemand (2015), Traffic Injury Prevention 16](https://doi.org/10.1080/15389588.2015.1020111) | 14명, 메뉴 탐색 중 압축 음성은 시선을 줄이고 음악적 알림음은 줄이지 못함 | 초록만. 메뉴 탐색 실험 |
+| Notion 2차 회의 전사 12:00~12:30, 18:07~18:29, 차량 데이터 검토, 선택지 도감 | 음성 대신 알림음 방향, 운전자 선택 안, 건강 보조 앱의 SAFETY·EMERGENCY 사용 금지, TTS 불가 시 대체 | 팀 문서. 자동 전사라 발언자는 특정하지 않음 |
 
-Pleos의 운전자 주의 분산 문서에서는 글자 수나 시간 수치를 찾지 못했습니다.
+Pleos의 운전자 주의 분산 문서에서는 글자 수나 시간 수치를 찾지 못했습니다. 소리에 대해서는 오디오 포커스 정책을 따르라는 내용만 있고 음량·길이·횟수 수치는 없습니다.
 
 ## 확인하지 못한 것
 
 - 실차 신호에서 카드가 뜨는 빈도와 시점
 - App Market의 `CATEGORY_MESSAGE` 사용 승인
-- 소리. 채널 중요도를 높게 두었으나 실제 소리가 나는지 확인하지 못함
+- 실차 스피커의 음량과 음질. 음성은 2026-11-05에 주행 담당이 에뮬레이터 출력(노트북 스피커)을 듣고 잘 나오는 것을 확인했고, 앱에서 재생한 알림음은 듣고 확인하지 않음
+- 음악이 실제로 줄어드는지. `MAY_DUCK`을 요청해도 음악을 재생하는 앱에 포커스 변화가 전달되지 않았음
+- 실제 통화 중의 동작. 통화 포커스로만 시험했고 `AudioManager.mode` 분기는 에뮬레이터에서 재현하지 못함
+- App Market의 `TTS_SERVICE` 승인. My Project의 TextToSpeech SDK 접근은 문서상 "Coming Soon"임
+- 음성으로 듣는 것이 운전 부담이나 멀미에 미치는 영향
 - 경로 안내 화면을 가리는지. 에뮬레이터 내비에 경로가 표시되지 않음
 - 권장 문구를 주행 중 보여 주는 것의 안전성, 문구대로 운전이 바뀌는지, 동승자에게 주는 효과, 어린이 동승 상황, 한국 주행 자료
 - 알림을 허용하지 않은 경우의 대안. 지금은 `FAILED`로만 기록하며, 기획의 앱 안 배너와 알림 센터 대안은 App Market 답을 받은 뒤 정합니다.

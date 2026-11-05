@@ -7,7 +7,7 @@
 - Pleos Connect v2.1.0, API 34, arm64, user build에서 측정했습니다.
 - 실차와 App Market 심사 결과가 아닙니다.
 - 시험 앱의 권한은 adb로 강제 부여했습니다. 앱의 속도 권한은 실제 요청 창으로 확인했습니다. 마켓 승인은 확인하지 못했습니다.
-- 소리와 음성 안내는 확인하지 못했습니다. 첫 측정은 소리를 끈 상태(`-no-audio`)였고, 메시지 카드 측정은 소리를 켰지만 재생 여부를 들을 수 없었습니다.
+- 소리는 재생 상태와 출력 프레임으로 확인했습니다. 음성은 주행 담당이 에뮬레이터 출력을 듣고 잘 나오는 것을 확인했고, 앱에서 재생한 알림음은 듣고 확인하지 않았습니다. 실차의 음량과 음질은 모릅니다. ([소리와 음성](#소리와-음성))
 - 시험하지 않은 항목: 자동 시작, 앱 닫기 제스처, 시동 껐다 켜기, 앱 두 개 동시 표시, 3분을 넘는 기록, 공조 제어 호출
 
 ## 결과
@@ -44,7 +44,7 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 | 긴 문구 | 두 줄(줄당 약 30자)까지만 보이고 말줄임표 없이 잘림 | [72_long_copy](shots/72_long_copy.png) |
 | P 기어 | 같은 카드가 표시됨 | [73_msg_park](shots/73_msg_park.png) |
 
-- **소리:** 미확인입니다. `dumpsys notification`의 `mSoundNotificationKey`는 비어 있었고 로그에서도 재생 흔적을 찾지 못했지만, 실제로 소리가 나지 않는다는 뜻은 아닙니다.
+- **소리:** 카드 알림만으로는 재생 기록이 없습니다. 측정은 [소리와 음성](#소리와-음성)에 있습니다.
 - **경로 안내 화면:** 에뮬레이터 내비에 지도와 경로가 표시되지 않아, 회전 안내를 가리는지는 확인하지 못했습니다.
 - **내비 앱 내부 표시:** NaviHelper 문서의 API는 경로 요청, 경유지 추가, 내비 화면 호출, 이벤트 수신이며, 내비 화면 안에 문구를 넣는 기능은 찾지 못했습니다.
 
@@ -98,6 +98,43 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 - **본 문구:** 앱이 실제로 띄운 문구는 정차 직전 문구 하나입니다. 나머지 4개는 시험 앱으로 같은 제목과 카테고리의 카드를 40km/h 내비 위에 띄웠고, 5개 모두 한 줄로 표시됐습니다. 시험 앱 카드는 아이콘이 다릅니다. ([가장 긴 문구](shots/88_guidance_longest_copy.png))
 - **값의 흔들림:** 같은 입력의 다른 실행에서 최고 가속도 6.17m/s²가 한 번 저장됐습니다. 에뮬레이터 속도가 계단처럼 바뀌어 계산 구간이 짧을 때 값이 커지는 것으로 보이며, 재현해 확인하지는 않았습니다.
 
+### 소리와 음성
+
+2026-11-05에 측정했습니다. 소리를 켠 에뮬레이터(`-no-audio` 없음)에서 [측정 앱](sound-probe)과 실제 앱을 돌렸습니다. 재생 여부는 `dumpsys audio`의 재생 상태, `media.audio_flinger`의 출력 프레임, SDK의 음량 콜백으로 판단했습니다. 소리를 귀로 듣지는 못했습니다.
+
+| 시험 | 결과 | 증거 |
+| --- | --- | --- |
+| 카드 알림의 소리 | 채널 소리가 기본값이든 직접 지정하든 재생 기록 없음. `mSoundNotificationKey`도 비어 있음. 소리는 앱이 직접 내야 함 | [sound_first](logs/sound_first.log) A |
+| 음성 서비스 | `ai.pleos.playground.caas` 4.2.10이 내장됨. `pleos.car.permission.TTS_SERVICE`의 보호 수준은 normal이라 선언만으로 동작 | |
+| TTS `ON_DEVICE`, 한국어 | 앱 등록 없이 재생. 20자 문구가 약 3초, 첫 재생은 약 4.5초. `onStart`는 호출 직후 와서 실제 재생 시작을 뜻하지 않음 | [sound_first](logs/sound_first.log) B |
+| TTS `HYBRID`, 등록 없음 | 온디바이스로 재생 | [sound_first](logs/sound_first.log) G |
+| TTS `SERVER`, 등록 없음 | `onError UNKNOWN` | [sound_first](logs/sound_first.log) G |
+| 재생 용도 | SDK 기본값은 `USAGE_MEDIA`. `setAudioAttributes`로 지정한 값이 그대로 적용됨 | [sound_first](logs/sound_first.log) B |
+| SDK의 오디오 포커스 | 재생 중 포커스 보유자에 음성 서비스가 없음. 포커스는 앱이 잡아야 함 | [sound_second](logs/sound_second.log) 1 |
+| 40km/h, 내비 앞 | TTS 재생됨. 카드와 함께 재생 가능 | [sound_first](logs/sound_first.log) F |
+| 다른 앱 음악 + 우리 `MAY_DUCK` | 포커스 허용, 함께 재생. 음악 앱에 포커스 변화가 전달되지 않음. 실제로 줄어드는지는 모름 | [sound_second](logs/sound_second.log) 2 |
+| 다른 앱 내비 음성 + 우리 `MAY_DUCK` | 포커스 허용, 내비 음성과 TTS가 함께 재생됨. 앱이 직접 막아야 함 | [sound_second](logs/sound_second.log) 3 |
+| 다른 앱 통화 포커스 + 우리 `MAY_DUCK` | `USAGE_NOTIFICATION` 요청이 허용됨. 같은 앱이 통화 포커스를 잡은 시험에서는 내비 용도도 허용되고 시스템 소리 용도(`SONIFICATION`)만 거부됨 | [sound_second](logs/sound_second.log) 4, [sound_first](logs/sound_first.log) C |
+| 재생 중 다른 앱이 독점 포커스 | 우리 쪽에 `LOSS_TRANSIENT`가 오지만 TTS는 끝까지 재생됨. 앱이 직접 멈춰야 함 | [sound_second](logs/sound_second.log) 5 |
+| `INTERNET` 권한 제거 | `ON_DEVICE` 재생 | [sound_second](logs/sound_second.log) 6 |
+| 표준 `android.speech.tts` API, 같은 엔진 지정 | 초기화 실패(status -1) | [sound_second](logs/sound_second.log) 7 |
+| 로그인 라이브러리(`universal-access`) 제외 | `ON_DEVICE` 재생, APK 25MB→5.3MB, 네이티브 라이브러리 없음 | [sound_without_login_library](logs/sound_without_login_library.log) |
+
+실제 앱의 결과입니다. 40km/h, 내비 앞에서 패턴을 반복시켜 카드를 띄웠습니다. `tools/sound_e2e.py`로 재현합니다.
+
+| 시나리오 | 소리 기록 | 재생 |
+| --- | --- | --- |
+| 알림음 | 시작 → 끝남 | 앱이 `USAGE_NOTIFICATION` 재생 |
+| 음성 | 시작 → 끝남 | 음성 서비스가 `USAGE_NOTIFICATION` 재생 |
+| 내비 음성이 재생 중일 때 카드 | 생략. 카드는 표시 | 내비 음성만 재생 |
+| 음성 중 내비 음성 시작 | 멈춤 → 끝남. 카드는 표시 | 앞부분만 재생 |
+| 음성 중 다른 앱이 독점 포커스 | 멈춤 → 끝남. 카드는 표시 | 앞부분만 재생 |
+| 선택 유지와 끄기 | 앱을 다시 켜도 음성 유지. "주행 중 안내"를 끄면 선택 항목이 사라짐 | [89_guidance_sound_choice](shots/89_guidance_sound_choice.png) |
+
+전체 기록: [sound_e2e](logs/sound_e2e.log). 실제 통화(`AudioManager.mode`)와 음악이 줄어드는지는 재현하지 못했습니다.
+
+- **일찍 멈춘 음성:** `speak` 후 약 0.6초 안에 `stop`하면 서비스의 재생 기록이 `started`로 남습니다. 17초 뒤에도 남아 있었고, 다음 음성을 끝까지 재생한 뒤에는 사라졌습니다. 1.2초 뒤 멈추면 남지 않았습니다. 소리가 나는지는 듣지 못했고, 앱에서 피할 방법은 찾지 못해 그대로 둡니다. ([sound_stop_early](logs/sound_stop_early.log))
+
 ### 백그라운드 기록
 
 | 조건 | 결과 | 증거 |
@@ -147,11 +184,13 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | 위치 | 내용 |
 | --- | --- |
 | [shots](shots) | 원본 캡처. `sheet1`~`sheet6`은 번호순 모음 |
-| [logs](logs) | 측정 로그 `soak_*.log`, 앱 차단 서비스 덤프 `cpm.txt`, Virtual Console 응답 `state.json`·`catalog.json`, AVD 설정 `avd-config.ini` |
+| [logs](logs) | 측정 로그 `soak_*.log`, `sound_*.log`, 앱 차단 서비스 덤프 `cpm.txt`, Virtual Console 응답 `state.json`·`catalog.json`, AVD 설정 `avd-config.ini` |
 | [probe](probe) | 시험 앱 소스. 앱 빌드에 포함되지 않는 독립 Gradle 프로젝트 |
+| [sound-probe](sound-probe) | 소리 측정 앱과 측정 스크립트 `measure_first.py`·`measure_second.py`. 앱 빌드에 포함되지 않는 독립 Gradle 프로젝트 |
 | [tools/soak.py](tools/soak.py) | 측정 로그 집계 |
 | [tools/recording_e2e.py](tools/recording_e2e.py) | 앱의 권한 요청부터 안내 카드와 저장까지 자동 시험. 켜 둔 에뮬레이터와 디버그 APK 필요. `ANDROID_SERIAL`로 기기 지정 |
 | [tools/steering_probe.py](tools/steering_probe.py) | 일반 앱이 조향을 받는 경로와 권한을 측정. 시험 앱 필요 |
+| [tools/sound_e2e.py](tools/sound_e2e.py) | 실제 앱의 알림음·음성과 겹침 처리 자동 시험. 소리 측정 앱 APK 필요 |
 
 저장소에 넣지 않은 것:
 
@@ -170,6 +209,7 @@ Android Studio SDK Manager의 SDK Update Sites에 아래 주소를 추가하고,
 
 ```sh
 emulator -avd <AVD 이름> -no-window -no-snapshot -no-audio -no-boot-anim -gpu host -netdelay none -netspeed full
+# 소리를 측정할 때는 -no-audio를 뺍니다.
 ```
 
 ### 시험 앱
@@ -206,6 +246,18 @@ curl -X PUT 'http://127.0.0.1:8088/vehicle/gear?gear=Drive'
 curl -X PUT 'http://127.0.0.1:8088/vehicle/controls?speed=40&accelerator=15&brake=0&steering=8'
 curl 'http://127.0.0.1:8088/vehicle/state'
 ```
+
+### 소리 측정
+
+저장소 루트에서 실행합니다. 측정 앱은 `-PprobeId`로 패키지를 바꿔 다른 앱 역할을 하고, `-PnoNet`은 인터넷 권한을, `-PnoUa`는 로그인 라이브러리를 뺍니다.
+
+```sh
+./gradlew -p docs/pleos-emulator/sound-probe -PprobeId=dev.soundother :app:assembleDebug
+./gradlew :app:assembleDebug
+ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/sound_e2e.py docs/pleos-emulator/sound-probe/app/build/outputs/apk/debug/app-debug.apk
+```
+
+`measure_first.py <출력 폴더>`는 `dev.soundprobe`를, `measure_second.py <APK 폴더>`는 `main.apk`(`dev.soundprobe`), `other.apk`(`dev.soundother`), `nonet.apk`(`dev.soundnonet`)를 씁니다.
 
 ### 로그 집계
 

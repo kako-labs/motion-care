@@ -1,0 +1,17 @@
+Build: -PprobeId=dev.soundnoua -PnoNet=1 -PnoUa=1, APK 5313821 bytes, no native libraries.
+[dev.soundnoua] created
+[dev.soundnoua] act tts:ON_DEVICE
+[dev.soundnoua] tts init success mode=ON_DEVICE +6ms
+[dev.soundnoua] act attrs:5
+[dev.soundnoua] act speak
+[dev.soundnoua] speak len=20
+[dev.soundnoua] tts onReady +5ms
+[dev.soundnoua] tts onStart +6ms
+[dev.soundnoua] tts onDone +2972ms rms count=5 min=3228.840988251463 max=5381.890458821808
+[dev.soundnoua] act speak
+[dev.soundnoua] speak len=19
+[dev.soundnoua] tts onReady +3ms
+[dev.soundnoua] tts onStart +8ms
+[dev.soundnoua] tts onDone +2570ms rms count=4 min=3551.3298574046526 max=5256.184111778912
+[dev.soundnoua] act release
+crash buffer lines: 0

@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+ai.pleos.playground:TextToSpeech:3.3.1=debugRuntimeClasspath,debugUnitTestRuntimeClasspath
 ai.pleos.playground:Vehicle:2.3.2=debugRuntimeClasspath,debugUnitTestRuntimeClasspath
 ai.pleos.playground:vehicle-aidl:1.1.1=debugRuntimeClasspath,debugUnitTestRuntimeClasspath
 ai.pleos.playground:vehicle-data:1.1.11=debugRuntimeClasspath,debugUnitTestRuntimeClasspath

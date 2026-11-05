@@ -10,6 +10,7 @@ robolectric = "4.14.1"
 
 [libraries]
 pleos-vehicle = { module = "ai.pleos.playground:Vehicle", version = "2.3.2" }
+pleos-tts = { module = "ai.pleos.playground:TextToSpeech", version = "3.3.1" }
 coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version = "2.9.0" }
 compose-ui-test = { module = "androidx.compose.ui:ui-test-junit4" }

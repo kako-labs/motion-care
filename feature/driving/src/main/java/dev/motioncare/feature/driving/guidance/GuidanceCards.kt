@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import dev.motioncare.core.model.DrivingPattern
+import dev.motioncare.data.trip.GuidanceAudio
 import dev.motioncare.data.trip.GuidancePresenter
 
 internal const val GUIDANCE_TITLE = "모션케어"
@@ -39,6 +40,7 @@ internal fun guidanceCopy(pattern: DrivingPattern): String = when (pattern) {
 class NotificationGuidancePresenter(
     context: Context,
     @param:DrawableRes private val smallIcon: Int,
+    private val audio: GuidanceAudio,
 ) : GuidancePresenter {
     private val context = context.applicationContext
 
@@ -60,6 +62,7 @@ class NotificationGuidancePresenter(
             .setTimeoutAfter(CARD_LIFETIME_MS)
             .build()
         manager.notify(NOTIFICATION_ID, card)
+        audio.play(guidanceCopy(pattern))
         return true
     }
 }

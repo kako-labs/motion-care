@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+ai.pleos.playground:TextToSpeech:3.3.1=debugAndroidTestCompileClasspath,debugAndroidTestRuntimeClasspath,debugCompileClasspath,debugRuntimeClasspath,debugUnitTestCompileClasspath,debugUnitTestRuntimeClasspath
 ai.pleos.playground:Vehicle:2.3.2=debugAndroidTestCompileClasspath,debugAndroidTestRuntimeClasspath,debugCompileClasspath,debugRuntimeClasspath,debugUnitTestCompileClasspath,debugUnitTestRuntimeClasspath
 ai.pleos.playground:vehicle-aidl:1.1.1=debugAndroidTestRuntimeClasspath,debugRuntimeClasspath,debugUnitTestRuntimeClasspath
 ai.pleos.playground:vehicle-data:1.1.11=debugAndroidTestRuntimeClasspath,debugRuntimeClasspath,debugUnitTestRuntimeClasspath
@@ -37,7 +38,7 @@ androidx.viewpager:viewpager:1.0.0=debugAndroidTestRuntimeClasspath,debugRuntime
 com.almworks.sqlite4java:sqlite4java:1.0.392=debugUnitTestCompileClasspath,debugUnitTestRuntimeClasspath
 com.google.auto.value:auto-value-annotations:1.11.0=debugUnitTestCompileClasspath,debugUnitTestRuntimeClasspath
 com.google.code.findbugs:jsr305:3.0.2=debugAndroidTestRuntimeClasspath,debugRuntimeClasspath,debugUnitTestCompileClasspath,debugUnitTestRuntimeClasspath
-com.google.code.gson:gson:2.10.1=debugAndroidTestRuntimeClasspath,debugRuntimeClasspath,debugUnitTestRuntimeClasspath
+com.google.code.gson:gson:2.10.1=debugAndroidTestCompileClasspath,debugAndroidTestRuntimeClasspath,debugCompileClasspath,debugRuntimeClasspath,debugUnitTestCompileClasspath,debugUnitTestRuntimeClasspath
 com.google.dagger:dagger-lint-aar:2.51.1=debugAndroidTestRuntimeClasspath,debugRuntimeClasspath,debugUnitTestRuntimeClasspath
 com.google.dagger:dagger:2.51.1=debugAndroidTestRuntimeClasspath,debugRuntimeClasspath,debugUnitTestRuntimeClasspath
 com.google.dagger:hilt-android:2.51.1=debugAndroidTestRuntimeClasspath,debugRuntimeClasspath,debugUnitTestRuntimeClasspath

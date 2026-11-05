@@ -1,0 +1,20 @@
+Stopping speech soon after speak(), measured with dev.soundnoua. Brackets list players that dumpsys audio reports as started.
+start of test: []
+stop 0.2 s after speak, fresh app
+  stop +2s: [speech service USAGE_NOTIFICATION]
+  stop +17s: [speech service USAGE_NOTIFICATION]
+  service log: generate complete, stop, fadeout, stopped
+  release +2s: [speech service USAGE_NOTIFICATION]
+stop 0.6 s after speak, fresh app
+  stop +2s: [speech service USAGE_NOTIFICATION]
+  stop +17s: [speech service USAGE_NOTIFICATION]
+  service log: generate complete, stop, fadeout, stopped, released, complete
+  release +2s: [speech service USAGE_NOTIFICATION]
+stop 1.2 s after speak, fresh app
+  stop +2s: []
+  stop +17s: []
+  service log: generate complete, stop, fadeout, stopped, released, complete
+  release +2s: []
+a later full speak
+  after full speak: []
+  release +2s: []
