@@ -20,33 +20,19 @@
       <div class="home-layout">
         <div class="cockpit-zone">
           <div class="speed-lines"><i></i><i></i><i></i></div>
-          <div class="people-dock panel">
-            <div class="dock-title"><b>등록 프로필</b><small>프로필을 좌석으로 끌어 놓으세요</small></div>
-            <div class="dock-people" id="peopleDock"></div>
-          </div>
           <div class="car-stage">
-            <div class="car" aria-label="5인승 차량 좌석 배치">
-              <div class="car-shell">
-                <i class="wheel wheel-rl"></i><i class="wheel wheel-fl"></i><i class="wheel wheel-rr"></i><i class="wheel wheel-fr"></i>
-                <div class="rear-deck"><span></span></div>
-                <div class="hood"><span class="hood-line"></span></div>
-                <div class="headlamp headlamp-top"></div><div class="headlamp headlamp-bottom"></div>
-                <div class="car-glass">
-                  <div class="rear-glass"></div><div class="windshield"></div>
-                  <div class="cabin">
-                    <div class="seating">
-                      <div class="rear-row">
-                        <button class="seat" data-seat="rear-left" aria-label="뒷좌석 왼쪽"></button>
-                        <button class="seat" data-seat="rear-center" aria-label="뒷좌석 가운데"></button>
-                        <button class="seat" data-seat="rear-right" aria-label="뒷좌석 오른쪽"></button>
-                      </div>
-                      <div class="console"><span></span></div>
-                      <div class="front-row">
-                        <button class="seat" data-seat="front-passenger" aria-label="앞좌석"></button>
-                        <button class="seat driver-seat" data-seat="driver" aria-label="운전석"></button>
-                      </div>
-                    </div>
-                  </div>
+            <div class="car" aria-label="5인승 차량 좌석 배치, 위쪽이 차 앞">
+              <div class="car-windshield"></div>
+              <div class="car-rear-glass"></div>
+              <div class="seat-grid">
+                <div class="front-row">
+                  <button class="seat front" data-seat="driver" aria-label="운전석"></button>
+                  <button class="seat front" data-seat="front-passenger" aria-label="조수석"></button>
+                </div>
+                <div class="rear-row">
+                  <button class="seat" data-seat="rear-left" aria-label="뒤 왼쪽"></button>
+                  <button class="seat" data-seat="rear-center" aria-label="뒤 가운데"></button>
+                  <button class="seat" data-seat="rear-right" aria-label="뒤 오른쪽"></button>
                 </div>
               </div>
             </div>
@@ -90,6 +76,8 @@
   <nav aria-label="주요 화면">
     <button class="nav active" data-go="home"><span>⌂</span>출발 안내</button><button class="nav" data-go="records"><span>◷</span>운행 기록</button><button class="nav" data-go="profiles"><span>♙</span>프로필</button><button class="nav" id="feedback"><span>♡</span>완료 평가</button>
   </nav>
+  <div class="drawer-scrim" id="drawerScrim" data-close-drawer></div>
+  <aside class="seat-drawer" id="seatDrawer" aria-hidden="true" aria-label="좌석에 앉을 사람 선택"></aside>
 </div>
 <div class="toast" id="toast"><b>운행 후 평가</b><span>서아 3/5 · 가장 불편했던 상황: 출발·정차</span></div>
 <script src="app.js"></script>

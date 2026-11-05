@@ -16,7 +16,6 @@ const labels = { stop: '정차 직전 속도 변화', start: '출발 직후 속�
 const previous = { stop: 2.4, start: 1.4, repeat: .9, curve: .6, sway: .3 };
 let selectedTrip = 't1';
 let selectedPerson = 'driver';
-let pendingPerson = null;
 const defaultSeats = { 'rear-left': null, 'rear-center': null, 'rear-right': 'passenger', 'front-passenger': null, driver: 'driver' };
 let seatAssignments = { ...defaultSeats };
 try {
@@ -28,61 +27,65 @@ function tripButton(t) {
   return `<button class="trip" data-trip="${t.id}"><div class="trip-top"><b>${t.date}</b><span class="rating">평가 ${t.feedback}/5</span></div><p>${t.duration}분 · ${t.distance.toFixed(1)}km<br>${t.driver} 운전 · ${t.passenger} 동승</p></button>`;
 }
 
-const seatLabels = { 'rear-left': '뒷좌석', 'rear-center': '뒷좌석', 'rear-right': '뒷좌석', 'front-passenger': '앞좌석', driver: '운전석' };
-
-function renderPeopleDock() {
-  document.querySelector('#peopleDock').innerHTML = Object.values(demo.people).map(p => `
-    <button class="dock-person ${pendingPerson === p.id ? 'selected' : ''}" draggable="true" data-person="${p.id}" aria-label="${p.name} 좌석 배치">
-      <span class="mini-avatar">${p.emoji}</span><span><b>${p.name}</b><small>${p.role}</small></span><i>⋮⋮</i>
-    </button>`).join('');
-}
+const seatLabels = { 'rear-left': '뒤 왼쪽', 'rear-center': '뒤 가운데', 'rear-right': '뒤 오른쪽', 'front-passenger': '조수석', driver: '운전석' };
+let openSeat = null;
 
 function renderSeats() {
   document.querySelectorAll('[data-seat]').forEach(seat => {
     const seatId = seat.dataset.seat;
-    const personId = seatAssignments[seatId];
-    const person = personId ? demo.people[personId] : null;
+    const person = seatAssignments[seatId] ? demo.people[seatAssignments[seatId]] : null;
     seat.classList.toggle('filled', Boolean(person));
-    seat.classList.toggle('selected', Boolean(person && pendingPerson === person.id));
-    seat.innerHTML = person
-      ? `<span class="seat-person" draggable="true" data-person="${person.id}"><span class="avatar">${person.emoji}</span><b>${person.name}</b><small>${seatLabels[seatId]}</small></span>`
-      : `<span class="empty-seat"><span class="empty-plus">＋</span><span class="empty-label">${seatLabels[seatId]}</span></span>`;
+    seat.classList.toggle('selected', openSeat === seatId);
+    seat.innerHTML = `<span class="seat-circle">${person ? `<span class="avatar">${person.emoji}</span>` : '<span class="seat-plus">＋</span>'}</span><span class="seat-name">${person ? person.name : seatLabels[seatId]}</span>`;
   });
+}
+
+function canSit(person, seatId) {
+  return (seatId === 'driver') === (person.role === '운전자');
+}
+
+function renderDrawer() {
+  const drawer = document.querySelector('#seatDrawer');
+  if (!openSeat) return;
+  const occupantId = seatAssignments[openSeat];
+  const occupant = occupantId ? demo.people[occupantId] : null;
+  drawer.innerHTML = `
+    <div class="drawer-head"><h2>${seatLabels[openSeat]}</h2><button class="btn icon" data-close-drawer aria-label="닫기">✕</button></div>
+    ${occupant ? `<div class="occupant"><span class="avatar">${occupant.emoji}</span><b>${occupant.name}</b><button class="btn primary" data-open-person="${occupant.id}">프로필</button><button class="btn" data-clear-seat>비우기</button></div>` : ''}
+    ${Object.values(demo.people).filter(p => p.id !== occupantId).map(p => {
+      const here = occupantId === p.id;
+      const elsewhere = Object.keys(seatAssignments).find(key => key !== openSeat && seatAssignments[key] === p.id);
+      return `<button class="drawer-person ${here ? 'here' : ''}" data-pick="${p.id}" ${here || !canSit(p, openSeat) ? 'disabled' : ''}>
+        <span class="avatar">${p.emoji}</span><span><b>${p.name}</b><small class="${elsewhere ? 'seated' : ''}">${elsewhere ? seatLabels[elsewhere] : p.role}</small></span><i>${here ? '✓' : ''}</i>
+      </button>`;
+    }).join('')}`;
+}
+
+function setDrawer(seatId) {
+  openSeat = seatId;
+  renderDrawer();
+  document.querySelector('#seatDrawer').classList.toggle('open', Boolean(seatId));
+  document.querySelector('#seatDrawer').setAttribute('aria-hidden', String(!seatId));
+  document.querySelector('#drawerScrim').classList.toggle('open', Boolean(seatId));
+  renderSeats();
 }
 
 function saveSeats() {
   try { localStorage.setItem('motion-care-demo-seats', JSON.stringify(seatAssignments)); } catch (_) {}
 }
 
-function showSeatNotice(message) {
-  const node = document.querySelector('#toast');
-  node.querySelector('b').textContent = '좌석 배치';
-  node.querySelector('span').textContent = message;
-  node.classList.add('show');
-  clearTimeout(window.toastTimer);
-  window.toastTimer = setTimeout(() => node.classList.remove('show'), 2200);
-}
-
 function assignPerson(personId, seatId) {
   const person = demo.people[personId];
-  if (!person) return;
-  if ((seatId === 'driver') !== (person.role === '운전자')) {
-    showSeatNotice('운전자는 운전석에, 동승자는 나머지 좌석에 배치해주세요.');
-    return;
-  }
+  if (!person || !canSit(person, seatId)) return;
   const previousSeat = Object.keys(seatAssignments).find(key => seatAssignments[key] === personId);
   const displaced = seatAssignments[seatId];
   if (previousSeat) seatAssignments[previousSeat] = displaced || null;
   seatAssignments[seatId] = personId;
-  pendingPerson = null;
   saveSeats();
-  renderPeopleDock();
-  renderSeats();
 }
 
 function renderHome() {
   document.querySelector('#homeTrips').innerHTML = demo.trips.map(tripButton).join('');
-  renderPeopleDock();
   renderSeats();
 }
 
@@ -139,50 +142,17 @@ function showToast() {
   clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => node.classList.remove('show'), 2200);
 }
 
-document.addEventListener('dragstart', e => {
-  const person = e.target.closest('[data-person]');
-  if (!person) return;
-  pendingPerson = person.dataset.person;
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', pendingPerson);
-  document.querySelectorAll(`[data-person="${pendingPerson}"]`).forEach(node => node.classList.add('selected'));
-});
-
-document.addEventListener('dragover', e => {
-  const seat = e.target.closest('[data-seat]');
-  if (!seat) return;
-  e.preventDefault();
-  seat.classList.add('drop-target');
-  e.dataTransfer.dropEffect = 'move';
-});
-
-document.addEventListener('dragleave', e => {
-  const seat = e.target.closest('[data-seat]');
-  if (seat && !seat.contains(e.relatedTarget)) seat.classList.remove('drop-target');
-});
-
-document.addEventListener('drop', e => {
-  const seat = e.target.closest('[data-seat]');
-  if (!seat) return;
-  e.preventDefault();
-  document.querySelectorAll('.drop-target').forEach(node => node.classList.remove('drop-target'));
-  assignPerson(e.dataTransfer.getData('text/plain') || pendingPerson, seat.dataset.seat);
-});
-
 document.addEventListener('click', e => {
-  const destination = e.target.closest('[data-go]'); if (destination) { go(destination.dataset.go); return; }
-  const seat = e.target.closest('[data-seat]');
-  if (seat && pendingPerson) { assignPerson(pendingPerson, seat.dataset.seat); return; }
-  const placementPerson = e.target.closest('[data-person]');
-  if (placementPerson) {
-    pendingPerson = pendingPerson === placementPerson.dataset.person ? null : placementPerson.dataset.person;
-    renderPeopleDock();
-    renderSeats();
-    return;
-  }
-  const person = e.target.closest('[data-open-person]'); if (person) { selectedPerson = person.dataset.openPerson; go('profile-detail'); return; }
+  const destination = e.target.closest('[data-go]'); if (destination) { setDrawer(null); go(destination.dataset.go); return; }
+  if (e.target.closest('[data-close-drawer]')) { setDrawer(null); return; }
+  const pick = e.target.closest('[data-pick]'); if (pick) { assignPerson(pick.dataset.pick, openSeat); setDrawer(null); return; }
+  if (e.target.closest('[data-clear-seat]')) { seatAssignments[openSeat] = null; saveSeats(); setDrawer(null); return; }
+  const seat = e.target.closest('[data-seat]'); if (seat) { setDrawer(openSeat === seat.dataset.seat ? null : seat.dataset.seat); return; }
+  const person = e.target.closest('[data-open-person]'); if (person) { setDrawer(null); selectedPerson = person.dataset.openPerson; go('profile-detail'); return; }
   const trip = e.target.closest('[data-trip]'); if (trip) { selectedTrip = trip.dataset.trip; go('records'); return; }
   if (e.target.closest('[data-feedback]') || e.target.closest('#feedback')) showToast();
 });
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && openSeat) setDrawer(null); });
 
 renderHome(); renderSelector(); renderProfile(); renderRecords();
