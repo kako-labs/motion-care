@@ -79,7 +79,8 @@ fun MainHost(
                         val finished = drivingState.finishedId
                         if (guidance != null && finished == null) {
                             val enabled by guidance.enabled.collectAsStateWithLifecycle()
-                            GuidanceSwitch(enabled, guidance::setEnabled)
+                            val sound by guidance.sound.collectAsStateWithLifecycle()
+                            GuidanceSwitch(enabled, sound, guidance::setEnabled, guidance::setSound)
                         }
                         when {
                             active != null -> ActiveContent(active, drivingState.busy, vehicleConnected, driving::capture, driving::finish)

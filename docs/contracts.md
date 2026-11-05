@@ -17,7 +17,7 @@
 
 화면은 `TripReader`·SQL·VehicleDataSource에 접근하지 않습니다. 이들은 데이터 모듈 내부 구현입니다.
 
-같은 파일의 `VehicleRecorder`는 `app`의 `TripRecordingService`만 사용합니다. `record(presenter)`는 기록 중인 주행이 끝나거나 호출자가 취소할 때까지 차량 속도를 저장하고, 카드를 띄울 때 `GuidancePresenter`를 호출합니다.
+같은 파일의 `VehicleRecorder`는 `app`의 `TripRecordingService`만 사용합니다. `record(presenter)`는 기록 중인 주행이 끝나거나 호출자가 취소할 때까지 차량 속도를 저장하고, 카드를 띄울 때 `GuidancePresenter`를 호출합니다. 소리는 `GuidanceAudio.play(문구)`로 냅니다. 재생하지 못해도 예외를 던지지 않으며, 알림음과 음성 중 무엇을 낼지는 `GuidanceSettings.sound`가 정합니다.
 
 조립부는 자동차 기기에서 `createVehicleTripData(context)`, 그 외 기기에서 `createSampleTripRepository(context)`를 호출합니다. 실제 기록은 `motion-care-trips.db`에 저장해 합성 샘플과 섞이지 않습니다.
 

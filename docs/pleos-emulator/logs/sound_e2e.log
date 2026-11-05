@@ -1,0 +1,73 @@
+device: emulator-5600 avd: pleos
+install app: Success
+install probe: Success
+
+===== chime =====
+tap start: 운행 기록 시작
+service: running=True foreground=True
+playing before the drive: []
+sound log: ['started: CHIME', 'finished']
+speech requests: []
+players: [('USAGE_NOTIFICATION', '12928')]
+usages from dev.motioncare.scaffold: {'USAGE_NOTIFICATION'}
+card text seen in the notification list: ['출발 후 몇 초 동안 천천히 속도를 높여보세요']
+result: PASS
+
+===== voice =====
+tap: 음성
+tap start: 운행 기록 시작
+service: running=True foreground=True
+playing before the drive: []
+sound log: ['started: VOICE', 'finished']
+speech requests: ['dev.motioncare.scaffold']
+players: [('USAGE_NOTIFICATION', '2888')]
+usages from ai.pleos.playground.caas: {'USAGE_NOTIFICATION'}
+card text seen in the notification list: ['출발 후 몇 초 동안 천천히 속도를 높여보세요']
+result: PASS
+
+===== voice_while_navigation_speaks =====
+tap: 음성
+tap start: 운행 기록 시작
+service: running=True foreground=True
+playing before the drive: []
+sound log: ['skipped: other voice']
+speech requests: []
+players: [('USAGE_ASSISTANCE_NAVIGATION_GUIDANCE', '12727')]
+card text seen in the notification list: ['출발 후 몇 초 동안 천천히 속도를 높여보세요']
+result: PASS
+
+===== navigation_starts_during_voice =====
+tap: 음성
+tap start: 운행 기록 시작
+service: running=True foreground=True
+playing before the drive: []
+sound log: ['started: VOICE', 'stopped: other voice', 'finished']
+speech requests: ['dev.motioncare.scaffold']
+players: [('USAGE_ASSISTANCE_NAVIGATION_GUIDANCE', '4698'), ('USAGE_NOTIFICATION', '2888')]
+card text seen in the notification list: ['출발 후 몇 초 동안 천천히 속도를 높여보세요']
+result: PASS
+
+===== exclusive_focus_during_voice =====
+tap: 음성
+tap start: 운행 기록 시작
+service: running=True foreground=True
+playing before the drive: ['ioTrack u/pid:1010143/2888 state:started']
+sound log: ['started: VOICE', 'stopped: focus lost', 'finished']
+speech requests: ['dev.motioncare.scaffold']
+players: [('USAGE_NOTIFICATION', '2888')]
+card text seen in the notification list: ['출발 후 몇 초 동안 천천히 속도를 높여보세요']
+result: PASS
+
+===== choice kept and hidden when guidance is off =====
+ready: ['주행 중 안내', '안내 소리', '알림음', '음성']
+tap: 음성
+stored: ['VOICE']
+after turning guidance off: ['주행 중 안내']
+
+===== summary =====
+PASS chime
+PASS voice
+PASS voice_while_navigation_speaks
+PASS navigation_starts_during_voice
+PASS exclusive_focus_during_voice
+PASS choice

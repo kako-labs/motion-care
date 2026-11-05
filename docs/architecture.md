@@ -78,7 +78,7 @@ AppGraph는 명시적 생성자 주입으로 Repository를 조립합니다. 프�
 
 ## 외부 API·차량 SDK
 
-현재 HTTP 코드와 인터넷 권한은 없고, 차량 신호는 `data:trip`의 `CarSpeedSource`가 `CarPropertyManager`로 속도만 읽습니다. Pleos Vehicle SDK는 아직 쓰지 않습니다. 기능을 구현할 때 아래 규칙을 따릅니다.
+현재 HTTP 코드와 인터넷 권한은 없습니다. 차량 신호는 `data:trip`이 읽습니다. 속도는 `CarSpeedSource`가 `CarPropertyManager`로, 조향은 `SdkSteeringSource`가 Pleos Vehicle SDK로 읽습니다. 카드의 음성은 `AndroidSoundOutput`이 Pleos TextToSpeech SDK의 온디바이스 모드로 재생합니다. 이 SDK가 추가하는 인터넷 권한은 앱 Manifest에서 지우고, 서버 모드용 로그인 라이브러리는 의존성에서 뺐습니다. 기능을 구현할 때 아래 규칙을 따릅니다.
 
 - 호출은 data 모듈에서만 합니다. 화면과 ViewModel은 Repository만 사용합니다.
 - 서비스마다 Repository를 하나 둡니다. 모든 API를 파일 하나에 모으지 않습니다. 대기질은 data:environment, LLM 요약은 data:summary, 차량 신호는 data:trip입니다.

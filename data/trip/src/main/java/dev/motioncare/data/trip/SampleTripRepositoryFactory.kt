@@ -1,8 +1,12 @@
 package dev.motioncare.data.trip
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import dev.motioncare.core.model.*
+import dev.motioncare.data.trip.guidance.AndroidSoundOutput
+import dev.motioncare.data.trip.guidance.GuidanceSoundPlayer
 import dev.motioncare.data.trip.guidance.StoredGuidanceSettings
 import dev.motioncare.data.trip.internal.*
 import dev.motioncare.data.trip.local.MotionCareDatabase
@@ -29,8 +33,16 @@ fun createVehicleTripData(context: Context): VehicleTripData {
     val controller = controller(store, UnavailableVehicleDataSource())
     val repository = DefaultTripRepository(store, controller)
     val guidance = StoredGuidanceSettings(app)
-    return VehicleTripData(repository,
-        DefaultVehicleRecorder(repository, controller, CarSpeedSource(app), SdkSteeringSource(app), guidance), guidance)
+    val main = Handler(Looper.getMainLooper())
+    val sound = GuidanceSoundPlayer({ guidance.sound.value }, AndroidSoundOutput(app))
+    return VehicleTripData(
+        repository,
+        DefaultVehicleRecorder(repository, controller, CarSpeedSource(app), SdkSteeringSource(app), guidance) {
+            main.post(sound::release)
+        },
+        guidance,
+        GuidanceAudio { message -> main.post { sound.play(message) } },
+    )
 }
 
 private fun controller(store: SqliteTripStore, source: VehicleDataSource) = TripSessionController(
@@ -68,9 +80,14 @@ internal class DefaultVehicleRecorder(
     private val signals: VehicleSignalSource,
     private val steering: SteeringSignalSource,
     private val guidance: GuidanceSettings,
+    private val onFinished: () -> Unit,
 ) : VehicleRecorder {
     override suspend fun record(presenter: GuidancePresenter) {
         repository.initialize()
-        controller.record(signals.speeds(), steering.steering(), presenter) { guidance.enabled.value }
+        try {
+            controller.record(signals.speeds(), steering.steering(), presenter) { guidance.enabled.value }
+        } finally {
+            onFinished()
+        }
     }
 }

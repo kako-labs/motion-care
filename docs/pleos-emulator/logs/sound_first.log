@@ -1,0 +1,392 @@
+
+===== A. card sound while parked =====
+
+>>> card:default 정지 지점보다 조금 일찍 감속해보세요
+  playing: none
+  focus: none
+  playing: none
+  focus: none
+  playing: none
+  focus: none
+
+>>> card:explicit 정지 지점보다 조금 일찍 감속해보세요
+  playing: none
+  focus: none
+  playing: none
+  focus: none
+  playing: none
+  focus: none
+
+>>> card:silent 정지 지점보다 조금 일찍 감속해보세요
+  playing: none
+  focus: none
+  playing: none
+  focus: none
+  playing: none
+  focus: none
+
+===== B. TTS usage =====
+
+>>> tts:ON_DEVICE 
+--- usage 1 media-default
+
+>>> attrs:1 
+
+>>> speak 정지 지점보다 조금 일찍 감속해보세요
+  playing: ['USAGE_MEDIA android.media.AudioTrack 1010143/2833']
+  focus: none
+--- usage 5 notification
+
+>>> attrs:5 
+
+>>> speak 정지 지점보다 조금 일찍 감속해보세요
+  playing: ['USAGE_NOTIFICATION android.media.AudioTrack 1010143/2833']
+  focus: none
+--- usage 10 notification-event
+
+>>> attrs:10 
+
+>>> speak 정지 지점보다 조금 일찍 감속해보세요
+  playing: ['USAGE_NOTIFICATION_EVENT android.media.AudioTrack 1010143/2833']
+  focus: none
+--- usage 12 nav-guidance
+
+>>> attrs:12 
+
+>>> speak 정지 지점보다 조금 일찍 감속해보세요
+  playing: ['USAGE_ASSISTANCE_NAVIGATION_GUIDANCE android.media.AudioTrack 1010143/2833']
+  focus: none
+--- usage 13 sonification
+
+>>> attrs:13 
+
+>>> speak 정지 지점보다 조금 일찍 감속해보세요
+  playing: ['USAGE_ASSISTANCE_SONIFICATION android.media.AudioTrack 1010143/2833']
+  focus: none
+
+===== C. audio focus =====
+--- holder music
+
+>>> focus:music:1:1 
+  playing: none
+  focus: none
+
+>>> focus:cue_notification:5:3 
+
+>>> abandon:cue_notification 
+
+>>> focus:cue_nav:12:3 
+
+>>> abandon:cue_nav 
+
+>>> focus:cue_sonification:13:3 
+
+>>> abandon:cue_sonification 
+
+>>> abandon:music 
+--- holder nav
+
+>>> focus:nav:12:3 
+  playing: none
+  focus: none
+
+>>> focus:cue_notification:5:3 
+
+>>> abandon:cue_notification 
+
+>>> focus:cue_nav:12:3 
+
+>>> abandon:cue_nav 
+
+>>> focus:cue_sonification:13:3 
+
+>>> abandon:cue_sonification 
+
+>>> abandon:nav 
+--- holder call
+
+>>> focus:call:2:2 
+  playing: none
+  focus: none
+
+>>> focus:cue_notification:5:3 
+
+>>> abandon:cue_notification 
+
+>>> focus:cue_nav:12:3 
+
+>>> abandon:cue_nav 
+
+>>> focus:cue_sonification:13:3 
+
+>>> abandon:cue_sonification 
+
+>>> abandon:call 
+
+===== D. own tone with focus =====
+
+>>> focus:cue:5:3 
+
+>>> tone:5:400 
+  playing: ['USAGE_NOTIFICATION android.media.AudioTrack 1010175/7510']
+  focus: none
+
+>>> abandon:cue 
+
+===== E. speech stop and second-speak latency =====
+
+>>> attrs:5 
+
+>>> speak 정지 지점보다 조금 일찍 감속해보세요
+
+>>> stop 
+
+>>> speak 정지 지점보다 조금 일찍 감속해보세요
+
+===== F. driving at 40 km/h with navigation in front =====
+gear: 200 speed: 200
+
+>>> card:default 정지 지점보다 조금 일찍 감속해보세요
+  playing: none
+  focus: none
+
+>>> speak 정지 지점보다 조금 일찍 감속해보세요
+  playing: ['USAGE_NOTIFICATION android.media.AudioTrack 1010143/2833']
+  focus: none
+speed 0: 200 park: 200
+
+===== G. network-dependent modes without registration =====
+
+>>> tts:HYBRID 
+
+>>> speak 정지 지점보다 조금 일찍 감속해보세요
+
+>>> tts:SERVER 
+
+>>> speak 정지 지점보다 조금 일찍 감속해보세요
+
+>>> release 
+
+===== probe log =====
+created
+act card:default
+card default sound=content://settings/system/notification_sound default=content://settings/system/notification_sound
+act card:explicit
+card explicit sound=content://settings/system/notification_sound default=content://settings/system/notification_sound
+act card:silent
+card silent sound=null default=content://settings/system/notification_sound
+act tts:ON_DEVICE
+tts init success mode=ON_DEVICE +9ms
+act attrs:1
+act speak
+speak len=20
+tts onReady +6ms
+tts onStart +7ms
+playback active=usage=1 content=1
+playback active=usage=1 content=1
+playback active=usage=1 content=1
+tts onDone +3017ms rms count=5 min=3228.840988251463 max=5381.890458821808
+playback active=
+playback active=
+act attrs:5
+act speak
+speak len=20
+tts onReady +6ms
+tts onStart +7ms
+playback active=usage=5 content=1
+playback active=usage=5 content=1
+playback active=usage=5 content=1
+tts onDone +2998ms rms count=5 min=3228.840988251463 max=5381.890458821808
+playback active=
+playback active=
+act attrs:10
+act speak
+speak len=20
+tts onReady +4ms
+tts onStart +5ms
+playback active=usage=10 content=1
+playback active=usage=10 content=1
+playback active=usage=10 content=1
+tts onDone +2938ms rms count=5 min=3228.840988251463 max=5381.890458821808
+playback active=
+playback active=
+act attrs:12
+act speak
+speak len=20
+tts onReady +3ms
+tts onStart +4ms
+playback active=usage=12 content=1
+playback active=usage=12 content=1
+playback active=usage=12 content=1
+tts onDone +2932ms rms count=5 min=3228.840988251463 max=5381.890458821808
+playback active=
+playback active=
+act attrs:13
+act speak
+speak len=20
+tts onReady +7ms
+tts onStart +8ms
+playback active=usage=13 content=1
+playback active=usage=13 content=1
+playback active=usage=13 content=1
+tts onDone +2949ms rms count=5 min=3228.840988251463 max=5381.890458821808
+playback active=
+playback active=
+act focus:music:1:1
+focus music usage=1 gain=1 result=1
+act focus:cue_notification:5:3
+focus cue_notification usage=5 gain=3 result=1
+act abandon:cue_notification
+abandon cue_notification result=1
+act focus:cue_nav:12:3
+focus cue_nav usage=12 gain=3 result=1
+act abandon:cue_nav
+abandon cue_nav result=1
+act focus:cue_sonification:13:3
+focus cue_sonification usage=13 gain=3 result=1
+act abandon:cue_sonification
+abandon cue_sonification result=1
+act abandon:music
+abandon music result=1
+act focus:nav:12:3
+focus nav usage=12 gain=3 result=1
+act focus:cue_notification:5:3
+focus cue_notification usage=5 gain=3 result=1
+act abandon:cue_notification
+abandon cue_notification result=1
+act focus:cue_nav:12:3
+focus cue_nav usage=12 gain=3 result=1
+act abandon:cue_nav
+abandon cue_nav result=1
+act focus:cue_sonification:13:3
+focus cue_sonification usage=13 gain=3 result=1
+act abandon:cue_sonification
+abandon cue_sonification result=1
+act abandon:nav
+abandon nav result=1
+act focus:call:2:2
+focus call usage=2 gain=2 result=1
+act focus:cue_notification:5:3
+focus cue_notification usage=5 gain=3 result=1
+act abandon:cue_notification
+abandon cue_notification result=1
+act focus:cue_nav:12:3
+focus cue_nav usage=12 gain=3 result=1
+act abandon:cue_nav
+abandon cue_nav result=1
+act focus:cue_sonification:13:3
+focus cue_sonification usage=13 gain=3 result=0
+act abandon:cue_sonification
+act abandon:call
+abandon call result=1
+act focus:cue:5:3
+focus cue usage=5 gain=3 result=1
+act tone:5:400
+tone play usage=5 ms=400 state=3
+playback active=usage=5 content=4
+playback active=usage=5 content=4
+playback active=usage=5 content=4
+tone end head=19200/19200 after 701ms
+playback active=
+playback active=
+act abandon:cue
+abandon cue result=1
+act attrs:5
+act speak
+speak len=20
+tts onReady +8ms
+tts onStart +10ms
+playback active=usage=5 content=1
+playback active=usage=5 content=1
+playback active=usage=5 content=1
+act stop
+tts onStop +1046ms rms count=5
+playback active=
+playback active=
+playback active=
+act speak
+speak len=20
+tts onReady +4ms
+tts onStart +6ms
+playback active=usage=5 content=1
+playback active=usage=5 content=1
+playback active=usage=5 content=1
+tts onDone +2956ms rms count=5 min=3228.840988251463 max=5381.890458821808
+playback active=
+playback active=
+act card:default
+card default sound=content://settings/system/notification_sound default=content://settings/system/notification_sound
+act speak
+speak len=20
+tts onReady +4ms
+tts onStart +6ms
+playback active=usage=5 content=1
+playback active=usage=5 content=1
+playback active=usage=5 content=1
+tts onDone +2990ms rms count=5 min=3228.840988251463 max=5381.890458821808
+playback active=
+playback active=
+act tts:HYBRID
+tts init success mode=HYBRID +6ms
+act speak
+speak len=20
+tts onReady +6ms
+tts onStart +10ms
+playback active=usage=1 content=1
+playback active=usage=1 content=1
+playback active=usage=1 content=1
+tts onDone +3023ms rms count=5 min=3228.840988251463 max=5381.890458821808
+playback active=
+playback active=
+act tts:SERVER
+tts init success mode=SERVER +3ms
+act speak
+speak len=20
+tts onReady +1ms
+tts onError UNKNOWN +6ms
+act release
+
+===== system log around sound =====
+11-04 16:19:02.545  4468  4485 D CarEvsOverlayStateManager: onOverlayChanged - Gleo: false, HVAC: false, HUN: true
+11-04 16:19:12.459  4468  4485 D CarEvsOverlayStateManager: onOverlayChanged - Gleo: false, HVAC: false, HUN: false
+11-04 16:19:12.867  4468  4485 D CarEvsOverlayStateManager: onOverlayChanged - Gleo: false, HVAC: false, HUN: true
+11-04 16:19:22.860  4468  4485 D CarEvsOverlayStateManager: onOverlayChanged - Gleo: false, HVAC: false, HUN: false
+11-04 16:19:23.423  4468  4485 D CarEvsOverlayStateManager: onOverlayChanged - Gleo: false, HVAC: false, HUN: true
+11-04 16:19:33.419  4468  4485 D CarEvsOverlayStateManager: onOverlayChanged - Gleo: false, HVAC: false, HUN: false
+11-04 16:19:37.397  2833  7756 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-5](jobId=2) generate(dev.soundprobe:ondevice)(ai.umos.airspeech.swig.TextToSpeech@668e2f2) start speaker=seoy
+11-04 16:19:37.539  2833  7756 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-5](jobId=2) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:37.573  2833  7756 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-5](jobId=2) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:37.599  2833  7756 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-5](jobId=2) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:37.623  2833  7756 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-5](jobId=2) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:37.645  2833  7756 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-5](jobId=2) generate(dev.soundprobe:ondevice) output - pcmSize=8704 isFinal=true, streamTextIsFinal:true
+11-04 16:19:37.646  2833  7756 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-5](jobId=2) generate(dev.soundprobe:ondevice) complete
+11-04 16:19:44.547  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=3) generate(dev.soundprobe:ondevice)(ai.umos.airspeech.swig.TextToSpeech@e8abfc0) start speaker=seoy
+11-04 16:19:44.681  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=3) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:44.703  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=3) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:44.726  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=3) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:44.748  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=3) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:44.769  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=3) generate(dev.soundprobe:ondevice) output - pcmSize=8704 isFinal=true, streamTextIsFinal:true
+11-04 16:19:44.770  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=3) generate(dev.soundprobe:ondevice) complete
+11-04 16:19:51.662  2833  3176 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-4](jobId=4) generate(dev.soundprobe:ondevice)(ai.umos.airspeech.swig.TextToSpeech@99e3c3e) start speaker=seoy
+11-04 16:19:51.753  2833  3176 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-4](jobId=4) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:51.775  2833  3176 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-4](jobId=4) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:51.796  2833  3176 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-4](jobId=4) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:51.818  2833  3176 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-4](jobId=4) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:51.840  2833  3176 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-4](jobId=4) generate(dev.soundprobe:ondevice) output - pcmSize=8704 isFinal=true, streamTextIsFinal:true
+11-04 16:19:51.840  2833  3176 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-4](jobId=4) generate(dev.soundprobe:ondevice) complete
+11-04 16:19:58.794  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=5) generate(dev.soundprobe:ondevice)(ai.umos.airspeech.swig.TextToSpeech@13c17ec) start speaker=seoy
+11-04 16:19:58.878  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=5) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:58.901  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=5) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:58.923  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=5) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:58.948  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=5) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:19:58.972  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=5) generate(dev.soundprobe:ondevice) output - pcmSize=8704 isFinal=true, streamTextIsFinal:true
+11-04 16:19:58.972  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=5) generate(dev.soundprobe:ondevice) complete
+11-04 16:20:05.958  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=6) generate(dev.soundprobe:ondevice)(ai.umos.airspeech.swig.TextToSpeech@73dde4a) start speaker=seoy
+11-04 16:20:06.065  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=6) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:20:06.086  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=6) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:20:06.108  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=6) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:20:06.129  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=6) generate(dev.soundprobe:ondevice) output - pcmSize=13312 isFinal=false, streamTextIsFinal:true
+11-04 16:20:06.151  2833  3007 I [GAAS]OnDeviceStreamPlayerImpl: [DefaultDispatcher-worker-2](jobId=6) generate(dev.soundprobe:ondevice) output - pcmSize=8704 isFinal=true, streamTextIsFinal:true
+--- notification effects
+mSoundNotificationKey=null
+mVibrateNotificationKey=null

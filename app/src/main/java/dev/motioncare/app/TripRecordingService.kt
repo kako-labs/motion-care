@@ -42,7 +42,12 @@ class TripRecordingService : Service() {
 
     private suspend fun record() {
         try {
-            (application as MotionCareApplication).graph.recorder?.record(NotificationGuidancePresenter(this, R.drawable.ic_launcher))
+            val graph = (application as MotionCareApplication).graph
+            val recorder = graph.recorder
+            val audio = graph.guidanceAudio
+            if (recorder != null && audio != null) {
+                recorder.record(NotificationGuidancePresenter(this, R.drawable.ic_launcher, audio))
+            }
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {

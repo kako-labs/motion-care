@@ -1,0 +1,208 @@
+dev.soundprobe install: Success
+dev.soundother install: Success
+dev.soundnonet install: Success
+nonet INTERNET granted lines: 0
+
+===== 1. other app plays music; TTS with no focus request =====
+>>> dev.soundother focus:music:1:1 
+>>> dev.soundother tone:1:30000 
+>>> dev.soundprobe tts:ON_DEVICE 
+>>> dev.soundprobe attrs:5 
+>>> dev.soundprobe speak 정지 지점보다 조금 일찍 감속해보세요
+  [speaking] playing: ['USAGE_MEDIA 1010176/9388', 'USAGE_NOTIFICATION 1010143/2833']
+  [speaking] car focus: ['Current Focus Holders:', 'android.media.AudioManager@af27817dev.soundprobe.ProbeService$$ExternalSyntheticLambda3@29e5404 - AudioAttributes: usage=USAGE_MEDIA content=CONTENT_TYPE_SPEECH flags=0x8', 'Transient Focus Losers:', '2026-11-04T16:20:13.152759 - onAudioFocusRequest for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@c1c306e with gain type', '2026-11-04T16:20:13.590476 - onAudioFocusAbandon for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@c1c306e', '2026-11-04T16:20:14.027746 - onAudioFocusRequest for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@1d6530f with gain type', '2026-11-04T16:20:14.469219 - onAudioFocusAbandon for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@1d6530f', '2026-11-04T16:20:14.914631 - onAudioFocusRequest for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@22a1f9c with gain type', '2026-11-04T16:20:15.356749 - onAudioFocusAbandon for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@22a1f9c', '2026-11-04T16:20:15.802314 - onAudioFocusAbandon for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@789bbe9', '2026-11-04T16:20:16.356367 - onAudioFocusRequest for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@392da5 with gain type ', '2026-11-04T16:20:16.964808 - onAudioFocusRequest for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@6dee57a with gain type']
+  [speaking] flinger active thread devices=0x1000000 (AUDIO_DEVICE_OUT_BUS) frames=1217664 tracks=1 Tracks of which 1 are active
+  [speaking] flinger active thread devices=0x1000000 (AUDIO_DEVICE_OUT_BUS) frames=1448064 tracks=1 Tracks of which 1 are active
+
+===== 2. same, TTS with MAY_DUCK focus =====
+>>> dev.soundprobe focus:cue:5:3 
+  [granted] car focus: ['Current Focus Holders:', 'android.media.AudioManager@af27817dev.soundprobe.ProbeService$$ExternalSyntheticLambda3@29e5404 - AudioAttributes: usage=USAGE_MEDIA content=CONTENT_TYPE_SPEECH flags=0x8', 'android.media.AudioManager@789bbe9dev.soundprobe.ProbeService$$ExternalSyntheticLambda3@c1c306e - AudioAttributes: usage=USAGE_NOTIFICATION content=CONTENT_TYPE_SPEECH fl', 'Transient Focus Losers:', '2026-11-04T16:20:13.590476 - onAudioFocusAbandon for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@c1c306e', '2026-11-04T16:20:14.027746 - onAudioFocusRequest for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@1d6530f with gain type', '2026-11-04T16:20:14.469219 - onAudioFocusAbandon for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@1d6530f', '2026-11-04T16:20:14.914631 - onAudioFocusRequest for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@22a1f9c with gain type', '2026-11-04T16:20:15.356749 - onAudioFocusAbandon for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@22a1f9c', '2026-11-04T16:20:15.802314 - onAudioFocusAbandon for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@789bbe9', '2026-11-04T16:20:16.356367 - onAudioFocusRequest for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@392da5 with gain type ', '2026-11-04T16:20:16.964808 - onAudioFocusRequest for client android.media.AudioManager@eaeac70dev.soundprobe.ProbeService$$ExternalSyntheticLambda2@6dee57a with gain type']
+>>> dev.soundprobe speak 정지 지점보다 조금 일찍 감속해보세요
+  [speaking] playing: ['USAGE_MEDIA 1010176/9388', 'USAGE_NOTIFICATION 1010143/2833']
+>>> dev.soundprobe abandon:cue 
+
+===== 3. same, navigation-usage voice holds focus from another app; TTS with MAY_DUCK =====
+>>> dev.soundother abandon:music 
+>>> dev.soundother focus:nav:12:3 
+>>> dev.soundother tone:12:8000 
+>>> dev.soundprobe focus:cue:5:3 
+>>> dev.soundprobe speak 정지 지점보다 조금 일찍 감속해보세요
+  [both] playing: ['USAGE_MEDIA 1010176/9388', 'USAGE_ASSISTANCE_NAVIGATION_GUIDANCE 1010176/9388', 'USAGE_NOTIFICATION 1010143/2833']
+>>> dev.soundprobe abandon:cue 
+>>> dev.soundother abandon:nav 
+
+===== 4. call focus held by another app =====
+>>> dev.soundother focus:call:2:2 
+>>> dev.soundprobe focus:cue:5:3 
+>>> dev.soundprobe abandon:cue 
+>>> dev.soundother abandon:call 
+
+===== 5. another app takes exclusive focus while TTS holds MAY_DUCK =====
+>>> dev.soundprobe focus:cue:5:3 
+>>> dev.soundprobe speak 정지 지점보다 조금 일찍 감속해보세요
+>>> dev.soundother focus:excl:1:4 
+  [after-exclusive] playing: none
+>>> dev.soundother abandon:excl 
+>>> dev.soundprobe abandon:cue 
+>>> dev.soundprobe release 
+
+===== 6. no-internet build, on-device mode =====
+>>> dev.soundnonet tts:ON_DEVICE 
+>>> dev.soundnonet attrs:5 
+>>> dev.soundnonet speak 정지 지점보다 조금 일찍 감속해보세요
+>>> dev.soundnonet release 
+
+===== 7. plain Android TextToSpeech API, no SDK call =====
+>>> dev.soundnonet ptts:5 정지 지점보다 조금 일찍 감속해보세요
+
+===== 8. Bluetooth/call mode =====
+audio mode: ['mode:ZEN_MODE_OFF', 'mMode=MODE_NORMAL,']
+
+===== probe log =====
+[dev.soundother] created
+[dev.soundother] act focus:music:1:1
+[dev.soundother] focus music usage=1 gain=1 result=1
+[dev.soundother] act tone:1:30000
+[dev.soundother] tone play usage=1 ms=30000 state=3
+[dev.soundother] playback active=usage=1 content=4
+[dev.soundother] playback active=usage=1 content=4
+[dev.soundother] playback active=usage=1 content=4
+[dev.soundprobe] created
+[dev.soundprobe] act tts:ON_DEVICE
+[dev.soundprobe] tts init success mode=ON_DEVICE +14ms
+[dev.soundprobe] act attrs:5
+[dev.soundprobe] act speak
+[dev.soundprobe] speak len=20
+[dev.soundprobe] tts onReady +8ms
+[dev.soundprobe] tts onStart +9ms
+[dev.soundother] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundprobe] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundother] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundother] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundprobe] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundprobe] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundprobe] tts onDone +3066ms rms count=5 min=3228.840988251463 max=5381.890458821808
+[dev.soundother] playback active=usage=1 content=4
+[dev.soundother] playback active=usage=1 content=4
+[dev.soundprobe] playback active=usage=1 content=4
+[dev.soundprobe] playback active=usage=1 content=4
+[dev.soundprobe] act focus:cue:5:3
+[dev.soundprobe] focus cue usage=5 gain=3 result=1
+[dev.soundprobe] act speak
+[dev.soundprobe] speak len=20
+[dev.soundprobe] tts onReady +7ms
+[dev.soundprobe] tts onStart +8ms
+[dev.soundprobe] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundother] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundother] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundprobe] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundother] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundprobe] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundprobe] tts onDone +3137ms rms count=5 min=3228.840988251463 max=5381.890458821808
+[dev.soundprobe] playback active=usage=1 content=4
+[dev.soundother] playback active=usage=1 content=4
+[dev.soundother] playback active=usage=1 content=4
+[dev.soundprobe] playback active=usage=1 content=4
+[dev.soundprobe] act abandon:cue
+[dev.soundprobe] abandon cue result=1
+[dev.soundother] act abandon:music
+[dev.soundother] abandon music result=1
+[dev.soundother] act focus:nav:12:3
+[dev.soundother] focus nav usage=12 gain=3 result=1
+[dev.soundother] act tone:12:8000
+[dev.soundprobe] playback active=usage=1 content=4, usage=12 content=4
+[dev.soundother] tone play usage=12 ms=8000 state=3
+[dev.soundother] playback active=usage=1 content=4, usage=12 content=4
+[dev.soundprobe] playback active=usage=1 content=4, usage=12 content=4
+[dev.soundother] playback active=usage=1 content=4, usage=12 content=4
+[dev.soundprobe] playback active=usage=1 content=4, usage=12 content=4
+[dev.soundother] playback active=usage=1 content=4, usage=12 content=4
+[dev.soundprobe] act focus:cue:5:3
+[dev.soundprobe] focus cue usage=5 gain=3 result=1
+[dev.soundprobe] act speak
+[dev.soundprobe] speak len=20
+[dev.soundprobe] tts onReady +7ms
+[dev.soundprobe] tts onStart +8ms
+[dev.soundother] playback active=usage=1 content=4, usage=5 content=1, usage=12 content=4
+[dev.soundprobe] playback active=usage=1 content=4, usage=5 content=1, usage=12 content=4
+[dev.soundother] playback active=usage=1 content=4, usage=5 content=1, usage=12 content=4
+[dev.soundprobe] playback active=usage=1 content=4, usage=5 content=1, usage=12 content=4
+[dev.soundprobe] playback active=usage=1 content=4, usage=5 content=1, usage=12 content=4
+[dev.soundother] playback active=usage=1 content=4, usage=5 content=1, usage=12 content=4
+[dev.soundprobe] tts onDone +3036ms rms count=5 min=3228.840988251463 max=5381.890458821808
+[dev.soundprobe] playback active=usage=1 content=4, usage=12 content=4
+[dev.soundprobe] playback active=usage=1 content=4, usage=12 content=4
+[dev.soundother] playback active=usage=1 content=4, usage=12 content=4
+[dev.soundother] playback active=usage=1 content=4, usage=12 content=4
+[dev.soundprobe] act abandon:cue
+[dev.soundprobe] abandon cue result=1
+[dev.soundother] act abandon:nav
+[dev.soundother] abandon nav result=1
+[dev.soundother] act focus:call:2:2
+[dev.soundother] focus call usage=2 gain=2 result=1
+[dev.soundprobe] act focus:cue:5:3
+[dev.soundprobe] focus cue usage=5 gain=3 result=1
+[dev.soundother] tone end head=384000/384000 after 8302ms
+[dev.soundprobe] playback active=usage=1 content=4
+[dev.soundprobe] playback active=usage=1 content=4
+[dev.soundother] playback active=usage=1 content=4
+[dev.soundother] playback active=usage=1 content=4
+[dev.soundprobe] act abandon:cue
+[dev.soundprobe] abandon cue result=1
+[dev.soundother] act abandon:call
+[dev.soundother] abandon call result=1
+[dev.soundprobe] act focus:cue:5:3
+[dev.soundprobe] focus cue usage=5 gain=3 result=1
+[dev.soundprobe] act speak
+[dev.soundprobe] speak len=20
+[dev.soundprobe] tts onReady +21ms
+[dev.soundprobe] tts onStart +24ms
+[dev.soundother] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundprobe] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundother] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundprobe] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundprobe] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundother] playback active=usage=1 content=4, usage=5 content=1
+[dev.soundother] act focus:excl:1:4
+[dev.soundprobe] focus cue change=-2
+[dev.soundother] focus excl usage=1 gain=4 result=1
+[dev.soundprobe] tts onDone +3107ms rms count=5 min=3228.840988251463 max=5381.890458821808
+[dev.soundprobe] playback active=usage=1 content=4
+[dev.soundother] playback active=usage=1 content=4
+[dev.soundother] playback active=usage=1 content=4
+[dev.soundprobe] playback active=usage=1 content=4
+[dev.soundother] tone end head=1440000/1440000 after 30303ms
+[dev.soundprobe] playback active=
+[dev.soundother] playback active=
+[dev.soundprobe] playback active=
+[dev.soundother] playback active=
+[dev.soundother] act abandon:excl
+[dev.soundother] abandon excl result=1
+[dev.soundprobe] focus cue change=1
+[dev.soundprobe] act abandon:cue
+[dev.soundprobe] abandon cue result=1
+[dev.soundprobe] act release
+[dev.soundnonet] created
+[dev.soundnonet] act tts:ON_DEVICE
+[dev.soundnonet] tts init success mode=ON_DEVICE +7ms
+[dev.soundnonet] act attrs:5
+[dev.soundnonet] act speak
+[dev.soundnonet] speak len=20
+[dev.soundnonet] tts onReady +7ms
+[dev.soundnonet] tts onStart +8ms
+[dev.soundprobe] playback active=usage=5 content=1
+[dev.soundprobe] playback active=usage=5 content=1
+[dev.soundprobe] playback active=usage=5 content=1
+[dev.soundnonet] playback active=usage=5 content=1
+[dev.soundnonet] playback active=usage=5 content=1
+[dev.soundnonet] playback active=usage=5 content=1
+[dev.soundnonet] tts onDone +2964ms rms count=5 min=3228.840988251463 max=5381.890458821808
+[dev.soundnonet] playback active=
+[dev.soundnonet] playback active=
+[dev.soundprobe] playback active=
+[dev.soundprobe] playback active=
+[dev.soundnonet] act release
+[dev.soundnonet] act ptts:5
+[dev.soundnonet] ptts init status=-1 engines=null default=null +15ms
+
+===== crashes =====

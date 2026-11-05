@@ -31,6 +31,9 @@ dependencies {
     testImplementation(libs.coroutines.test)
     implementation(libs.core.ktx)
     implementation(libs.pleos.vehicle)
+    // Only the on-device mode is used. The excluded login library is for the server mode and adds
+    // native libraries, Material and about 20 MB. Add it back before using registerApp().
+    implementation(libs.pleos.tts) { exclude(group = "ai.pleos.playground.security") }
     testImplementation(libs.robolectric)
     testImplementation(libs.junit)
 }

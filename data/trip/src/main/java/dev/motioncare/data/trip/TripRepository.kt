@@ -24,10 +24,25 @@ fun interface GuidancePresenter {
     fun show(pattern: DrivingPattern): Boolean
 }
 
-/** Whether cards appear during a drive. Recording continues either way. */
+/** What the driver hears when a card appears. */
+enum class GuidanceSound { CHIME, VOICE }
+
+/** Whether cards appear during a drive and how they sound. Recording continues either way. */
 interface GuidanceSettings {
     val enabled: StateFlow<Boolean>
     fun setEnabled(enabled: Boolean)
+    val sound: StateFlow<GuidanceSound>
+    fun setSound(sound: GuidanceSound)
 }
 
-class VehicleTripData(val trips: TripRepository, val recorder: VehicleRecorder, val guidance: GuidanceSettings)
+/** Plays the sound for a card that was just shown. A sound that cannot play never affects the card. */
+fun interface GuidanceAudio {
+    fun play(message: String)
+}
+
+class VehicleTripData(
+    val trips: TripRepository,
+    val recorder: VehicleRecorder,
+    val guidance: GuidanceSettings,
+    val audio: GuidanceAudio,
+)
