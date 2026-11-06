@@ -94,6 +94,7 @@
 - **문구 표현:** "답답함을 느낀다면"은 조건문이라 CO₂가 높다고 주장하지 않습니다. 멀미 리서치의 "공조 조작 자체가 멀미 해결이라고 표현하지 않음"을 따라 멀미를 쓰지 않습니다(`GuidanceCopyTest`).
 - **창문 대신 외기 모드:** NHS는 차 창문을 열어 신선한 공기를 마시라고 안내하지만, 설계 구조는 외부 공기와 주행 안전을 무시한 창문 열기 지시를 만들지 않기로 했습니다. §15도 외기 모드를 권합니다.
 - **일반 기기와 합성 주행:** 환경 값이 모두 미지원이라 환경 카드가 나오지 않습니다.
+- **에뮬레이터:** 대기질 매우나쁨 + 외기 유입이면 카드가 뜨고, 내기 순환이면 뜨지 않으며, 대기질 좋음 + 내기 순환이면 30분에 뜨는 것을 확인했습니다([측정](pleos-emulator/README.md#환경-값)).
 
 ## 소리
 
@@ -196,7 +197,7 @@ python3 -I docs/detection-limits/measure_guidance.py <VED_*_week.csv 폴더> <�
 | Notion 최종 기획 §1·§15·§17·§19.4, 화면별 기능 분해 G02-F02·F03, 설계 구조, 멀미 리서치 | 대기질별 환경 문구, 환경 알림은 필요한 경우만, 운전 조언과 환경 조언 분리, 후보 우선순위, 멀미 최적 온도·창문 지시 금지, 공조 조작을 멀미 해결로 표현하지 않음 | 팀 문서 |
 | [Hudda·Fruin (2018), Science of the Total Environment 610–611](https://doi.org/10.1016/j.scitotenv.2017.08.105) | 내기 순환은 입자 유입을 줄이지만 CO₂가 쌓임. 1~2명·평균 26분 통근은 대부분 2,500ppm 이하, 여러 명·긴 주행은 중간에 외기 | 초록만. 본문 수치(인원별 도달 시간)는 확인하지 못함 |
 | [NHS, Motion sickness](https://www.nhs.uk/conditions/motion-sickness/) | 차 창문 등으로 신선한 공기 마시기 | 공중보건 안내. 2023-06-19 검토판 |
-| Pleos 에뮬레이터 측정: [메시지 카드](pleos-emulator/README.md#메시지-카드로-안내-띄우기), [앱의 안내 카드](pleos-emulator/README.md#앱의-안내-카드), [소리와 음성](pleos-emulator/README.md#소리와-음성) | 카드 표시, 수명, 길이 제한, 끄기, 소리 재생과 겹침 | v2.1.0 측정. 실차 아님 |
+| Pleos 에뮬레이터 측정: [메시지 카드](pleos-emulator/README.md#메시지-카드로-안내-띄우기), [앱의 안내 카드](pleos-emulator/README.md#앱의-안내-카드), [소리와 음성](pleos-emulator/README.md#소리와-음성), [환경 값](pleos-emulator/README.md#환경-값) | 카드 표시, 수명, 길이 제한, 끄기, 소리 재생과 겹침, 환경 카드 세 경우 | v2.1.0 측정. 실차 아님 |
 | [Pleos TextToSpeech SDK](https://document.pleos.ai/en/docs/pleos-only/connect-sdk-pleos/TextToSpeech/intro), [권한](https://document.pleos.ai/en/docs/pleos-only/connect-sdk-pleos/TextToSpeech/declaring-permissions), [지원 언어](https://document.pleos.ai/en/docs/pleos-only/connect-sdk-pleos/TextToSpeech/set-locale) | 모드 3종과 등록 조건, `TTS_SERVICE` 권한, 한국어 지원 | 공식 문서 |
 | [Pleos 오디오 포커스 가이드](https://document.pleos.ai/en/docs/pleos-only/vehicle-app-developer-guide/audio-focus-development-guide/audio-focus-development) | 재생 전 포커스 요청, 공존 문맥의 `MAY_DUCK`, 문맥과 용도의 대응 | 공식 문서. 상호작용 표는 이미지라 글로 설명된 칸만 확인 |
 | [Pleos 음성 안내 앞 묵음 가이드](https://document.pleos.ai/en/docs/pleos-only/vehicle-app-developer-guide/voice-guidance-preroll-silence-guide) | 150~200ms 묵음을 오디오 데이터에 넣기 | 공식 문서 |

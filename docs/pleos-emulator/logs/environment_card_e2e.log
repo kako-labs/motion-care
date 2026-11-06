@@ -1,0 +1,38 @@
+device: emulator-5600 avd: pleos console port: <forwarded>
+install: Success
+
+===== bad_outside =====
+position: OK
+climate on, recirculation False : 200
+tap start: 운행 기록 시작
+service: running=True foreground=True
+tap finish: 운행 기록 종료
+stored air: [{'air_grade': 'VERY_BAD', 'air_state': 'AVAILABLE', 'recirculation_value': 0.0}, {'air_grade': 'VERY_BAD', 'air_state': 'AVAILABLE', 'recirculation_value': 0.0}]
+guidance events: [{'elapsed': 3646, 'observed': 351, 'pattern': 'REDUCE_OUTSIDE_AIR', 'outcome': 'SHOWN'}]
+cards seen: ['외기 유입을 줄이고 공기청정 기능을 확인해보세요']
+
+===== bad_recirculating =====
+position: OK
+climate on, recirculation True : 200
+tap start: 운행 기록 시작
+service: running=True foreground=True
+tap finish: 운행 기록 종료
+stored air: [{'air_grade': 'VERY_BAD', 'air_state': 'AVAILABLE', 'recirculation_value': 1.0}, {'air_grade': 'VERY_BAD', 'air_state': 'AVAILABLE', 'recirculation_value': 1.0}]
+guidance events: []
+cards seen: []
+
+===== good_recirculating =====
+position: OK
+climate on, recirculation True : 200
+tap start: 운행 기록 시작
+service: running=True foreground=True
+tap finish: 운행 기록 종료
+stored air: [{'air_grade': 'GOOD', 'air_state': 'AVAILABLE', 'recirculation_value': 1.0}, {'air_grade': 'GOOD', 'air_state': 'AVAILABLE', 'recirculation_value': 1.0}]
+guidance events: [{'elapsed': 1800326, 'observed': 1800240, 'pattern': 'TRY_OUTSIDE_AIR', 'outcome': 'SHOWN'}]
+cards seen: ['답답함을 느낀다면 잠시 외기 모드를 사용해보세요']
+
+===== summary =====
+PASS bad outdoor air with outside intake shows the card
+PASS bad outdoor air while recirculating shows nothing
+PASS good outdoor air after 30 minutes of recirculation shows the card
+exit=0
