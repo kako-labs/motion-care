@@ -131,6 +131,7 @@
 - **2차 시안 문구를 쓰지 않음:** 시안의 "1시간째 운전 중이에요. 쉬어갈 곳을 미리 정해보세요"는 1시간의 근거가 적혀 있지 않고, 제목을 포함하면 32자이며, "정해보세요"가 주행 중 내비 조작을 부를 수 있습니다.
 - **멀미 기준이 아님:** 2시간에 멀미가 생기거나 쉬면 줄어든다고 주장하지 않습니다. CDC Yellow Book에는 이동 중 휴식에 대한 문장이 없습니다.
 - **일반 기기와 합성 주행:** 차량 속도로만 세므로 합성 샘플 주행에서는 나오지 않습니다.
+- **에뮬레이터:** 30km/h로 2시간 5분 쉬지 않고 달리면 처음 움직인 때부터 정확히 2시간에 카드가 한 번 뜨고 `LONG_DRIVE`·`SHOWN`으로 저장되는 것을 확인했습니다([측정](pleos-emulator/README.md#주행-시간-카드)). 쉬는 경우와 간격·끄기는 단위 테스트로만 확인했습니다.
 
 ## 소리
 
@@ -240,7 +241,7 @@ python3 -I docs/detection-limits/measure_guidance.py <VED_*_week.csv 폴더> <�
 | [한국도로공사 권고, 파이낸셜뉴스 2026-07-07](https://www.fnnews.com/news/202607071051189361) | 2시간 이상 연속 운전하거나 피로하면 휴게소나 졸음쉼터에서 충분히 휴식 | 기사로만 확인. 보도자료 원문은 찾지 못함. 휴식 길이는 적혀 있지 않음 |
 | [CDC Yellow Book, Motion Sickness](https://www.cdc.gov/yellow-book/hcp/travel-air-sea/motion-sickness.html) | 이동 중 휴식에 대한 문장이 없음을 확인 | 원문(2026판) |
 | Notion 화면별 기능 분해 G02-F02, 멀미 리서치, 2차 시안 Driving2 | 주행 중 안내 후보의 주행시간, 안전한 곳에 멈춰 쉬기(즉시 정차 명령이 아님), 시안의 1시간 문구 | 팀 문서. 시안 문구의 근거는 적혀 있지 않음 |
-| Pleos 에뮬레이터 측정: [메시지 카드](pleos-emulator/README.md#메시지-카드로-안내-띄우기), [앱의 안내 카드](pleos-emulator/README.md#앱의-안내-카드), [소리와 음성](pleos-emulator/README.md#소리와-음성), [환경 값](pleos-emulator/README.md#환경-값) | 카드 표시, 수명, 길이 제한, 끄기, 소리 재생과 겹침, 환경 카드 세 경우 | v2.1.0 측정. 실차 아님 |
+| Pleos 에뮬레이터 측정: [메시지 카드](pleos-emulator/README.md#메시지-카드로-안내-띄우기), [앱의 안내 카드](pleos-emulator/README.md#앱의-안내-카드), [소리와 음성](pleos-emulator/README.md#소리와-음성), [환경 값](pleos-emulator/README.md#환경-값), [주행 시간 카드](pleos-emulator/README.md#주행-시간-카드) | 카드 표시, 수명, 길이 제한, 끄기, 소리 재생과 겹침, 환경 카드 세 경우, 2시간 주행의 휴식 카드 | v2.1.0 측정. 실차 아님 |
 | [Pleos TextToSpeech SDK](https://document.pleos.ai/en/docs/pleos-only/connect-sdk-pleos/TextToSpeech/intro), [권한](https://document.pleos.ai/en/docs/pleos-only/connect-sdk-pleos/TextToSpeech/declaring-permissions), [지원 언어](https://document.pleos.ai/en/docs/pleos-only/connect-sdk-pleos/TextToSpeech/set-locale) | 모드 3종과 등록 조건, `TTS_SERVICE` 권한, 한국어 지원 | 공식 문서 |
 | [Pleos 오디오 포커스 가이드](https://document.pleos.ai/en/docs/pleos-only/vehicle-app-developer-guide/audio-focus-development-guide/audio-focus-development) | 재생 전 포커스 요청, 공존 문맥의 `MAY_DUCK`, 문맥과 용도의 대응 | 공식 문서. 상호작용 표는 이미지라 글로 설명된 칸만 확인 |
 | [Pleos 음성 안내 앞 묵음 가이드](https://document.pleos.ai/en/docs/pleos-only/vehicle-app-developer-guide/voice-guidance-preroll-silence-guide) | 150~200ms 묵음을 오디오 데이터에 넣기 | 공식 문서 |

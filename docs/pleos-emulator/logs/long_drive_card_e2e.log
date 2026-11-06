@@ -1,0 +1,15 @@
+device: emulator-5600 avd: pleos console port: <forwarded>
+install: Success
+position: OK
+climate on, recirculation off: 200
+tap start: 운행 기록 시작
+service: running=True foreground=True
+service before finish: running=True foreground=True
+tap finish: 운행 기록 종료
+first movement ms: 4182
+guidance events: [{'elapsed': 7204182, 'observed': 7204182, 'pattern': 'LONG_DRIVE', 'outcome': 'SHOWN'}]
+cards seen: ['2시간 넘게 달렸어요. 안전한 곳에서 쉬어가보세요']
+
+===== summary =====
+PASS two hours of driving without a break shows the rest card once
+exit=0
