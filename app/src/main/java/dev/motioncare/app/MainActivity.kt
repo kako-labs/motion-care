@@ -18,6 +18,7 @@ class MainActivity : ComponentActivity() {
                 MainHost(
                     trips = graph.trips,
                     profiles = graph.profiles,
+                    environment = graph.environment,
                     vehicleConnected = graph.vehicleConnected,
                     guidance = graph.guidance,
                     onRecordingStarted = {

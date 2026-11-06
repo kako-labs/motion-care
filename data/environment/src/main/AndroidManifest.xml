@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outdoor air quality from Open-Meteo. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Normal permissions: outside temperature and the Vehicle SDK climate readings. -->
+    <uses-permission android:name="android.car.permission.CAR_EXTERIOR_ENVIRONMENT" />
+    <uses-permission android:name="pleos.car.permission.CAR_CLIMATE" />
+    <!-- Dangerous permission, requested at trip start. Without it outdoor air is unavailable. -->
+    <uses-permission android:name="pleos.car.permission.FUSED_LOCATION" />
+</manifest>

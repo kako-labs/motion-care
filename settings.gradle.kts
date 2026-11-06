@@ -14,4 +14,6 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "MotionCare"
-include(":app", ":core:model", ":core:ui", ":data:profile", ":data:trip", ":feature:driving", ":feature:history")
+include(
+    ":app", ":core:model", ":core:ui", ":data:environment", ":data:profile", ":data:trip", ":feature:driving", ":feature:history",
+)

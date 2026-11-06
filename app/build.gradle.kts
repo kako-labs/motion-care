@@ -48,6 +48,7 @@ android {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:ui"))
+    implementation(project(":data:environment"))
     implementation(project(":data:profile"))
     implementation(project(":data:trip"))
     implementation(project(":feature:driving"))

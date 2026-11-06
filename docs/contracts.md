@@ -1,8 +1,8 @@
-# 공개 연결 계약 v0.4
+# 공개 연결 계약 v0.5
 
 ## 데이터 접근
 
-기능은 data 모듈의 Repository로만 데이터에 접근합니다. 현재 공개된 Repository는 아래 2개입니다.
+기능은 data 모듈의 Repository로만 데이터에 접근합니다. 현재 공개된 Repository는 아래 3개입니다.
 
 ### 주행 · `data/trip/src/main/java/dev/motioncare/data/trip/TripRepository.kt`
 
@@ -30,6 +30,17 @@
 | addPerson(displayName) | 앞뒤 공백을 제거해 저장하고 ID가 붙은 프로필 반환. 빈 이름은 IllegalArgumentException |
 
 조립부는 `createProfileRepository(context)`만 호출합니다. 차량·주행별 인물 연결·평가·설정은 기능 착수 시 이 모듈에 추가합니다.
+
+### 환경 · `data/environment/src/main/java/dev/motioncare/data/environment/EnvironmentRepository.kt`
+
+| API | 의미 |
+| --- | --- |
+| current | 가장 최근에 읽은 `EnvironmentSnapshot` StateFlow. 처음 읽기 전에는 모든 값이 `LOADING` |
+| refresh() | 차량 값을 다시 읽고, 바깥 대기질은 1시간이 지났거나 위치 칸이 바뀌었을 때만 다시 요청. 값이 없어도 예외를 던지지 않음 |
+| capture(tripId) | refresh 후 그 결과를 주행에 저장 |
+| history(tripId) | 주행에 저장된 값 목록. 저장 순서 |
+
+조립부는 자동차 기기에서 `createVehicleEnvironmentRepository(context)`, 그 외 기기에서 `createUnsupportedEnvironmentRepository()`를 호출합니다. 후자는 모든 값이 `UNSUPPORTED`이고 아무것도 저장하지 않습니다. `app`의 `TripRecordingService`가 주행 시작, 1시간마다, 종료 때 `capture`를 부르고, `MainHost`가 홈을 열 때와 권한 응답 뒤에 `refresh`를 부릅니다. 이 모듈을 화면에서 읽으려면 해당 feature를 `allowedEdges`에 추가합니다.
 
 ## 데이터 의미
 
@@ -76,6 +87,24 @@
 - 합성 샘플 주행의 `guidance`는 비어 있습니다.
 - 표시 구현은 `feature:driving`의 `NotificationGuidancePresenter`이고, ON/OFF 스위치는 `GuidanceSwitch`입니다.
 
+## 환경 데이터
+
+모델은 `core/model/.../EnvironmentModels.kt`에 있습니다. 출처와 규칙 값의 근거는 [환경 데이터의 근거](environment.md)에 있습니다.
+
+| 항목 | 출처 | 의미 |
+| --- | --- | --- |
+| outsideTemperature | VEHICLE | 바깥 온도 °C |
+| cabinTemperature | VEHICLE | 실내 온도 °C. 공조가 측정한 값 |
+| cabinSetTemperature | VEHICLE | 운전석 설정 온도 °C. 실내 온도와 다름 |
+| recirculation, airCleaner | VEHICLE | 내기 순환, 공기청정 켜짐 여부 |
+| outdoorAir | OPEN_METEO_CAMS | PM10·PM2.5 µg/m³, 등급, 소수 첫째 자리로 반올림한 위경도. 실측이 아닌 예측값 |
+
+- 값마다 `Availability`, 관측 시각, 출처를 갖고, 값이 없을 때만 `MissingReason`이 붙습니다. `AVAILABLE`과 `STALE`만 값을 가집니다.
+- 값이 없으면 0이나 다른 출처의 값으로 채우지 않습니다. 실내 공기질 값은 차량 SDK에 없어 모델에 두지 않았습니다.
+- 대기질을 보여 주는 화면은 "대기질: Open-Meteo, CAMS 예측"을 함께 적어야 합니다(CC BY 4.0).
+- 온도와 대기질로 멀미를 판단하지 않고, 운전 패턴과 합쳐 점수를 만들지 않습니다.
+- 합성 샘플 주행과 일반 기기에서는 환경 값을 저장하지 않습니다.
+
 ## 상태·오류
 
 Repository의 도메인 거부는 CommandResult.Rejected, 저장/미지원 실패는 예외로 전달합니다. 화면 ViewModel은 사용자 오류 상태로 변환하고 CancellationException은 전파합니다. 상세는 Loading/Content/NotFound/Error를 구분합니다.
@@ -86,7 +115,7 @@ DrivingViewModel의 busy는 주행 명령에만 적용합니다. 상세 조회�
 
 Application의 AppGraph가 도메인별 Repository를 한 개씩 소유합니다. Activity 재생성은 주행을 끊지 않습니다. 새 프로세스에서 미완료 원본은 INTERRUPTED로 보존합니다. 화면 종료를 자동 운행 종료로 해석하지 않습니다.
 
-주행 원본의 스키마는 v4입니다. 이전 파일은 `observations`, `steering_samples`, `guidance_events` 테이블만 추가하고 기존 주행과 샘플을 유지합니다. 프로필은 별도 파일 `motion-care-profile.db`를 사용하며 스키마 버전을 따로 관리합니다. 트랜잭션 저장 후 목록을 갱신하고 읽기·쓰기는 IO dispatcher에서 처리합니다. 차량 샘플·관찰·조향·안내 결과는 약 1초마다 같은 트랜잭션으로 묶어 추가 저장하므로, 프로세스가 강제 종료되면 마지막 약 1초의 값은 잃을 수 있습니다. 보관 기간 정책은 아직 없습니다.
+주행 원본의 스키마는 v4입니다. 이전 파일은 `observations`, `steering_samples`, `guidance_events` 테이블만 추가하고 기존 주행과 샘플을 유지합니다. 프로필은 별도 파일 `motion-care-profile.db`, 환경은 `motion-care-environment.db`(v1)를 사용하며 스키마 버전을 따로 관리합니다. 트랜잭션 저장 후 목록을 갱신하고 읽기·쓰기는 IO dispatcher에서 처리합니다. 차량 샘플·관찰·조향·안내 결과는 약 1초마다 같은 트랜잭션으로 묶어 추가 저장하므로, 프로세스가 강제 종료되면 마지막 약 1초의 값은 잃을 수 있습니다. 보관 기간 정책은 아직 없습니다.
 
 ## 후속 계약
 

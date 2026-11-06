@@ -11,6 +11,7 @@
 - 조향각 원본 저장과 횡가속도 추정
 - 반복되는 패턴의 내비 위 안내 카드, ON/OFF, 표시·생략 결과 저장
 - 카드의 소리: 알림음과 음성(Pleos 온디바이스 TTS) 선택, 통화·내비 음성과 겹치지 않게 처리
+- 환경 데이터: 바깥 온도·실내 공조(차량), 바깥 대기질(Open-Meteo 예측), 주행 시작·1시간마다·종료 때 저장
 - 프로필 저장 모듈과 사람 목록 조회. 등록 화면은 후속 구현
 - 모델/저장/상태 테스트·UI 테스트·공유 기기 정의
 - 실행 도구·버전/lockfile·환경 점검·CI·문서
@@ -19,7 +20,7 @@
 
 1. 함께: README 명령과 샘플 전체 흐름 확인.
 2. 주행 담당: 승인된 차량 입력·지원/시각/단위. 기록 담당: 프로필·주행 인물 연결.
-3. 주행 담당: 환경. 기록 담당: 기록 집계·비교·상세. 관찰된 패턴은 `TripSnapshot.observations`로 읽습니다.
+3. 주행 담당: 환경(데이터 완료). 기록 담당: 기록 집계·비교·상세. 관찰된 패턴은 `TripSnapshot.observations`로 읽습니다.
 4. 주행 담당: 주행 안내의 환경 연결. 기록 담당: 출발 조언·평점·개인 요약.
 5. 연결·OFF·누락·삭제 검증 후 AI 요약·선택 녹음.
 6. 메인 기능 완료 후 시간이 남을 때만 케어·경로.
@@ -48,10 +49,18 @@
 - 환경 안내를 추가하면 패턴 카드와의 우선순위를 정해야 합니다.
 - 카드 문구는 최종 기획 §15의 기본 조언에서 가져와 `guidanceCopy`에 고정했습니다. 출발 조언(기록 담당)도 같은 표를 쓰면 표현이 어긋나지 않습니다.
 
+## 환경에서 남은 것
+
+- 화면 표시는 아직 없습니다. 출발 전·주행 상세(기록 담당)는 `EnvironmentRepository`의 `current`와 `history`를 읽고, 값의 상태와 출처, "대기질: Open-Meteo, CAMS 예측" 표시를 함께 보여 줘야 합니다. [근거](environment.md#상태)
+- 위치 권한 요청 창 문구가 "알 수 없는 작업 실행"으로 나옵니다. 권한에 이름표가 없어 생기는 시스템 문구라 앱에서 바꿀 수 없습니다.
+- 대기질은 실측이 아닌 예측값입니다. 실측이 필요해지면 `OpenMeteoAirSource`를 에어코리아로 바꾸고 키 보관 방법을 정합니다.
+- 에뮬레이터의 바깥·실내 온도는 고정값이었습니다. 실차 값은 확인하지 못했습니다.
+
 ## 운영사무국에 확인할 것
 
 - `distractionOptimized` 선언과 `android.car.permission.CAR_SPEED`, `pleos.car.permission.CAR_DRIVE` 권한의 승인 여부
 - 멀미 안내를 `CATEGORY_MESSAGE` 알림으로 보내도 심사를 통과하는지
 - `pleos.car.permission.TTS_SERVICE`와 온디바이스 TTS를 앱 등록 없이 배포해도 되는지. My Project의 TextToSpeech SDK 접근은 문서상 "Coming Soon"입니다
+- `pleos.car.permission.FUSED_LOCATION`, `pleos.car.permission.CAR_CLIMATE`, `android.car.permission.CAR_EXTERIOR_ENVIRONMENT` 권한의 승인 여부
 
 구현되지 않은 데이터 API를 미리 모두 넣지 않습니다. 기능을 시작할 때 해당 도메인의 Repository·입력·상태·인수 기준을 정합니다. 최초 기획서의 상세 계약은 참고이며 실제 공개 API는 docs/contracts.md와 코드가 기준입니다.

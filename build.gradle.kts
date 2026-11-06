@@ -10,9 +10,12 @@ plugins {
 
 // One explicit graph. Gradle supplies the actual dependencies; no source regex parsing.
 val allowedEdges = mapOf(
-    ":app" to setOf(":core:model", ":core:ui", ":data:profile", ":data:trip", ":feature:driving", ":feature:history"),
+    ":app" to setOf(
+        ":core:model", ":core:ui", ":data:environment", ":data:profile", ":data:trip", ":feature:driving", ":feature:history",
+    ),
     ":core:model" to emptySet(),
     ":core:ui" to emptySet(),
+    ":data:environment" to setOf(":core:model"),
     ":data:profile" to setOf(":core:model"),
     ":data:trip" to setOf(":core:model"),
     ":feature:driving" to setOf(":core:model", ":core:ui", ":data:trip"),

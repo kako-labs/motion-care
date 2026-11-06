@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트
 
-현대자동차그룹 차량용 앱 공모전 출품작인 멀미 대응 앱(가칭 모션케어)입니다. Pleos Connect(AAOS API 34) 대상 Kotlin·Jetpack Compose 앱이며, 일반 기기에서는 합성 샘플로 동작하고 자동차 기기에서는 차량 속도와 조향을 기록하고 운전 패턴을 찾아 저장하며, 같은 패턴이 반복되면 내비 위 카드로 알립니다. 환경 API, AI 요약은 아직 없습니다. 문서 목록은 `README.md`의 문서 지도를 봅니다.
+현대자동차그룹 차량용 앱 공모전 출품작인 멀미 대응 앱(가칭 모션케어)입니다. Pleos Connect(AAOS API 34) 대상 Kotlin·Jetpack Compose 앱이며, 일반 기기에서는 합성 샘플로 동작하고 자동차 기기에서는 차량 속도와 조향을 기록하고 운전 패턴을 찾아 저장하며, 같은 패턴이 반복되면 내비 위 카드로 알립니다. 환경 값(차량 온도·공조, Open-Meteo 대기질)은 주행마다 저장하지만 화면 표시는 아직 없습니다. AI 요약은 아직 없습니다. 문서 목록은 `README.md`의 문서 지도를 봅니다.
 
 ## 작업 흐름: 브랜치와 PR
 
@@ -65,7 +65,7 @@ feature:* ────► data:*, core:*     (feature끼리는 참조 금지)
 data:* ───────► core:model
 ```
 
-- **모듈 규칙:** 허용 의존성은 루트 `build.gradle.kts`의 `allowedEdges`가 정합니다. `verifyArchitecture`가 빌드 전에 검사하며, 선언하지 않은 모듈이나 의존성은 빌드를 실패시킵니다. `verifyAll`은 플러그인을 보고 모든 모듈의 테스트와 lint를 자동으로 포함합니다. `docs/pleos-emulator/probe`와 `docs/pleos-emulator/sound-probe`는 앱 빌드에 포함되지 않는 측정용 프로젝트입니다.
+- **모듈 규칙:** 허용 의존성은 루트 `build.gradle.kts`의 `allowedEdges`가 정합니다. `verifyArchitecture`가 빌드 전에 검사하며, 선언하지 않은 모듈이나 의존성은 빌드를 실패시킵니다. `verifyAll`은 플러그인을 보고 모든 모듈의 테스트와 lint를 자동으로 포함합니다. `docs/pleos-emulator/probe`, `sound-probe`, `environment-probe`는 앱 빌드에 포함되지 않는 측정용 프로젝트입니다.
 - **데이터 접근:** data 모듈은 Repository 인터페이스와 생성 함수만 공개하고 나머지는 `internal`입니다. 모듈마다 DB 파일과 스키마 버전을 따로 가지며, `onUpgrade`는 명시적 마이그레이션이 없으면 실패합니다. 파일이 나뉘어 있어 모듈을 넘는 트랜잭션은 쓸 수 없습니다.
 - **조립:** DI 프레임워크 없이 Application 범위의 `AppGraph`가 Repository를 만들고, `MainActivity`를 거쳐 `MainHost`로 전달합니다.
 - **화면 이동:** `MainHost`는 home 경로와 `historyGraph` 호출만 갖습니다. 기록 쪽 경로는 `feature/history/.../navigation/HistoryNavigation.kt`에 추가하며 `MainHost`를 고치지 않습니다.
@@ -74,6 +74,7 @@ data:* ───────► core:model
 - **주행 기록:** `TripSessionController`가 기록 중인 주행을 하나로 유지합니다. 새 프로세스에서 미완료 기록은 `INTERRUPTED`가 되고, `SqliteTripStore`는 오래된 revision의 저장을 거부합니다. `UnavailableVehicleDataSource`는 차량 입력이 없을 때 합성값으로 대체되지 않도록 예외를 던집니다.
 - **차량 기록:** `AppGraph`는 자동차 기기에서만 `createVehicleTripData`를 조립합니다. 주행이 시작되면 `TripRecordingService`가 `VehicleRecorder.record()`를 돌리고, 속도는 이벤트 시각 기준으로 약 1초마다 묶어 추가 저장합니다. 단위 테스트로 잡히지 않는 이 흐름은 `docs/pleos-emulator/tools/recording_e2e.py`로 확인합니다.
 - **패턴 탐지:** `TripSessionController`가 차량 샘플을 `PatternDetector`와 `LateralDetector`에 한 건씩 넘기고, 찾은 `Observation`을 샘플과 같은 트랜잭션으로 저장합니다. 합성 샘플 주행은 탐지하지 않습니다. 기준값의 출처와 한계는 `docs/detection-thresholds.md`에 있으며 멀미 기준이 아닙니다.
+- **환경:** `data:environment`의 `EnvironmentRepository`가 바깥 온도·실내 공조(차량)와 바깥 대기질(Open-Meteo 예측)을 값마다 출처·시각·상태와 함께 냅니다. 값이 없으면 채우지 않고 이유를 남깁니다. `TripRecordingService`가 주행 시작·1시간마다·종료 때 저장합니다. 일반 기기는 모두 미지원입니다. 근거와 규칙 값은 `docs/environment.md`, 에뮬레이터 확인은 `docs/pleos-emulator/tools/environment_e2e.py`입니다.
 - **주행 중 안내:** `GuidancePolicy`(data:trip)가 관찰과 샘플을 받아 카드의 표시·대기·생략을 정하고, 결과 `GuidanceEvent`를 샘플과 같은 트랜잭션으로 저장합니다. 표시는 `TripRecordingService`가 넘긴 `NotificationGuidancePresenter`(feature:driving)가 맡고, 소리는 `GuidanceSoundPlayer`(data:trip)가 맡습니다. 소리 실패는 카드에 영향을 주지 않습니다. 규칙과 문구의 출처는 `docs/guidance-card.md`에 있습니다.
 
 ## Pleos 제약
@@ -83,7 +84,8 @@ data:* ───────► core:model
 - **백그라운드:** 일반 서비스는 앱이 뒤로 가고 60초 뒤 종료됩니다. 기록은 포그라운드 서비스에서 돌립니다.
 - **주행 중 화면:** `distractionOptimized`를 선언하지 않은 Activity는 5km/h부터 시스템 화면으로 가려집니다. 현재 `MainActivity`에는 선언이 없습니다.
 - **알림:** 일반 알림은 내비 위에 뜨지 않고 종 배지도 표시되지 않습니다. 메시지·내비 카테고리만 뜹니다. 주행 중 안내는 `CATEGORY_MESSAGE` 카드로 표시합니다(약 9초, 두 줄까지). App Market 심사 통과 여부는 미확인입니다.
-- **소리:** 알림 채널의 소리는 재생 기록이 없어 앱이 직접 냅니다. TextToSpeech SDK는 온디바이스 모드만 씁니다. 등록·키·인터넷 권한이 필요 없고, 서버 모드용 `universal-access`는 의존성에서 뺐습니다. SDK는 오디오 포커스를 잡지 않고 다른 앱에 포커스를 뺏겨도 멈추지 않으며, 포커스만으로는 내비 음성·통화와의 겹침이 막히지 않아 앱이 처리합니다.
+- **소리:** 알림 채널의 소리는 재생 기록이 없어 앱이 직접 냅니다. TextToSpeech SDK는 온디바이스 모드만 씁니다. 등록·키가 필요 없고 인터넷 권한 없이도 재생되며(앱은 대기질 때문에 인터넷 권한을 가짐), 서버 모드용 `universal-access`는 의존성에서 뺐습니다. SDK는 오디오 포커스를 잡지 않고 다른 앱에 포커스를 뺏겨도 멈추지 않으며, 포커스만으로는 내비 음성·통화와의 겹침이 막히지 않아 앱이 처리합니다.
 - **속도:** Vehicle SDK 2.3.2에는 속도 API가 없습니다. `CarPropertyManager`의 `PERF_VEHICLE_SPEED`를 `android.car.permission.CAR_SPEED` 권한으로 읽으며 단위는 m/s입니다. 이 권한은 위치 권한 그룹에 속해 요청 창에 위치 정보로 표시됩니다.
 - **조향:** `CarPropertyManager`의 조향 권한은 `signature|privileged`라 일반 앱이 받을 수 없습니다. Vehicle SDK를 `pleos.car.permission.CAR_DRIVE`로 씁니다. 값은 핸들 각도(도)이고, 바뀔 때만 오며 시각이 없습니다. 축거·조향비 API는 없어 횡가속도는 추정값입니다.
+- **환경:** 바깥 온도는 `CarPropertyManager`의 `ENV_OUTSIDE_TEMPERATURE`(`CAR_EXTERIOR_ENVIRONMENT`, normal), 공조는 Vehicle SDK(`CAR_CLIMATE`, normal)로 읽습니다. `CarPropertyManager`의 공조 속성은 `signature|privileged`입니다. 위치는 FusedLocation SDK(`FUSED_LOCATION`, dangerous)이며 요청 창에 "알 수 없는 작업"으로 표시됩니다. 실내 공기질 API는 없고 `Geocoder`도 없습니다. FusedLocation이 자동차 기기를 필수로 선언해 앱 Manifest에서 `tools:replace`로 덮어씁니다.
 - **창:** 앱 하나가 앱 영역 전체를 쓰는 가로형 창은 1682×1210입니다. 앱 두 개가 나뉜 세로형 창은 측정하지 못했습니다.

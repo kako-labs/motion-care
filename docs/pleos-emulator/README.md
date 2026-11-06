@@ -135,6 +135,27 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 
 - **일찍 멈춘 음성:** `speak` 후 약 0.6초 안에 `stop`하면 서비스의 재생 기록이 `started`로 남습니다. 17초 뒤에도 남아 있었고, 다음 음성을 끝까지 재생한 뒤에는 사라졌습니다. 1.2초 뒤 멈추면 남지 않았습니다. 소리가 나는지는 듣지 못했고, 앱에서 피할 방법은 찾지 못해 그대로 둡니다. ([sound_stop_early](logs/sound_stop_early.log))
 
+### 환경 값
+
+2026-11-06에 [측정 앱](environment-probe)과 실제 앱으로 측정했습니다. 규칙과 근거는 [환경 데이터의 근거](../environment.md)에 있습니다.
+
+| 시험 | 결과 | 증거 |
+| --- | --- | --- |
+| 권한 보호 수준 | `CAR_EXTERIOR_ENVIRONMENT`·`CAR_CLIMATE`는 normal, `FUSED_LOCATION`은 dangerous | `pm list permissions -f` |
+| 일반 앱에 보이는 차량 속성 | `NIGHT_MODE`, `ENV_OUTSIDE_TEMPERATURE` 두 개 | [environment_probe](logs/environment_probe.log) |
+| 바깥 온도 | 25.0°C, 1~2초마다 이벤트. 값이 바뀌지 않아 시뮬레이터 고정값으로 보임 | 같음 |
+| 실내 온도 | Vehicle SDK로 19.1°C. 운전석·조수석·전체 실내 영역을 지원 | 같음 |
+| 내기 순환·공기청정·공조 전원 | 전체 실내 영역만 지원. 좌석 하나로 물으면 `area ID not supported` | 같음 |
+| 설정 온도 | 공조가 꺼져 있으면 `PropertyNotAvailable`. 콘솔에서 공조를 켜고 24°C·20°C로 바꾸면 앱이 그대로 저장 | [environment_e2e](logs/environment_e2e.log) |
+| 위치 | 권한 없이 부르면 `SecurityException`. 요청 창 문구는 "알 수 없는 작업 실행". 허용 후 `emu geo fix` 좌표를 그대로 받고 등록하면 1초마다 이벤트 | [environment_probe](logs/environment_probe.log) |
+| `Geocoder` | `isPresent=false`, 주소 없음 | 같음 |
+| 인터넷 | 앱에서 Open-Meteo HTTPS 200, 약 1.1초 | 같음 |
+| 실제 앱, 모두 허용 | 주행 시작·종료 때 값 저장. 도중에 바꾼 내기 순환과 설정 온도가 종료 값에 반영. 대기질은 반올림한 (37.6, 127.0) 기준 | [environment_e2e](logs/environment_e2e.log) |
+| 실제 앱, 위치만 거부 | 기록은 진행. 대기질만 `UNAVAILABLE`·`NO_PERMISSION`, 차량 값은 저장 | 같음 |
+| 인터넷 권한을 되살린 뒤 소리 | `sound_e2e.py` 6개 시나리오 통과 | |
+
+측정 앱의 위치 권한은 앞선 실행에서 요청 창으로 허용한 상태라 로그에는 권한이 있는 경우만 남아 있습니다. 권한이 없을 때의 `SecurityException`은 첫 실행에서 확인했습니다.
+
 ### 백그라운드 기록
 
 | 조건 | 결과 | 증거 |
@@ -187,10 +208,12 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | [logs](logs) | 측정 로그 `soak_*.log`, `sound_*.log`, 앱 차단 서비스 덤프 `cpm.txt`, Virtual Console 응답 `state.json`·`catalog.json`, AVD 설정 `avd-config.ini` |
 | [probe](probe) | 시험 앱 소스. 앱 빌드에 포함되지 않는 독립 Gradle 프로젝트 |
 | [sound-probe](sound-probe) | 소리 측정 앱과 측정 스크립트 `measure_first.py`·`measure_second.py`. 앱 빌드에 포함되지 않는 독립 Gradle 프로젝트 |
+| [environment-probe](environment-probe) | 바깥 온도·공조·위치·`Geocoder`·인터넷 측정 앱. 앱 빌드에 포함되지 않는 독립 Gradle 프로젝트 |
 | [tools/soak.py](tools/soak.py) | 측정 로그 집계 |
 | [tools/recording_e2e.py](tools/recording_e2e.py) | 앱의 권한 요청부터 안내 카드와 저장까지 자동 시험. 켜 둔 에뮬레이터와 디버그 APK 필요. `ANDROID_SERIAL`로 기기 지정 |
 | [tools/steering_probe.py](tools/steering_probe.py) | 일반 앱이 조향을 받는 경로와 권한을 측정. 시험 앱 필요 |
 | [tools/sound_e2e.py](tools/sound_e2e.py) | 실제 앱의 알림음·음성과 겹침 처리 자동 시험. 소리 측정 앱 APK 필요 |
+| [tools/environment_e2e.py](tools/environment_e2e.py) | 실제 앱의 환경 값 저장 자동 시험. 위치 허용·거부와 공조 변경. 에뮬레이터 인터넷 필요 |
 
 저장소에 넣지 않은 것:
 
@@ -258,6 +281,23 @@ ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/sound_e2e.py docs/pleo
 ```
 
 `measure_first.py <출력 폴더>`는 `dev.soundprobe`를, `measure_second.py <APK 폴더>`는 `main.apk`(`dev.soundprobe`), `other.apk`(`dev.soundother`), `nonet.apk`(`dev.soundnonet`)를 씁니다.
+
+### 환경 측정
+
+```sh
+./gradlew -p docs/pleos-emulator/environment-probe :app:assembleDebug
+adb install -r docs/pleos-emulator/environment-probe/app/build/outputs/apk/debug/app-debug.apk
+adb emu geo fix 126.978 37.5665
+adb shell am start --user 10 -n dev.envprobe/.PermissionActivity   # 위치 권한 요청 창
+adb shell am start-foreground-service --user 10 -n dev.envprobe/.ProbeService
+adb shell am start-foreground-service --user 10 -n dev.envprobe/.ProbeService --es act again
+adb logcat -d -s ENVPROBE:I
+
+./gradlew :app:assembleDebug
+ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_e2e.py
+```
+
+공조는 Virtual Console의 `PUT /vehicle/hvac?power=1&recirc=1&driver_temp=24`로 바꿉니다. 페이지 소스에서 확인한 값입니다.
 
 ### 로그 집계
 

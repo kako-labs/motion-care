@@ -10,6 +10,7 @@ flowchart TD
   App --> History[feature:history · 기록 UI/상태]
   App --> Data[data:trip · 주행 Repository]
   App --> Profile[data:profile · 프로필 Repository]
+  App --> Env[data:environment · 환경 Repository]
   Driving --> Data
   History --> Data
   History --> Profile
@@ -17,6 +18,7 @@ flowchart TD
   History --> UI
   Data --> Model[core:model]
   Profile --> Model
+  Env --> Model
   Driving --> Model
   History --> Model
 ```
@@ -32,6 +34,7 @@ flowchart TD
 | core:ui | 재사용 Section·기능 자리 UI | Repository·업무 로직 없음 |
 | data:trip | TripRepository, VehicleRecorder, 샘플·차량 생성 함수 | DB·SQL·세션·입력·샘플을 internal로 제한 |
 | data:profile | ProfileRepository, Repository 생성 함수 | DB·SQL을 internal로 제한 |
+| data:environment | EnvironmentRepository, 차량용·미지원 생성 함수 | 공조·위치 SDK, 대기질 HTTP, DB·캐시를 internal로 제한 |
 | feature:driving | DrivingViewModel·주행 컴포넌트 | 주행 UI 상태를 독립 관리 |
 | feature:history | historyGraph·목록/상세/프로필 ViewModel·기록 관련 화면 | 상세 로딩·오류·재시도 상태를 독립 관리 |
 
@@ -78,11 +81,11 @@ AppGraph는 명시적 생성자 주입으로 Repository를 조립합니다. 프�
 
 ## 외부 API·차량 SDK
 
-현재 HTTP 코드와 인터넷 권한은 없습니다. 차량 신호는 `data:trip`이 읽습니다. 속도는 `CarSpeedSource`가 `CarPropertyManager`로, 조향은 `SdkSteeringSource`가 Pleos Vehicle SDK로 읽습니다. 카드의 음성은 `AndroidSoundOutput`이 Pleos TextToSpeech SDK의 온디바이스 모드로 재생합니다. 이 SDK가 추가하는 인터넷 권한은 앱 Manifest에서 지우고, 서버 모드용 로그인 라이브러리는 의존성에서 뺐습니다. 기능을 구현할 때 아래 규칙을 따릅니다.
+HTTP 호출은 `data:environment`의 바깥 대기질 하나이며, 인터넷 권한은 이 모듈의 Manifest에서 추가합니다. 차량 신호는 `data:trip`이 읽습니다. 속도는 `CarSpeedSource`가 `CarPropertyManager`로, 조향은 `SdkSteeringSource`가 Pleos Vehicle SDK로 읽습니다. 카드의 음성은 `AndroidSoundOutput`이 Pleos TextToSpeech SDK의 온디바이스 모드로 재생합니다. 서버 모드용 로그인 라이브러리는 의존성에서 뺐습니다. 환경 값은 `data:environment`가 읽습니다. 바깥 온도는 `CarPropertyManager`, 공조는 Vehicle SDK, 위치는 Pleos FusedLocation SDK, 바깥 대기질은 Open-Meteo입니다([근거](environment.md)). 기능을 구현할 때 아래 규칙을 따릅니다.
 
 - 호출은 data 모듈에서만 합니다. 화면과 ViewModel은 Repository만 사용합니다.
 - 서비스마다 Repository를 하나 둡니다. 모든 API를 파일 하나에 모으지 않습니다. 대기질은 data:environment, LLM 요약은 data:summary, 차량 신호는 data:trip입니다.
-- 인터넷 권한은 첫 외부 API 기능과 함께 추가합니다.
+- 인터넷 권한은 외부 API를 쓰는 data 모듈의 Manifest에 선언합니다. 지금은 `data:environment`뿐입니다.
 - HTTP 실행, 시간 제한, 오류 변환이 두 모듈에서 필요해지면 core:network를 만듭니다. HTTP 라이브러리는 그 모듈에 `implementation`으로만 선언해 feature에서 쓸 수 없게 합니다.
 - API 키는 저장소와 APK에 넣지 않습니다. 비용이 발생하는 키는 서버리스 함수 등 앱 밖에 보관합니다.
 

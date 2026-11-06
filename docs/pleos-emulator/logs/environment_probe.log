@@ -1,0 +1,58 @@
+--------- beginning of main
+I ENVPROBE: checkSelf android.car.permission.CAR_EXTERIOR_ENVIRONMENT=0
+I ENVPROBE: checkSelf pleos.car.permission.CAR_CLIMATE=0
+I ENVPROBE: checkSelf pleos.car.permission.FUSED_LOCATION=0
+I ENVPROBE: checkSelf android.permission.INTERNET=0
+I ENVPROBE: cpm visible count=2 list=[NIGHT_MODE, ENV_OUTSIDE_TEMPERATURE]
+I ENVPROBE: ENV_OUTSIDE config=CarPropertyConfig{mPropertyId=ENV_OUTSIDE_TEMPERATURE, mAccess=1, mAreaType=0, mChangeMode=2, mConfigArray=[], mConfigString=, mMaxSampleRate=2.0, mMinSampleRate=1.0, mAreaIdConfigs =[AreaIdConfig{mAreaId=0}], mType=class java.lang.Float}
+I ENVPROBE: ENV_OUTSIDE get value=25.0 status=0 ts=27000385011
+I ENVPROBE: ENV_OUTSIDE registerCallback=true
+I ENVPROBE: net code=200 ms=1094 body={"latitude":37.6,"longitude":127.0,"generationtime_ms":0.07700920104980469,"utc_offset_seconds":32400,"timezone":"Asia/Seoul","timezone_abbreviation":"GMT+9","elevation":34.0,"current_units":{"time":"iso8601","interval":"seconds","pm10":"μg
+I ENVPROBE: cap recirc access=READ_WRITE areas=[[ROW_1_LEFT, ROW_1_RIGHT, ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT]]
+I ENVPROBE: cap temp access=READ_WRITE areas={ai.pleos.playground.vehicle.api.model.area.SeatArea@13ae482=AreaBounds(minValue=15.0, maxValue=30.0), ai.pleos.playground.vehicle.api.model.area.SeatArea@f3b987f=AreaBounds(minValue=15.0, maxValue=30.0)}
+I ENVPROBE: cap tempCurrent access=READ areas=[[ROW_1_LEFT], [ROW_1_RIGHT], [ROW_1_LEFT, ROW_1_RIGHT, ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT]]
+I ENVPROBE: cap autoRecirc access=READ_WRITE areas=[[ROW_1_LEFT, ROW_1_RIGHT, ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT]]
+I ENVPROBE: cap fan access=READ_WRITE areas={ai.pleos.playground.vehicle.api.model.area.SeatArea@355d441e=AreaBounds(minValue=1, maxValue=8)}
+I ENVPROBE: recirc cabin=true
+I ENVPROBE: cap power access=READ_WRITE areas=[[ROW_1_LEFT, ROW_1_RIGHT, ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT]]
+I ENVPROBE: cap airCleaner access=READ_WRITE areas=[[ROW_1_LEFT, ROW_1_RIGHT, ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT]]
+I ENVPROBE: autoRecirc cabin=false
+I ENVPROBE: airCleaner cabin=false
+I ENVPROBE: power cabin=false
+I ENVPROBE: location isSupported=true
+I ENVPROBE: tempCurrent left=19.1
+I ENVPROBE: tempCurrent cabin=19.1
+I ENVPROBE: location last lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932802558 ageMs=751
+I ENVPROBE: fan [ROW_1_LEFT, ROW_1_RIGHT]=3
+I ENVPROBE: tempSet [ROW_1_LEFT] failed java.lang.Exception: android.car.hardware.property.PropertyNotAvailableException: Property ID: HVAC_TEMPERATURE_SET area ID: 0x1 - is not available because of vendor error code: 0
+I ENVPROBE: tempSet [ROW_1_RIGHT] failed java.lang.Exception: android.car.hardware.property.PropertyNotAvailableException: Property ID: HVAC_TEMPERATURE_SET area ID: 0x4 - is not available because of vendor error code: 0
+I ENVPROBE: tempCurrent event 19.1 66.0
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932803559 ageMs=2
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932804560 ageMs=2
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932805561 ageMs=2
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932806564 ageMs=2
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932807568 ageMs=1
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932809572 ageMs=3
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932810577 ageMs=2
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932811579 ageMs=1
+I ENVPROBE: ENV_OUTSIDE get value=25.0 status=0 ts=39000168809
+I ENVPROBE: autoRecirc cabin=false
+I ENVPROBE: location isSupported=true
+I ENVPROBE: recirc cabin=true
+I ENVPROBE: geocoder present=false
+I ENVPROBE: airCleaner cabin=false
+I ENVPROBE: location last lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932811579 ageMs=119
+I ENVPROBE: geocoder result=null
+I ENVPROBE: power cabin=false
+I ENVPROBE: tempCurrent left=19.1
+I ENVPROBE: tempCurrent cabin=19.1
+I ENVPROBE: fan [ROW_1_LEFT, ROW_1_RIGHT]=3
+I ENVPROBE: tempSet [ROW_1_RIGHT] failed java.lang.Exception: android.car.hardware.property.PropertyNotAvailableException: Property ID: HVAC_TEMPERATURE_SET area ID: 0x4 - is not available because of vendor error code: 0
+I ENVPROBE: tempSet [ROW_1_LEFT] failed java.lang.Exception: android.car.hardware.property.PropertyNotAvailableException: Property ID: HVAC_TEMPERATURE_SET area ID: 0x1 - is not available because of vendor error code: 0
+I ENVPROBE: net code=200 ms=257 body={"latitude":37.6,"longitude":127.0,"generationtime_ms":0.08440017700195312,"utc_offset_seconds":32400,"timezone":"Asia/Seoul","timezone_abbreviation":"GMT+9","elevation":34.0,"current_units":{"time":"iso8601","interval":"seconds","pm10":"μg
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932812584 ageMs=1
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932813589 ageMs=3
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932814592 ageMs=1
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932815593 ageMs=1
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932816596 ageMs=1
+I ENVPROBE: location event lat=37.566498333333335 lon=126.97799833333333 confidence=5.0 ts=1793932817600 ageMs=3

@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | 주행 담당 | app | AppGraph.kt·MainHost.kt |
 | 주행 담당 | data/trip | TripRepository.kt·SampleTripRepositoryFactory.kt |
+| 주행 담당 | data/environment | EnvironmentRepository.kt·DefaultEnvironmentRepository.kt |
 | 주행 담당 | feature/driving | DrivingViewModel.kt·ui/ActiveContent.kt |
 | 기록 담당 | data/profile | ProfileRepository.kt·ProfileRepositoryFactory.kt |
 | 기록 담당 | feature/history | navigation/HistoryNavigation.kt·HistoryViewModel.kt·TripDetailViewModel.kt·profile/ProfileViewModel.kt |
@@ -17,7 +18,7 @@
 ## 다음 기능을 붙일 위치
 
 - 차량 SDK·기본 탐지: data/trip.
-- 실내 환경·외부 대기질: data/environment 모듈을 추가해 구현.
+- 실내 환경·외부 대기질: data/environment. 출발 전·주행 상세 화면에서 읽을 때는 feature:history를 `allowedEdges`에 추가합니다.
 - 주행 중 안내·소리·배너: feature/driving. 데이터는 Repository로 접근. 표시·생략 판단은 data/trip의 `GuidancePolicy`.
 - 주행 중 안내 ON/OFF: 기록 중 판단에 쓰여 지금은 data/trip의 `GuidanceSettings`. 통합 설정 화면을 만들 때 옮길지 함께 정합니다.
 - 프로필·차량·인물 연결·평가·안내 설정 저장: data/profile. 화면은 feature/history.
