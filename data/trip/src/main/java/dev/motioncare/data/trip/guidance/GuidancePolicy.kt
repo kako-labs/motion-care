@@ -24,14 +24,15 @@ internal data class GuidanceLimits(
 /**
  * Decides whether a card appears, waits or is skipped. Knows nothing about how a card is displayed.
  *
- * Pattern cards and cabin air advice share one waiting slot and one interval. A repeated pattern takes the place of
- * waiting advice: the pattern is gone once skipped, while the cabin air stays the same and is offered again with the
- * next environment reading.
+ * Pattern cards, cabin air advice and the rest card share one waiting slot and one interval. A repeated pattern
+ * takes the place of waiting advice or a waiting rest card: the pattern is gone once skipped, while the cabin air
+ * and the driving time stay and are offered again later.
  */
 internal class GuidancePolicy(
     private val enabled: () -> Boolean,
     private val show: (GuidanceTopic) -> Boolean,
     private val limits: GuidanceLimits = GuidanceLimits(),
+    longDriveLimits: LongDriveLimits = LongDriveLimits(),
 ) {
     private class Waiting(val topic: GuidanceTopic, val observedMs: Long)
     private class Point(val elapsedMs: Long, val speed: Double)
@@ -43,6 +44,7 @@ internal class GuidancePolicy(
     private var calmSinceMs: Long? = null
     // Each piece of advice is decided once per trip.
     private val decidedAdvice = mutableSetOf<EnvironmentAdvice>()
+    private val longDrive = LongDriveTracker(longDriveLimits)
 
     fun onObservation(seen: Observation): List<GuidanceEvent> {
         val now = seen.endMs
@@ -73,6 +75,22 @@ internal class GuidancePolicy(
     /** Pass the estimated lateral acceleration, or null when steering is not available. */
     fun onSample(now: Long, speedMps: Double, lateralMps2: Double?): List<GuidanceEvent> {
         trackCalm(now, speedMps, lateralMps2)
+        val offered = if (longDrive.onSample(now, speedMps)) offerRest(now) else emptyList()
+        return offered + decideWaiting(now)
+    }
+
+    /** A rest card that cannot wait now stays due and is offered again with the next sample, without a record. */
+    private fun offerRest(now: Long): List<GuidanceEvent> {
+        if (waiting?.topic == GuidanceTopic.LongDrive) return emptyList()
+        if (!enabled()) {
+            longDrive.used(now)
+            return listOf(GuidanceEvent(now, now, GuidanceTopic.LongDrive, GuidanceOutcome.SKIPPED_OFF))
+        }
+        if (waiting == null && !withinInterval(now)) waiting = Waiting(GuidanceTopic.LongDrive, now)
+        return emptyList()
+    }
+
+    private fun decideWaiting(now: Long): List<GuidanceEvent> {
         val card = waiting ?: return emptyList()
         if (!enabled()) return settle(card, now, GuidanceOutcome.SKIPPED_OFF)
         if (now - card.observedMs > limits.expireAfterMs) return settle(card, now, GuidanceOutcome.SKIPPED_EXPIRED)
@@ -97,7 +115,11 @@ internal class GuidancePolicy(
 
     private fun settle(card: Waiting, now: Long, outcome: GuidanceOutcome): List<GuidanceEvent> {
         waiting = null
-        (card.topic as? GuidanceTopic.Environment)?.let { decidedAdvice += it.advice }
+        when (val topic = card.topic) {
+            is GuidanceTopic.Environment -> decidedAdvice += topic.advice
+            GuidanceTopic.LongDrive -> longDrive.used(now)
+            is GuidanceTopic.Pattern -> Unit
+        }
         return listOf(GuidanceEvent(now, card.observedMs, card.topic, outcome))
     }
 

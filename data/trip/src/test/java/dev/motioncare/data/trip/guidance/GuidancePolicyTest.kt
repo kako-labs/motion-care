@@ -14,6 +14,9 @@ class GuidancePolicyTest {
         showWorks
     })
     private val reduce = GuidanceTopic.Environment(EnvironmentAdvice.REDUCE_OUTSIDE_AIR)
+    private val rest = GuidanceTopic.LongDrive
+    private val minute = 60_000L
+    private val hour = 60 * minute
 
     private fun card(pattern: DrivingPattern) = GuidanceTopic.Pattern(pattern)
 
@@ -21,8 +24,9 @@ class GuidancePolicyTest {
         Observation(pattern, maxOf(atMs - 100, 0), atMs, 3.0, PATTERN_DETECTOR_VERSION)
 
     /** Steady driving at 5 Hz from the given time, returning all recorded events. */
-    private fun cruise(fromMs: Long, toMs: Long, speed: Double = 15.0, lateral: Double? = 0.0): List<GuidanceEvent> =
-        (fromMs..toMs step 200).flatMap { policy.onSample(it, speed, lateral) }
+    private fun cruise(
+        fromMs: Long, toMs: Long, speed: Double = 15.0, lateral: Double? = 0.0, stepMs: Long = 200,
+    ): List<GuidanceEvent> = (fromMs..toMs step stepMs).flatMap { policy.onSample(it, speed, lateral) }
 
     private fun outcomes(events: List<GuidanceEvent>) = events.map { it.outcome }
 
@@ -274,5 +278,72 @@ class GuidancePolicyTest {
         thirdTime(DrivingPattern.REPEATED_SWAY, 1000)
         assertEquals(listOf(GuidanceOutcome.SKIPPED_EXPIRED), outcomes(policy.finish(2000)))
         assertEquals(emptyList<GuidanceEvent>(), policy.finish(3000))
+    }
+
+    @Test fun `two hours of driving brings a rest card`() {
+        val events = cruise(0, 2 * hour + minute, stepMs = 1000)
+        assertEquals(listOf(rest), shown)
+        assertEquals(GuidanceOutcome.SHOWN, events.single().outcome)
+        assertEquals(2 * hour, events.single().observedMs)
+    }
+
+    @Test fun `the rest card returns two hours after it was shown`() {
+        val events = cruise(0, 4 * hour + minute, stepMs = 1000)
+        assertEquals(listOf(rest, rest), shown)
+        assertEquals(listOf(2 * hour, 4 * hour), events.map { it.elapsedMs })
+    }
+
+    @Test fun `a rest card inside the interval waits without a record`() {
+        cruise(0, 110 * minute, stepMs = 1000)
+        thirdTime(DrivingPattern.HARD_STOP, 110 * minute)
+        val events = cruise(110 * minute + 1000, 2 * hour + 30 * minute, stepMs = 1000)
+        assertEquals(listOf(card(DrivingPattern.HARD_STOP), rest), shown)
+        assertEquals(listOf(110 * minute + 1000, 125 * minute + 1000), events.map { it.elapsedMs })
+        assertEquals(listOf(GuidanceOutcome.SHOWN, GuidanceOutcome.SHOWN), outcomes(events))
+    }
+
+    @Test fun `a repeated pattern takes the place of a waiting rest card`() {
+        cruise(0, 2 * hour - 1000, stepMs = 1000)
+        // Swaying keeps the car from being calm, so the rest card waits.
+        cruise(2 * hour, 2 * hour + 10_000, lateral = 1.5, stepMs = 1000)
+        thirdTime(DrivingPattern.REPEATED_SWAY, 2 * hour + 10_000)
+        val events = cruise(2 * hour + 11_000, 2 * hour + 30 * minute, stepMs = 1000)
+        assertEquals(listOf(card(DrivingPattern.REPEATED_SWAY), rest), shown)
+        assertEquals(listOf(GuidanceOutcome.SHOWN, GuidanceOutcome.SHOWN), outcomes(events))
+    }
+
+    @Test fun `a break cancels a held rest card`() {
+        cruise(0, 110 * minute, stepMs = 1000)
+        thirdTime(DrivingPattern.HARD_STOP, 110 * minute)
+        cruise(110 * minute + 1000, 2 * hour + minute, stepMs = 1000)
+        cruise(2 * hour + minute + 1000, 2 * hour + 16 * minute + 1000, speed = 0.0, stepMs = 1000)
+        val events = cruise(2 * hour + 16 * minute + 2000, 3 * hour, stepMs = 1000)
+        assertEquals(listOf(card(DrivingPattern.HARD_STOP)), shown)
+        assertTrue(events.isEmpty())
+    }
+
+    @Test fun `a rest card with guidance off is recorded once per stretch`() {
+        enabled = false
+        val events = cruise(0, 3 * hour, stepMs = 1000)
+        assertTrue(shown.isEmpty())
+        assertEquals(listOf(GuidanceOutcome.SKIPPED_OFF), outcomes(events))
+        assertEquals(rest, events.single().topic)
+    }
+
+    @Test fun `turning guidance off while a rest card waits records it once`() {
+        cruise(0, 2 * hour - 1000, stepMs = 1000)
+        cruise(2 * hour, 2 * hour + 10_000, lateral = 1.5, stepMs = 1000)
+        enabled = false
+        val events = cruise(2 * hour + 11_000, 2 * hour + 20_000, stepMs = 1000)
+        assertEquals(listOf(GuidanceOutcome.SKIPPED_OFF), outcomes(events))
+        assertEquals(rest, events.single().topic)
+    }
+
+    @Test fun `a rest card that finds no calm moment expires`() {
+        cruise(0, 2 * hour - 1000, stepMs = 1000)
+        val events = cruise(2 * hour, 2 * hour + 2 * minute, lateral = 1.5, stepMs = 1000)
+        assertTrue(shown.isEmpty())
+        assertEquals(listOf(GuidanceOutcome.SKIPPED_EXPIRED), outcomes(events))
+        assertEquals(rest, events.single().topic)
     }
 }

@@ -39,6 +39,7 @@ internal fun guidanceCopy(topic: GuidanceTopic): String = when (topic) {
         EnvironmentAdvice.REDUCE_OUTSIDE_AIR -> "외기 유입을 줄이고 공기청정 기능을 확인해보세요"
         EnvironmentAdvice.TRY_OUTSIDE_AIR -> "답답함을 느낀다면 잠시 외기 모드를 사용해보세요"
     }
+    GuidanceTopic.LongDrive -> "2시간 넘게 달렸어요. 안전한 곳에서 쉬어가보세요"
 }
 
 /**

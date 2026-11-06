@@ -8,7 +8,7 @@ import org.junit.Test
 
 class GuidanceCopyTest {
     private val topics = DrivingPattern.entries.map { GuidanceTopic.Pattern(it) } +
-        EnvironmentAdvice.entries.map { GuidanceTopic.Environment(it) }
+        EnvironmentAdvice.entries.map { GuidanceTopic.Environment(it) } + GuidanceTopic.LongDrive
 
     /** Counts what the driver reads. NHTSA excludes punctuation; spaces stay in to be conservative. */
     private fun readLength(text: String) = text.count { it.isLetterOrDigit() || it.isWhitespace() }
@@ -34,6 +34,7 @@ class GuidanceCopyTest {
             GuidanceTopic.Pattern(DrivingPattern.REPEATED_SWAY) to "핸들",
             GuidanceTopic.Environment(EnvironmentAdvice.REDUCE_OUTSIDE_AIR) to "외기 유입을 줄이고",
             GuidanceTopic.Environment(EnvironmentAdvice.TRY_OUTSIDE_AIR) to "외기 모드",
+            GuidanceTopic.LongDrive to "쉬어가",
         )
         topics.forEach { topic ->
             val copy = guidanceCopy(topic)
