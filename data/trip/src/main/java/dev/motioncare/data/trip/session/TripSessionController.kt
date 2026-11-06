@@ -6,6 +6,7 @@ import dev.motioncare.data.trip.analysis.LateralDetector
 import dev.motioncare.data.trip.analysis.LateralLimits
 import dev.motioncare.data.trip.analysis.PatternDetector
 import dev.motioncare.data.trip.analysis.lateralAcceleration
+import dev.motioncare.data.trip.guidance.EnvironmentAdvisor
 import dev.motioncare.data.trip.guidance.GuidancePolicy
 import dev.motioncare.data.trip.internal.*
 import kotlinx.coroutines.CancellationException
@@ -41,6 +42,7 @@ internal class TripSessionController(
     private val lateralLimits = LateralLimits()
     private var lateral = LateralDetector(lateralLimits)
     private var guidance: GuidancePolicy? = null
+    private var advisor = EnvironmentAdvisor()
     private val pendingGuidance = mutableListOf<GuidanceEvent>()
     private val pendingSteering = mutableListOf<SteeringSample>()
     private var lastSteeringElapsedMs = -1L
@@ -73,6 +75,7 @@ internal class TripSessionController(
         detector = PatternDetector()
         lateral = LateralDetector(lateralLimits)
         guidance = null
+        advisor = EnvironmentAdvisor()
         pendingGuidance.clear()
         pendingSteering.clear()
         lastSteeringElapsedMs = -1
@@ -114,13 +117,34 @@ internal class TripSessionController(
         steering: Flow<SteeringReading> = emptyFlow(),
         presenter: GuidancePresenter? = null,
         guidanceEnabled: () -> Boolean = { true },
+        environment: Flow<EnvironmentSnapshot> = emptyFlow(),
     ) = coroutineScope {
         mutex.withLock { guidance = presenter?.let { GuidancePolicy(guidanceEnabled, it::show) } }
         val collecting = launch { readings.collect { accept(it) } }
         val steeringJob = launch { collectSteering(steering) }
+        val environmentJob = launch { collectEnvironment(environment) }
         reader.records.first { records -> records.none { it.status == TripStatus.RECORDING } }
         collecting.cancelAndJoin()
         steeringJob.cancelAndJoin()
+        environmentJob.cancelAndJoin()
+    }
+
+    // Cabin air advice is an addition to the trip; a failing environment stream never stops recording.
+    private suspend fun collectEnvironment(environment: Flow<EnvironmentSnapshot>) {
+        try {
+            environment.collect { acceptEnvironment(it) }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+        }
+    }
+
+    private suspend fun acceptEnvironment(snapshot: EnvironmentSnapshot) = mutex.withLock {
+        active() ?: return@withLock
+        val policy = guidance ?: return@withLock
+        val elapsed = (monotonic.nowNanos() - startedAtNanos) / 1_000_000
+        val advice = advisor.onSnapshot(snapshot, elapsed) ?: return@withLock
+        pendingGuidance += policy.onAdvice(advice, elapsed)
     }
 
     // A steering failure ends left and right analysis only. Speed keeps recording.

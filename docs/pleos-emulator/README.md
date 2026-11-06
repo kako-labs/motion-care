@@ -153,6 +153,9 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 | 실제 앱, 모두 허용 | 주행 시작·종료 때 값 저장. 도중에 바꾼 내기 순환과 설정 온도가 종료 값에 반영. 대기질은 반올림한 (37.6, 127.0) 기준 | [environment_e2e](logs/environment_e2e.log) |
 | 실제 앱, 위치만 거부 | 기록은 진행. 대기질만 `UNAVAILABLE`·`NO_PERMISSION`, 차량 값은 저장 | 같음 |
 | 인터넷 권한을 되살린 뒤 소리 | `sound_e2e.py` 6개 시나리오 통과 | |
+| 환경 카드, 대기질 매우나쁨 + 외기 유입 | 델리(28.6, 77.2) 예측 PM10 158.8·PM2.5 82.2, 내기 순환 끔. 주행 시작 0.4초 뒤 후보, 3.6초 뒤 "외기 유입을 줄이고 공기청정 기능을 확인해보세요"가 내비 위에 한 줄로 뜸. `REDUCE_OUTSIDE_AIR`·`SHOWN` 저장 | [environment_card_e2e](logs/environment_card_e2e.log), [90_environment_card_reduce](shots/90_environment_card_reduce.png) |
+| 환경 카드, 대기질 매우나쁨 + 내기 순환 | 1분 주행 동안 카드와 기록 없음 | 같음 |
+| 환경 카드, 대기질 좋음 + 내기 순환 33분 | 서울(37.6, 127.0) 예측 PM10 7.2·PM2.5 7.0, 내기 순환 켬, 30km/h 유지. 30분 0.24초에 후보, 0.09초 뒤 "답답함을 느낀다면 잠시 외기 모드를 사용해보세요"가 주행 중 내비 위에 뜸. 그 전에는 카드 없음. `TRY_OUTSIDE_AIR`·`SHOWN` 저장 | 같음, [91_environment_card_try](shots/91_environment_card_try.png) |
 
 측정 앱의 위치 권한은 앞선 실행에서 요청 창으로 허용한 상태라 로그에는 권한이 있는 경우만 남아 있습니다. 권한이 없을 때의 `SecurityException`은 첫 실행에서 확인했습니다.
 
@@ -214,6 +217,7 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | [tools/steering_probe.py](tools/steering_probe.py) | 일반 앱이 조향을 받는 경로와 권한을 측정. 시험 앱 필요 |
 | [tools/sound_e2e.py](tools/sound_e2e.py) | 실제 앱의 알림음·음성과 겹침 처리 자동 시험. 소리 측정 앱 APK 필요 |
 | [tools/environment_e2e.py](tools/environment_e2e.py) | 실제 앱의 환경 값 저장 자동 시험. 위치 허용·거부와 공조 변경. 에뮬레이터 인터넷 필요 |
+| [tools/environment_card_e2e.py](tools/environment_card_e2e.py) | 환경 카드 자동 시험. 위치(델리·서울)와 내기 순환을 바꿔 카드와 저장 결과 확인. `--long`은 내기 순환 33분 주행 추가. 실행 시점의 예측 등급이 맞지 않으면 "NOT RUN" |
 
 저장소에 넣지 않은 것:
 
@@ -295,6 +299,8 @@ adb logcat -d -s ENVPROBE:I
 
 ./gradlew :app:assembleDebug
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_e2e.py
+ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_card_e2e.py           # 약 3분
+ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_card_e2e.py --long    # 약 40분
 ```
 
 공조는 Virtual Console의 `PUT /vehicle/hvac?power=1&recirc=1&driver_temp=24`로 바꿉니다. 페이지 소스에서 확인한 값입니다.

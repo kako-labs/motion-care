@@ -1,43 +1,50 @@
 package dev.motioncare.feature.driving.guidance
 
 import dev.motioncare.core.model.DrivingPattern
+import dev.motioncare.core.model.EnvironmentAdvice
+import dev.motioncare.core.model.GuidanceTopic
 import org.junit.Assert.*
 import org.junit.Test
 
 class GuidanceCopyTest {
+    private val topics = DrivingPattern.entries.map { GuidanceTopic.Pattern(it) } +
+        EnvironmentAdvice.entries.map { GuidanceTopic.Environment(it) }
+
     /** Counts what the driver reads. NHTSA excludes punctuation; spaces stay in to be conservative. */
     private fun readLength(text: String) = text.count { it.isLetterOrDigit() || it.isWhitespace() }
 
     @Test fun `every card fits the 30 character limit with its title`() {
-        DrivingPattern.entries.forEach { pattern ->
-            val length = readLength(GUIDANCE_TITLE) + readLength(guidanceCopy(pattern))
-            assertTrue("$pattern is $length characters", length <= 30)
+        topics.forEach { topic ->
+            val length = readLength(GUIDANCE_TITLE) + readLength(guidanceCopy(topic))
+            assertTrue("$topic is $length characters", length <= 30)
         }
     }
 
-    @Test fun `every pattern has its own message`() {
-        val copies = DrivingPattern.entries.map(::guidanceCopy)
+    @Test fun `every topic has its own message`() {
+        val copies = topics.map(::guidanceCopy)
         assertEquals(copies.size, copies.toSet().size)
     }
 
-    @Test fun `each card recommends an action for the pattern that repeated`() {
+    @Test fun `each card recommends an action for its topic`() {
         val subject = mapOf(
-            DrivingPattern.RAPID_START to "출발",
-            DrivingPattern.HARD_STOP to "정지",
-            DrivingPattern.REPEATED_SPEED_CHANGE to "앞차",
-            DrivingPattern.FAST_TURN to "커브",
-            DrivingPattern.REPEATED_SWAY to "핸들",
+            GuidanceTopic.Pattern(DrivingPattern.RAPID_START) to "출발",
+            GuidanceTopic.Pattern(DrivingPattern.HARD_STOP) to "정지",
+            GuidanceTopic.Pattern(DrivingPattern.REPEATED_SPEED_CHANGE) to "앞차",
+            GuidanceTopic.Pattern(DrivingPattern.FAST_TURN) to "커브",
+            GuidanceTopic.Pattern(DrivingPattern.REPEATED_SWAY) to "핸들",
+            GuidanceTopic.Environment(EnvironmentAdvice.REDUCE_OUTSIDE_AIR) to "외기 유입을 줄이고",
+            GuidanceTopic.Environment(EnvironmentAdvice.TRY_OUTSIDE_AIR) to "외기 모드",
         )
-        DrivingPattern.entries.forEach { pattern ->
-            val copy = guidanceCopy(pattern)
+        topics.forEach { topic ->
+            val copy = guidanceCopy(topic)
             assertTrue(copy, copy.endsWith("보세요"))
-            assertTrue("$pattern says: $copy", subject.getValue(pattern) in copy)
+            assertTrue("$topic says: $copy", subject.getValue(topic) in copy)
         }
     }
 
     @Test fun `cards never give orders or medical claims`() {
-        DrivingPattern.entries.forEach { pattern ->
-            val copy = guidanceCopy(pattern)
+        topics.forEach { topic ->
+            val copy = guidanceCopy(topic)
             listOf("하세요", "마세요", "멀미", "위험", "운전자", "습관").forEach { word ->
                 assertFalse("$copy contains $word", word in copy)
             }

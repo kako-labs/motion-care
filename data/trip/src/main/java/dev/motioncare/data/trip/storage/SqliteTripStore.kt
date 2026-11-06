@@ -65,7 +65,7 @@ internal class SqliteTripStore(
                 guidance.forEach { event ->
                     db.insertOrThrow("guidance_events", null, ContentValues().apply {
                         put("trip_id", trip.id.value); put("elapsed", event.elapsedMs); put("observed", event.observedMs)
-                        put("pattern", event.pattern.name); put("outcome", event.outcome.name)
+                        put("pattern", topicName(event.topic)); put("outcome", event.outcome.name)
                     })
                 }
             }
@@ -105,7 +105,7 @@ internal class SqliteTripStore(
             val guidance = db.rawQuery("SELECT elapsed, observed, pattern, outcome FROM guidance_events WHERE trip_id = ? ORDER BY elapsed, rowid",
                 arrayOf(id.value)).use { c ->
                 buildList { while (c.moveToNext()) {
-                    add(GuidanceEvent(c.getLong(0), c.getLong(1), DrivingPattern.valueOf(c.getString(2)), GuidanceOutcome.valueOf(c.getString(3))))
+                    add(GuidanceEvent(c.getLong(0), c.getLong(1), topicOf(c.getString(2)), GuidanceOutcome.valueOf(c.getString(3))))
                 } }
             }
             TripSnapshot(trip, samples, observations, steering, guidance)
@@ -149,3 +149,14 @@ internal class SqliteTripStore(
             DataOrigin.valueOf(text("origin")), number("revision"))
     }
 }
+
+// guidance_events.pattern holds the card topic: a pattern name or a cabin air advice name. The two sets of
+// names never overlap, which SqliteTripStoreTest checks, so the column needs no migration.
+internal fun topicName(topic: GuidanceTopic): String = when (topic) {
+    is GuidanceTopic.Pattern -> topic.pattern.name
+    is GuidanceTopic.Environment -> topic.advice.name
+}
+
+internal fun topicOf(name: String): GuidanceTopic =
+    DrivingPattern.entries.firstOrNull { it.name == name }?.let { GuidanceTopic.Pattern(it) }
+        ?: GuidanceTopic.Environment(EnvironmentAdvice.valueOf(name))

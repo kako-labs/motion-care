@@ -17,6 +17,14 @@ class TripModelsTest {
     fun `observation peak must be a finite magnitude`() {
         Observation(DrivingPattern.HARD_STOP, 100, 200, -1.0, "test-1")
     }
+    @Test fun `a pattern card names its pattern as the topic`() {
+        val event = GuidanceEvent(10, 5, DrivingPattern.HARD_STOP, GuidanceOutcome.SHOWN)
+        assertEquals(GuidanceTopic.Pattern(DrivingPattern.HARD_STOP), event.topic)
+    }
+    @Test fun `an environment card is told apart from pattern cards`() {
+        val event = GuidanceEvent(10, 5, GuidanceTopic.Environment(EnvironmentAdvice.REDUCE_OUTSIDE_AIR), GuidanceOutcome.SHOWN)
+        assertNotEquals(GuidanceEvent(10, 5, DrivingPattern.HARD_STOP, GuidanceOutcome.SHOWN), event)
+    }
     @Test fun `snapshot has no observations unless given`() {
         val trip = TripRecord(TripId("trip"), 100, origin = DataOrigin.SYNTHETIC)
         assertTrue(TripSnapshot(trip).observations.isEmpty())

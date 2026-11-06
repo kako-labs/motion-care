@@ -17,7 +17,7 @@
 
 화면은 `TripReader`·SQL·VehicleDataSource에 접근하지 않습니다. 이들은 데이터 모듈 내부 구현입니다.
 
-같은 파일의 `VehicleRecorder`는 `app`의 `TripRecordingService`만 사용합니다. `record(presenter)`는 기록 중인 주행이 끝나거나 호출자가 취소할 때까지 차량 속도를 저장하고, 카드를 띄울 때 `GuidancePresenter`를 호출합니다. 소리는 `GuidanceAudio.play(문구)`로 냅니다. 재생하지 못해도 예외를 던지지 않으며, 알림음과 음성 중 무엇을 낼지는 `GuidanceSettings.sound`가 정합니다.
+같은 파일의 `VehicleRecorder`는 `app`의 `TripRecordingService`만 사용합니다. `record(presenter, environment)`는 기록 중인 주행이 끝나거나 호출자가 취소할 때까지 차량 속도를 저장하고, 카드를 띄울 때 `GuidancePresenter`를 호출합니다. `environment`는 `EnvironmentSnapshot` 흐름이며 환경 카드에만 쓰입니다. 앱은 `EnvironmentRepository.current`를 넘기고, 흐름이 실패해도 기록은 계속됩니다. 소리는 `GuidanceAudio.play(문구)`로 냅니다. 재생하지 못해도 예외를 던지지 않으며, 알림음과 음성 중 무엇을 낼지는 `GuidanceSettings.sound`가 정합니다.
 
 조립부는 자동차 기기에서 `createVehicleTripData(context)`, 그 외 기기에서 `createSampleTripRepository(context)`를 호출합니다. 실제 기록은 `motion-care-trips.db`에 저장해 합성 샘플과 섞이지 않습니다.
 
@@ -78,13 +78,16 @@
 
 | 공개 항목 | 위치 | 의미 |
 | --- | --- | --- |
-| GuidanceEvent | core:model | 결과가 정해진 시각 `elapsedMs`, 카드가 결정된 시각 `observedMs`, 패턴, 결과 |
+| GuidanceEvent | core:model | 결과가 정해진 시각 `elapsedMs`, 카드가 결정된 시각 `observedMs`, 주제 `topic`, 결과. 패턴을 받는 보조 생성자가 있음 |
+| GuidanceTopic | core:model | `Pattern(DrivingPattern)` 또는 `Environment(EnvironmentAdvice)` |
+| EnvironmentAdvice | core:model | REDUCE_OUTSIDE_AIR(대기질 나쁨인데 외기 유입), TRY_OUTSIDE_AIR(대기질 좋음인데 내기 순환 30분 이상) |
 | GuidanceOutcome | core:model | SHOWN, SKIPPED_INTERVAL, SKIPPED_OFF, SKIPPED_EXPIRED, FAILED |
-| GuidancePresenter | data:trip | `show(pattern)`. 표시를 시스템에 넘겼으면 true. 예외와 false는 FAILED로 기록되고 기록 저장을 막지 않음 |
+| GuidancePresenter | data:trip | `show(topic)`. 표시를 시스템에 넘겼으면 true. 예외와 false는 FAILED로 기록되고 기록 저장을 막지 않음 |
 | GuidanceSettings | data:trip | `enabled` StateFlow와 `setEnabled`. 기본은 켜짐, 앱을 다시 켜도 유지 |
 
 - `SHOWN`은 시스템에 알림을 보냈다는 뜻이고 사용자가 봤다는 뜻이 아닙니다.
-- 합성 샘플 주행의 `guidance`는 비어 있습니다.
+- 합성 샘플 주행의 `guidance`는 비어 있습니다. 일반 기기는 환경 값이 미지원이라 환경 카드도 없습니다.
+- 저장 열 `guidance_events.pattern`에는 패턴 이름이나 환경 안내 이름이 들어갑니다. 이름이 겹치지 않아 스키마는 v4 그대로입니다.
 - 표시 구현은 `feature:driving`의 `NotificationGuidancePresenter`이고, ON/OFF 스위치는 `GuidanceSwitch`입니다.
 
 ## 환경 데이터

@@ -17,6 +17,7 @@ import dev.motioncare.data.trip.vehicle.CarSpeedSource
 import dev.motioncare.data.trip.vehicle.SdkSteeringSource
 import dev.motioncare.data.trip.vehicle.UnavailableVehicleDataSource
 import java.util.UUID
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -82,10 +83,10 @@ internal class DefaultVehicleRecorder(
     private val guidance: GuidanceSettings,
     private val onFinished: () -> Unit,
 ) : VehicleRecorder {
-    override suspend fun record(presenter: GuidancePresenter) {
+    override suspend fun record(presenter: GuidancePresenter, environment: Flow<EnvironmentSnapshot>) {
         repository.initialize()
         try {
-            controller.record(signals.speeds(), steering.steering(), presenter) { guidance.enabled.value }
+            controller.record(signals.speeds(), steering.steering(), presenter, { guidance.enabled.value }, environment)
         } finally {
             onFinished()
         }

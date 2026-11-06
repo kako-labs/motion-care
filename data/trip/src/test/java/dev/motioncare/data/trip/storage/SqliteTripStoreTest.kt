@@ -158,6 +158,31 @@ class SqliteTripStoreTest {
         } finally { db.close(); context.deleteDatabase(name) }
     }
 
+    @Test fun `cabin air cards are saved apart from pattern cards`() = runTest {
+        val name = name()
+        val db = MotionCareDatabase(context, name)
+        try {
+            val store = SqliteTripStore(db)
+            store.load()
+            val first = TripRecord(TripId("trip"), 1000, origin = DataOrigin.VEHICLE)
+            store.saveTrip(first)
+            val events = listOf(
+                GuidanceEvent(500, 400, GuidanceTopic.Environment(EnvironmentAdvice.REDUCE_OUTSIDE_AIR), GuidanceOutcome.SHOWN),
+                GuidanceEvent(600, 600, GuidanceTopic.Environment(EnvironmentAdvice.TRY_OUTSIDE_AIR), GuidanceOutcome.SKIPPED_OFF),
+                GuidanceEvent(700, 650, DrivingPattern.HARD_STOP, GuidanceOutcome.SHOWN),
+            )
+            store.appendSamples(first.copy(revision = 2), emptyList(), emptyList(), emptyList(), events)
+            assertEquals(events, store.get(TripId("trip"))!!.guidance)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
+    @Test fun `every card topic has a name of its own`() {
+        val names = DrivingPattern.entries.map { topicName(GuidanceTopic.Pattern(it)) } +
+            EnvironmentAdvice.entries.map { topicName(GuidanceTopic.Environment(it)) }
+        assertEquals(names.size, names.toSet().size)
+        names.forEach { assertEquals(it, topicName(topicOf(it))) }
+    }
+
     @Test fun `the same guidance result twice at one time does not block saving`() = runTest {
         val name = name()
         val db = MotionCareDatabase(context, name)

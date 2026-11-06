@@ -1,7 +1,9 @@
 package dev.motioncare.data.trip
 
 import dev.motioncare.core.model.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emptyFlow
 
 /** The only data access contract exposed to features. */
 interface TripRepository {
@@ -15,13 +17,16 @@ interface TripRepository {
 
 /** Used by the recording service in app. Features keep using [TripRepository]. */
 interface VehicleRecorder {
-    /** Stores vehicle signals until the active trip ends or the caller is cancelled. */
-    suspend fun record(presenter: GuidancePresenter)
+    /**
+     * Stores vehicle signals until the active trip ends or the caller is cancelled. Each [environment] reading may
+     * lead to a cabin air card; a failing stream ends that advice only.
+     */
+    suspend fun record(presenter: GuidancePresenter, environment: Flow<EnvironmentSnapshot> = emptyFlow())
 }
 
 /** Displays one in-drive card. Returns false when it could not be shown. */
 fun interface GuidancePresenter {
-    fun show(pattern: DrivingPattern): Boolean
+    fun show(topic: GuidanceTopic): Boolean
 }
 
 /** What the driver hears when a card appears. */
