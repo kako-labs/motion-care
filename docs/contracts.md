@@ -79,15 +79,15 @@
 | 공개 항목 | 위치 | 의미 |
 | --- | --- | --- |
 | GuidanceEvent | core:model | 결과가 정해진 시각 `elapsedMs`, 카드가 결정된 시각 `observedMs`, 주제 `topic`, 결과. 패턴을 받는 보조 생성자가 있음 |
-| GuidanceTopic | core:model | `Pattern(DrivingPattern)` 또는 `Environment(EnvironmentAdvice)` |
+| GuidanceTopic | core:model | `Pattern(DrivingPattern)`, `Environment(EnvironmentAdvice)`, `LongDrive`(쉬지 않고 2시간 주행) 중 하나 |
 | EnvironmentAdvice | core:model | REDUCE_OUTSIDE_AIR(대기질 나쁨인데 외기 유입), TRY_OUTSIDE_AIR(대기질 좋음인데 내기 순환 30분 이상) |
 | GuidanceOutcome | core:model | SHOWN, SKIPPED_INTERVAL, SKIPPED_OFF, SKIPPED_EXPIRED, FAILED |
 | GuidancePresenter | data:trip | `show(topic)`. 표시를 시스템에 넘겼으면 true. 예외와 false는 FAILED로 기록되고 기록 저장을 막지 않음 |
 | GuidanceSettings | data:trip | `enabled` StateFlow와 `setEnabled`. 기본은 켜짐, 앱을 다시 켜도 유지 |
 
 - `SHOWN`은 시스템에 알림을 보냈다는 뜻이고 사용자가 봤다는 뜻이 아닙니다.
-- 합성 샘플 주행의 `guidance`는 비어 있습니다. 일반 기기는 환경 값이 미지원이라 환경 카드도 없습니다.
-- 저장 열 `guidance_events.pattern`에는 패턴 이름이나 환경 안내 이름이 들어갑니다. 이름이 겹치지 않아 스키마는 v4 그대로입니다.
+- 합성 샘플 주행의 `guidance`는 비어 있습니다. 일반 기기는 환경 값이 미지원이라 환경 카드도 없습니다. 주행 시간 카드는 차량 속도로만 셉니다.
+- 저장 열 `guidance_events.pattern`에는 패턴 이름, 환경 안내 이름, `LONG_DRIVE`가 들어갑니다. 이름이 겹치지 않아 스키마는 v4 그대로입니다.
 - 표시 구현은 `feature:driving`의 `NotificationGuidancePresenter`이고, ON/OFF 스위치는 `GuidanceSwitch`입니다.
 
 ## 환경 데이터
