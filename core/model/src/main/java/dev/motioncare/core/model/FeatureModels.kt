@@ -9,14 +9,6 @@ data class TripParticipants(
     val revision: Long,
 )
 data class GuidanceSettings(val departureEnabled: Boolean = true, val liveEnabled: Boolean = true)
-enum class Availability { AVAILABLE, LOADING, UNSUPPORTED, UNAVAILABLE, STALE }
-data class EnvironmentReading(
-    val value: Double?,
-    val unit: String,
-    val availability: Availability,
-    val observedAtEpochMs: Long?,
-    val sourceLabel: String,
-)
 data class Guidance(val message: String, val reason: String, val evidenceIds: List<String>)
 
 // Independent from any medical scale; the actual questionnaire is a future feature.
