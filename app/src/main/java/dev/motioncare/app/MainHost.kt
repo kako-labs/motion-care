@@ -16,6 +16,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.*
+import dev.motioncare.data.environment.EnvironmentRepository
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.trip.GuidanceSettings
 import dev.motioncare.data.trip.TripRepository
@@ -30,9 +31,12 @@ import dev.motioncare.feature.history.ui.RecentTripsRoute
 
 private const val HOME_ROUTE = "home"
 private const val CAR_SPEED_PERMISSION = "android.car.permission.CAR_SPEED"
+// Outdoor air needs the car's position. Recording goes on without it.
+private const val LOCATION_PERMISSION = "pleos.car.permission.FUSED_LOCATION"
 
 private fun recordingPermissions(): Array<String> = buildList {
     add(CAR_SPEED_PERMISSION)
+    add(LOCATION_PERMISSION)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
 }.toTypedArray()
 
@@ -40,6 +44,7 @@ private fun recordingPermissions(): Array<String> = buildList {
 fun MainHost(
     trips: TripRepository,
     profiles: ProfileRepository,
+    environment: EnvironmentRepository,
     vehicleConnected: Boolean,
     guidance: GuidanceSettings?,
     onRecordingStarted: () -> Unit,
@@ -50,10 +55,14 @@ fun MainHost(
     })
     val drivingState by driving.uiState.collectAsStateWithLifecycle()
     var speedPermissionDenied by remember { mutableStateOf(false) }
+    var permissionsAnswered by remember { mutableIntStateOf(0) }
     val permissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
         speedPermissionDenied = results[CAR_SPEED_PERMISSION] != true
+        permissionsAnswered += 1
         if (!speedPermissionDenied) driving.start()
     }
+    // Read once on opening and again after the permission answer, which may allow outdoor air.
+    LaunchedEffect(permissionsAnswered) { environment.refresh() }
     val activeId = drivingState.active?.id
     LaunchedEffect(activeId) {
         if (vehicleConnected && activeId != null) onRecordingStarted()

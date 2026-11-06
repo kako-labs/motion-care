@@ -12,6 +12,9 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import dev.motioncare.R
+import dev.motioncare.core.model.TripId
+import dev.motioncare.core.model.TripStatus
+import dev.motioncare.data.environment.EnvironmentRepository
 import dev.motioncare.feature.driving.guidance.NotificationGuidancePresenter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -19,11 +22,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private const val TAG = "TripRecording"
 private const val CHANNEL_ID = "trip_recording"
 private const val NOTIFICATION_ID = 1
+// Matches the outdoor air provider's hourly values. A product judgement, see docs/environment.md.
+private const val ENVIRONMENT_INTERVAL_MS = 60 * 60 * 1000L
 
 /** Keeps vehicle recording alive while another app such as navigation is in front. */
 class TripRecordingService : Service() {
@@ -46,7 +54,14 @@ class TripRecordingService : Service() {
             val recorder = graph.recorder
             val audio = graph.guidanceAudio
             if (recorder != null && audio != null) {
-                recorder.record(NotificationGuidancePresenter(this, R.drawable.ic_launcher, audio))
+                val tripId = graph.trips.records.value.firstOrNull { it.status == TripStatus.RECORDING }?.id
+                coroutineScope {
+                    val environment = tripId?.let { id -> launch { captureEnvironment(graph.environment, id) } }
+                    recorder.record(NotificationGuidancePresenter(this@TripRecordingService, R.drawable.ic_launcher, audio))
+                    environment?.cancelAndJoin()
+                }
+                // Values at the end of the trip.
+                tripId?.let { captureOnce(graph.environment, it) }
             }
         } catch (error: CancellationException) {
             throw error
@@ -54,6 +69,24 @@ class TripRecordingService : Service() {
             Log.e(TAG, "Vehicle recording stopped", error)
         }
         stopSelf()
+    }
+
+    private suspend fun captureEnvironment(environment: EnvironmentRepository, tripId: TripId) {
+        while (true) {
+            captureOnce(environment, tripId)
+            delay(ENVIRONMENT_INTERVAL_MS)
+        }
+    }
+
+    // Environment values are an addition to the trip; failing to store them never stops recording.
+    private suspend fun captureOnce(environment: EnvironmentRepository, tripId: TripId) {
+        try {
+            environment.capture(tripId)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Log.e(TAG, "Environment not stored", error)
+        }
     }
 
     private fun notification(): Notification {

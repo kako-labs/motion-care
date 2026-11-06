@@ -92,6 +92,8 @@ def scenario(name, voice, expect_log, expect_speech, expect_owner=None, before=N
     e2e.shell(f"pm clear --user 10 {e2e.PKG}")
     e2e.shell(f"pm grant --user 10 {e2e.PKG} android.permission.POST_NOTIFICATIONS")
     e2e.shell(f"pm grant --user 10 {e2e.PKG} android.car.permission.CAR_SPEED")
+    # The start button also asks for location, for outdoor air.
+    e2e.shell(f"pm grant --user 10 {e2e.PKG} pleos.car.permission.FUSED_LOCATION")
     e2e.http("PUT", "/vehicle/gear?gear=Park")
     e2e.http("PUT", "/vehicle/controls?speed=0&accelerator=0&brake=0&steering=0")
     time.sleep(1)

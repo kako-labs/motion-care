@@ -2,6 +2,9 @@ package dev.motioncare.app
 
 import android.content.Context
 import android.content.pm.PackageManager
+import dev.motioncare.data.environment.EnvironmentRepository
+import dev.motioncare.data.environment.createUnsupportedEnvironmentRepository
+import dev.motioncare.data.environment.createVehicleEnvironmentRepository
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.profile.createProfileRepository
 import dev.motioncare.data.trip.GuidanceAudio
@@ -19,4 +22,6 @@ class AppGraph(context: Context) {
     val guidance: GuidanceSettings? = vehicle?.guidance
     val guidanceAudio: GuidanceAudio? = vehicle?.audio
     val profiles: ProfileRepository = createProfileRepository(context)
+    val environment: EnvironmentRepository =
+        if (vehicleConnected) createVehicleEnvironmentRepository(context) else createUnsupportedEnvironmentRepository()
 }
