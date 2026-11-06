@@ -8,11 +8,14 @@ import org.junit.Test
 class GuidancePolicyTest {
     private var enabled = true
     private var showWorks = true
-    private val shown = mutableListOf<DrivingPattern>()
-    private val policy = GuidancePolicy({ enabled }, { pattern ->
-        if (showWorks) shown += pattern
+    private val shown = mutableListOf<GuidanceTopic>()
+    private val policy = GuidancePolicy({ enabled }, { topic ->
+        if (showWorks) shown += topic
         showWorks
     })
+    private val reduce = GuidanceTopic.Environment(EnvironmentAdvice.REDUCE_OUTSIDE_AIR)
+
+    private fun card(pattern: DrivingPattern) = GuidanceTopic.Pattern(pattern)
 
     private fun seen(pattern: DrivingPattern, atMs: Long) =
         Observation(pattern, maxOf(atMs - 100, 0), atMs, 3.0, PATTERN_DETECTOR_VERSION)
@@ -33,7 +36,7 @@ class GuidancePolicyTest {
     @Test fun `a repeated pattern is shown once the car is calm`() {
         cruise(0, 3000)
         val events = thirdTime(DrivingPattern.REPEATED_SPEED_CHANGE, 3000) + cruise(3200, 4000)
-        assertEquals(listOf(DrivingPattern.REPEATED_SPEED_CHANGE), shown)
+        assertEquals(listOf(card(DrivingPattern.REPEATED_SPEED_CHANGE)), shown)
         assertEquals(listOf(GuidanceOutcome.SHOWN), outcomes(events))
         assertEquals(3000L, events.single().observedMs)
     }
@@ -54,7 +57,7 @@ class GuidancePolicyTest {
         cruise(60_200, 120_000)
         policy.onObservation(seen(DrivingPattern.HARD_STOP, 120_000))
         cruise(120_200, 125_000)
-        assertEquals(listOf(DrivingPattern.HARD_STOP), shown)
+        assertEquals(listOf(card(DrivingPattern.HARD_STOP)), shown)
     }
 
     @Test fun `events spread beyond the window do not add up`() {
@@ -85,7 +88,7 @@ class GuidancePolicyTest {
         cruise(6200, 12_000, speed = 21.0, lateral = 1.5)
         assertTrue(shown.isEmpty())
         cruise(12_200, 15_400, speed = 21.0, lateral = 0.0)
-        assertEquals(listOf(DrivingPattern.REPEATED_SWAY), shown)
+        assertEquals(listOf(card(DrivingPattern.REPEATED_SWAY)), shown)
     }
 
     @Test fun `a stop counts as a calm moment`() {
@@ -181,6 +184,89 @@ class GuidancePolicyTest {
         policy.onSignalLost()
         assertEquals(emptyList<GuidanceEvent>(), policy.onSample(1200, 15.0, 0.0))
         assertTrue(shown.isEmpty())
+    }
+
+    @Test fun `cabin air advice is shown once the car is calm`() {
+        cruise(0, 3000)
+        val events = policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 3000) + cruise(3200, 4000)
+        assertEquals(listOf(reduce), shown)
+        assertEquals(listOf(GuidanceOutcome.SHOWN), outcomes(events))
+        assertEquals(reduce, events.single().topic)
+        assertEquals(3000L, events.single().observedMs)
+    }
+
+    @Test fun `the same advice appears once per trip`() {
+        cruise(0, 3000)
+        policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 3000)
+        cruise(3200, 4000)
+        val later = policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 2_000_000) + cruise(2_000_200, 2_005_000)
+        assertEquals(1, shown.size)
+        assertTrue(later.isEmpty())
+    }
+
+    @Test fun `different advice is counted separately`() {
+        cruise(0, 3000)
+        policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 3000)
+        cruise(3200, 4000)
+        policy.onAdvice(EnvironmentAdvice.TRY_OUTSIDE_AIR, 1_000_000)
+        cruise(1_000_200, 1_004_000)
+        assertEquals(listOf(reduce, GuidanceTopic.Environment(EnvironmentAdvice.TRY_OUTSIDE_AIR)), shown)
+    }
+
+    @Test fun `advice inside the interval waits for a later reading without a record`() {
+        cruise(0, 3000)
+        thirdTime(DrivingPattern.HARD_STOP, 3000)
+        cruise(3200, 4000)
+        val tooSoon = policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 300_000) + cruise(300_200, 305_000)
+        assertTrue(tooSoon.isEmpty())
+        assertEquals(1, shown.size)
+        val later = policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 910_000) + cruise(910_200, 914_000)
+        assertEquals(listOf(GuidanceOutcome.SHOWN), outcomes(later))
+        assertEquals(reduce, shown.last())
+    }
+
+    @Test fun `advice while a pattern card waits is held`() {
+        cruise(0, 1000, lateral = 1.5)
+        thirdTime(DrivingPattern.REPEATED_SWAY, 1000)
+        assertTrue(policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 1000).isEmpty())
+        cruise(1200, 5000)
+        assertEquals(listOf(card(DrivingPattern.REPEATED_SWAY)), shown)
+    }
+
+    @Test fun `a repeated pattern takes the place of waiting advice`() {
+        cruise(0, 1000, lateral = 1.5)
+        policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 1000)
+        val events = thirdTime(DrivingPattern.REPEATED_SWAY, 1000) + cruise(1200, 5000)
+        assertEquals(listOf(card(DrivingPattern.REPEATED_SWAY)), shown)
+        assertEquals(listOf(GuidanceOutcome.SHOWN), outcomes(events))
+        // The advice was never decided, so the next reading after the interval still brings it.
+        policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 1_000_000)
+        cruise(1_000_200, 1_004_000)
+        assertEquals(reduce, shown.last())
+    }
+
+    @Test fun `a pattern soon after advice was shown is skipped`() {
+        cruise(0, 3000)
+        policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 3000)
+        cruise(3200, 4000)
+        assertEquals(listOf(GuidanceOutcome.SKIPPED_INTERVAL), outcomes(thirdTime(DrivingPattern.HARD_STOP, 300_000)))
+    }
+
+    @Test fun `advice with guidance off is recorded once`() {
+        enabled = false
+        cruise(0, 3000)
+        val events = policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 3000) + cruise(3200, 8000) +
+            policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 400_000)
+        assertTrue(shown.isEmpty())
+        assertEquals(listOf(GuidanceOutcome.SKIPPED_OFF), outcomes(events))
+    }
+
+    @Test fun `advice that finds no calm moment expires and is not asked again`() {
+        cruise(0, 3000, lateral = 1.5)
+        val events = policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 3000) + cruise(3200, 70_000, lateral = 1.5) +
+            policy.onAdvice(EnvironmentAdvice.REDUCE_OUTSIDE_AIR, 1_000_000) + cruise(1_000_200, 1_004_000)
+        assertTrue(shown.isEmpty())
+        assertEquals(listOf(GuidanceOutcome.SKIPPED_EXPIRED), outcomes(events))
     }
 
     @Test fun `finishing with a waiting card records it as expired`() {

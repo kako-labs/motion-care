@@ -1,8 +1,10 @@
 package dev.motioncare.data.trip.guidance
 
 import dev.motioncare.core.model.DrivingPattern
+import dev.motioncare.core.model.EnvironmentAdvice
 import dev.motioncare.core.model.GuidanceEvent
 import dev.motioncare.core.model.GuidanceOutcome
+import dev.motioncare.core.model.GuidanceTopic
 import dev.motioncare.core.model.Observation
 import kotlin.math.abs
 
@@ -19,13 +21,19 @@ internal data class GuidanceLimits(
     val maxGapMs: Long = 1_000,
 )
 
-/** Decides whether a card appears, waits or is skipped. Knows nothing about how a card is displayed. */
+/**
+ * Decides whether a card appears, waits or is skipped. Knows nothing about how a card is displayed.
+ *
+ * Pattern cards and cabin air advice share one waiting slot and one interval. A repeated pattern takes the place of
+ * waiting advice: the pattern is gone once skipped, while the cabin air stays the same and is offered again with the
+ * next environment reading.
+ */
 internal class GuidancePolicy(
     private val enabled: () -> Boolean,
-    private val show: (DrivingPattern) -> Boolean,
+    private val show: (GuidanceTopic) -> Boolean,
     private val limits: GuidanceLimits = GuidanceLimits(),
 ) {
-    private class Waiting(val pattern: DrivingPattern, val observedMs: Long)
+    private class Waiting(val topic: GuidanceTopic, val observedMs: Long)
     private class Point(val elapsedMs: Long, val speed: Double)
 
     private val repeats = mutableMapOf<DrivingPattern, ArrayDeque<Long>>()
@@ -33,17 +41,32 @@ internal class GuidancePolicy(
     private var waiting: Waiting? = null
     private var lastShownMs: Long? = null
     private var calmSinceMs: Long? = null
+    // Each piece of advice is decided once per trip.
+    private val decidedAdvice = mutableSetOf<EnvironmentAdvice>()
 
     fun onObservation(seen: Observation): List<GuidanceEvent> {
         val now = seen.endMs
         if (!repeatedEnough(seen.pattern, now)) return emptyList()
         val skipped = when {
             !enabled() -> GuidanceOutcome.SKIPPED_OFF
-            waiting != null || lastShownMs?.let { now - it < limits.minIntervalMs } == true -> GuidanceOutcome.SKIPPED_INTERVAL
+            waiting?.topic is GuidanceTopic.Pattern || withinInterval(now) -> GuidanceOutcome.SKIPPED_INTERVAL
             else -> null
         }
         if (skipped != null) return listOf(GuidanceEvent(now, now, seen.pattern, skipped))
-        waiting = Waiting(seen.pattern, now)
+        waiting = Waiting(GuidanceTopic.Pattern(seen.pattern), now)
+        return emptyList()
+    }
+
+    /** Offered with every environment reading that calls for [advice]. A card that cannot wait now is not recorded. */
+    fun onAdvice(advice: EnvironmentAdvice, now: Long): List<GuidanceEvent> {
+        if (advice in decidedAdvice) return emptyList()
+        val topic = GuidanceTopic.Environment(advice)
+        if (!enabled()) {
+            decidedAdvice += advice
+            return listOf(GuidanceEvent(now, now, topic, GuidanceOutcome.SKIPPED_OFF))
+        }
+        if (waiting != null || withinInterval(now)) return emptyList()
+        waiting = Waiting(topic, now)
         return emptyList()
     }
 
@@ -56,10 +79,12 @@ internal class GuidancePolicy(
         val calmSince = calmSinceMs ?: return emptyList()
         if (now - calmSince < limits.calmForMs) return emptyList()
         // A display failure must never reach recording.
-        val displayed = runCatching { show(card.pattern) }.getOrDefault(false)
+        val displayed = runCatching { show(card.topic) }.getOrDefault(false)
         if (displayed) lastShownMs = now
         return settle(card, now, if (displayed) GuidanceOutcome.SHOWN else GuidanceOutcome.FAILED)
     }
+
+    private fun withinInterval(now: Long) = lastShownMs?.let { now - it < limits.minIntervalMs } == true
 
     /** Speed became unavailable, so nothing is known about how calm the car is. */
     fun onSignalLost() {
@@ -72,7 +97,8 @@ internal class GuidancePolicy(
 
     private fun settle(card: Waiting, now: Long, outcome: GuidanceOutcome): List<GuidanceEvent> {
         waiting = null
-        return listOf(GuidanceEvent(now, card.observedMs, card.pattern, outcome))
+        (card.topic as? GuidanceTopic.Environment)?.let { decidedAdvice += it.advice }
+        return listOf(GuidanceEvent(now, card.observedMs, card.topic, outcome))
     }
 
     private fun repeatedEnough(pattern: DrivingPattern, now: Long): Boolean {

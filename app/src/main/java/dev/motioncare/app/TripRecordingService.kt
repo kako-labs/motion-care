@@ -32,6 +32,10 @@ private const val CHANNEL_ID = "trip_recording"
 private const val NOTIFICATION_ID = 1
 // Matches the outdoor air provider's hourly values. A product judgement, see docs/environment.md.
 private const val ENVIRONMENT_INTERVAL_MS = 60 * 60 * 1000L
+// How often the air intake is read for cabin air cards. Outdoor air stays cached for an hour, so this adds no
+// network requests. An implementation judgement, see docs/guidance-card.md.
+private const val ENVIRONMENT_CHECK_MS = 5 * 60 * 1000L
+private const val CHECKS_PER_CAPTURE = ENVIRONMENT_INTERVAL_MS / ENVIRONMENT_CHECK_MS
 
 /** Keeps vehicle recording alive while another app such as navigation is in front. */
 class TripRecordingService : Service() {
@@ -56,8 +60,11 @@ class TripRecordingService : Service() {
             if (recorder != null && audio != null) {
                 val tripId = graph.trips.records.value.firstOrNull { it.status == TripStatus.RECORDING }?.id
                 coroutineScope {
-                    val environment = tripId?.let { id -> launch { captureEnvironment(graph.environment, id) } }
-                    recorder.record(NotificationGuidancePresenter(this@TripRecordingService, R.drawable.ic_launcher, audio))
+                    val environment = tripId?.let { id -> launch { watchEnvironment(graph.environment, id) } }
+                    recorder.record(
+                        NotificationGuidancePresenter(this@TripRecordingService, R.drawable.ic_launcher, audio),
+                        graph.environment.current,
+                    )
                     environment?.cancelAndJoin()
                 }
                 // Values at the end of the trip.
@@ -71,10 +78,12 @@ class TripRecordingService : Service() {
         stopSelf()
     }
 
-    private suspend fun captureEnvironment(environment: EnvironmentRepository, tripId: TripId) {
+    // Stores values every hour and reads them in between, so cabin air cards see the air intake change.
+    private suspend fun watchEnvironment(environment: EnvironmentRepository, tripId: TripId) {
+        var check = 0L
         while (true) {
-            captureOnce(environment, tripId)
-            delay(ENVIRONMENT_INTERVAL_MS)
+            if (check++ % CHECKS_PER_CAPTURE == 0L) captureOnce(environment, tripId) else refreshOnce(environment)
+            delay(ENVIRONMENT_CHECK_MS)
         }
     }
 
@@ -86,6 +95,16 @@ class TripRecordingService : Service() {
             throw error
         } catch (error: Exception) {
             Log.e(TAG, "Environment not stored", error)
+        }
+    }
+
+    private suspend fun refreshOnce(environment: EnvironmentRepository) {
+        try {
+            environment.refresh()
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Log.e(TAG, "Environment not read", error)
         }
     }
 

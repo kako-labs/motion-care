@@ -56,13 +56,31 @@ data class Observation(
 
 enum class GuidanceOutcome { SHOWN, SKIPPED_INTERVAL, SKIPPED_OFF, SKIPPED_EXPIRED, FAILED }
 
+/** Cabin air advice. Each one needs the car's air intake state to match it; see docs/guidance-card.md. */
+enum class EnvironmentAdvice {
+    /** Outdoor air is bad while the car takes air from outside. */
+    REDUCE_OUTSIDE_AIR,
+
+    /** Outdoor air is good while the car has recirculated cabin air for a while. */
+    TRY_OUTSIDE_AIR,
+}
+
+/** What an in-drive card is about: a driving pattern that repeated, or the cabin air. */
+sealed interface GuidanceTopic {
+    data class Pattern(val pattern: DrivingPattern) : GuidanceTopic
+    data class Environment(val advice: EnvironmentAdvice) : GuidanceTopic
+}
+
 /** What happened to one in-drive card. Times are measured from the start of the trip. */
 data class GuidanceEvent(
     val elapsedMs: Long,
     val observedMs: Long,
-    val pattern: DrivingPattern,
+    val topic: GuidanceTopic,
     val outcome: GuidanceOutcome,
 ) {
+    constructor(elapsedMs: Long, observedMs: Long, pattern: DrivingPattern, outcome: GuidanceOutcome) :
+        this(elapsedMs, observedMs, GuidanceTopic.Pattern(pattern), outcome)
+
     init {
         require(elapsedMs >= 0)
         require(observedMs >= 0)

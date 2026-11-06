@@ -6,8 +6,11 @@ import dev.motioncare.data.trip.internal.*
 import dev.motioncare.data.trip.sample.SampleVehicleDataSource
 import dev.motioncare.data.trip.vehicle.UnavailableVehicleDataSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
@@ -369,14 +372,30 @@ class TripSessionControllerTest {
     private suspend fun TestScope.startRecordingWithGuidance(
         controller: TripSessionController,
         enabled: () -> Boolean = { true },
-        show: (DrivingPattern) -> Boolean,
+        environment: Flow<EnvironmentSnapshot> = emptyFlow(),
+        show: (GuidanceTopic) -> Boolean,
     ): RecordingFixture {
         controller.initialize()
         val id = (controller.start() as CommandResult.Success).tripId
         val readings = MutableSharedFlow<SpeedReading>(extraBufferCapacity = 256)
-        val job = launch { controller.record(readings, kotlinx.coroutines.flow.emptyFlow(), GuidancePresenter(show), enabled) }
+        val job = launch { controller.record(readings, emptyFlow(), GuidancePresenter(show), enabled, environment) }
         runCurrent()
         return RecordingFixture(id, readings, job)
+    }
+
+    /** Outdoor air graded bad while the car takes air from outside. */
+    private fun badAirWithOutsideIntake(): EnvironmentSnapshot {
+        fun <T : Any> unsupported() = EnvironmentReading<T>(null, Availability.UNSUPPORTED, EnvironmentSource.VEHICLE)
+        return EnvironmentSnapshot(
+            capturedAtEpochMs = now,
+            outsideTemperature = unsupported(),
+            cabinTemperature = unsupported(),
+            cabinSetTemperature = unsupported(),
+            recirculation = EnvironmentReading(false, Availability.AVAILABLE, EnvironmentSource.VEHICLE, observedAtEpochMs = now),
+            airCleaner = unsupported(),
+            outdoorAir = EnvironmentReading(OutdoorAir(95.0, 40.0, AirGrade.BAD, 37.6, 127.0), Availability.AVAILABLE,
+                EnvironmentSource.OPEN_METEO_CAMS, observedAtEpochMs = now),
+        )
     }
 
     /** Speeds up and slows down at about 1.3 m/s2 long enough to repeat the pattern three times. */
@@ -400,13 +419,13 @@ class TripSessionControllerTest {
 
     @Test fun `a repeated pattern shows a card and saves the result with the trip`() = runTest {
         val controller = controller()
-        val cards = mutableListOf<DrivingPattern>()
+        val cards = mutableListOf<GuidanceTopic>()
         val trip = startRecordingWithGuidance(controller) { cards += it; true }
         trip.driveRepeatedChanges()
         runCurrent()
         controller.finish()
         runCurrent()
-        assertEquals(listOf(DrivingPattern.REPEATED_SPEED_CHANGE), cards)
+        assertEquals(listOf(GuidanceTopic.Pattern(DrivingPattern.REPEATED_SPEED_CHANGE)), cards)
         val saved = store.get(trip.id)!!
         assertEquals(listOf(GuidanceOutcome.SHOWN), saved.guidance.map { it.outcome })
         assertTrue(saved.observations.any { it.pattern == DrivingPattern.REPEATED_SPEED_CHANGE })
@@ -414,7 +433,7 @@ class TripSessionControllerTest {
 
     @Test fun `guidance turned off keeps recording and saves why no card appeared`() = runTest {
         val controller = controller()
-        val cards = mutableListOf<DrivingPattern>()
+        val cards = mutableListOf<GuidanceTopic>()
         val trip = startRecordingWithGuidance(controller, enabled = { false }) { cards += it; true }
         trip.driveRepeatedChanges()
         runCurrent()
@@ -437,6 +456,34 @@ class TripSessionControllerTest {
         val saved = store.get(trip.id)!!
         assertEquals(listOf(GuidanceOutcome.FAILED), saved.guidance.map { it.outcome })
         assertFalse(saved.samples.isEmpty())
+    }
+
+    @Test fun `cabin air advice from an environment reading shows a card and is saved`() = runTest {
+        val controller = controller()
+        val cards = mutableListOf<GuidanceTopic>()
+        val environment = MutableSharedFlow<EnvironmentSnapshot>(extraBufferCapacity = 8)
+        val trip = startRecordingWithGuidance(controller, environment = environment) { cards += it; true }
+        environment.emit(badAirWithOutsideIntake())
+        runCurrent()
+        for (ms in 200L..4000L step 200) trip.readings.emit(reading(ms, value = 10.0))
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        val advice = GuidanceTopic.Environment(EnvironmentAdvice.REDUCE_OUTSIDE_AIR)
+        assertEquals(listOf(advice), cards)
+        assertEquals(listOf(GuidanceEvent(3800, 0, advice, GuidanceOutcome.SHOWN)), store.get(trip.id)!!.guidance)
+    }
+
+    @Test fun `a failing environment stream does not stop recording`() = runTest {
+        val controller = controller()
+        val environment = flow<EnvironmentSnapshot> { error("climate service died") }
+        val trip = startRecordingWithGuidance(controller, environment = environment) { true }
+        for (ms in 200L..2000L step 200) trip.readings.emit(reading(ms))
+        runCurrent()
+        assertTrue(trip.job.isActive)
+        controller.finish()
+        runCurrent()
+        assertFalse(store.get(trip.id)!!.samples.isEmpty())
     }
 
     @Test fun `recording without an active trip ends immediately`() = runTest {
