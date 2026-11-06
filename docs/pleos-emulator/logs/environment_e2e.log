@@ -1,0 +1,29 @@
+device: emulator-5600 avd: pleos console port: 51246
+install: Success
+position: OK
+gear park: 200
+climate on, recirculation on, driver 24 °C: 200
+
+===== allowed =====
+tap start: 운행 기록 시작
+dialogs: ['Motion Care에서 이 기기의 위치 정보에 액세스하도록 허용하시겠습니까?', 'Motion Care에서 알림을 보내도록 허용하시겠습니까?', 'Motion Care에서 알 수 없는 작업 실행하도록 허용하시겠습니까?']
+service: running=True foreground=True
+recirculation off, driver 20 °C: 200
+tap finish: 운행 기록 종료
+snapshot: outside=25.0(AVAILABLE) cabin=19.1(AVAILABLE) cabin_set=24.0(AVAILABLE) recirculation=1.0(AVAILABLE) air_cleaner=0.0(AVAILABLE) air=pm10=12.9 pm25=12.2 grade=GOOD at=(37.6,127.0)(AVAILABLE, OPEN_METEO_CAMS)
+snapshot: outside=25.0(AVAILABLE) cabin=19.1(AVAILABLE) cabin_set=20.0(AVAILABLE) recirculation=0.0(AVAILABLE) air_cleaner=0.0(AVAILABLE) air=pm10=12.9 pm25=12.2 grade=GOOD at=(37.6,127.0)(AVAILABLE, OPEN_METEO_CAMS)
+
+===== location denied =====
+tap start: 운행 기록 시작
+dialogs: ['Motion Care에서 이 기기의 위치 정보에 액세스하도록 허용하시겠습니까?', 'Motion Care에서 알림을 보내도록 허용하시겠습니까?', 'Motion Care에서 알 수 없는 작업 실행하도록 허용하시겠습니까?']
+service: running=True foreground=True
+tap finish: 운행 기록 종료
+snapshot: outside=25.0(AVAILABLE) cabin=19.1(AVAILABLE) cabin_set=20.0(AVAILABLE) recirculation=0.0(AVAILABLE) air_cleaner=0.0(AVAILABLE) air=pm10=None pm25=None grade=None at=(None,None)(UNAVAILABLE/NO_PERMISSION, OPEN_METEO_CAMS)
+snapshot: outside=25.0(AVAILABLE) cabin=19.1(AVAILABLE) cabin_set=20.0(AVAILABLE) recirculation=0.0(AVAILABLE) air_cleaner=0.0(AVAILABLE) air=pm10=None pm25=None grade=None at=(None,None)(UNAVAILABLE/NO_PERMISSION, OPEN_METEO_CAMS)
+
+===== summary =====
+PASS start and end snapshots stored
+PASS vehicle values read
+PASS climate changes followed
+PASS outdoor air for the rounded position
+PASS denied location leaves only outdoor air out

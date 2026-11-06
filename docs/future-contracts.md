@@ -8,9 +8,6 @@ interface ParticipantWriter { suspend fun assign(participants: TripParticipants)
 interface FeedbackWriter { suspend fun save(feedback: TripFeedback) }
 interface SettingsReader { val settings: StateFlow<GuidanceSettings> }
 
-// data/environment
-interface EnvironmentReader { suspend fun current(): EnvironmentReading }
-
 // feature/history, computed from repositories
 interface DepartureAdviceReader { suspend fun forTrip(id: TripId): Guidance? }
 ```
