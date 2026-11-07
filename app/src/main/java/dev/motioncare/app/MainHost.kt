@@ -23,6 +23,7 @@ import dev.motioncare.data.trip.TripRepository
 import dev.motioncare.feature.driving.DrivingViewModel
 import dev.motioncare.feature.driving.ui.ActiveContent
 import dev.motioncare.feature.driving.ui.GuidanceSwitch
+import dev.motioncare.feature.driving.ui.rememberGuidanceCardsAllowed
 import dev.motioncare.feature.history.departure.ReadyContent
 import dev.motioncare.feature.history.navigation.HistoryRoutes
 import dev.motioncare.feature.history.navigation.historyGraph
@@ -89,7 +90,14 @@ fun MainHost(
                         if (guidance != null && finished == null) {
                             val enabled by guidance.enabled.collectAsStateWithLifecycle()
                             val sound by guidance.sound.collectAsStateWithLifecycle()
-                            GuidanceSwitch(enabled, sound, guidance::setEnabled, guidance::setSound)
+                            GuidanceSwitch(
+                                enabled = enabled,
+                                sound = sound,
+                                cardsBlocked = !rememberGuidanceCardsAllowed(),
+                                onChange = guidance::setEnabled,
+                                onSound = guidance::setSound,
+                                onTurnOnNotifications = rememberTurnOnNotifications(),
+                            )
                         }
                         when {
                             active != null -> ActiveContent(active, drivingState.busy, vehicleConnected, driving::capture, driving::finish)

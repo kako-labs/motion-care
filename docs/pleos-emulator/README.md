@@ -189,6 +189,22 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 - **고친 방식:** 두 곳 모두 `createCar(context, handler, waitTimeoutMs, CarServiceLifecycleListener)`로 만듭니다. 연결이 끊기면 리스너가 `ready=false`를 받고, 바인딩이 유지되어 서비스가 다시 뜨면 같은 `Car`가 `ready=true`를 받습니다. 끊길 때 관리자 객체가 비워지므로 속도는 `ready=true`마다 새 관리자에 다시 구독합니다. 바깥 온도는 읽을 때마다 관리자를 얻으므로, 끊긴 동안에는 값 없음으로 저장되고 다시 연결되면 읽힙니다.
 - **Pleos SDK:** Vehicle·FusedLocation·TextToSpeech SDK의 클래스에는 `android.car.Car` 사용이 없고 각자 서비스에 바인딩합니다. 위치와 음성은 재시작 뒤 동작을 확인하지 않았습니다.
 
+### 알림 권한 거부
+
+2026-11-07에 실제 앱으로 알림 권한을 거부했을 때의 요청 창과 설정 화면을 확인했습니다. 수정 전 main APK에서 기록 시작 버튼으로 먼저 보고, 수정 후 APK의 "알림 켜기"로 다시 시험했습니다. 규칙은 [안내 카드의 근거](../guidance-card.md#알림이-꺼져-있을-때)에 있습니다.
+
+| 항목 | 결과 | 증거 |
+| --- | --- | --- |
+| 수정 전 | 기록 시작 때 위치·알림·위치 SDK 요청 창이 차례로 뜸. 알림을 거부해도 기록은 시작되고, 시작 화면은 "주행 중 안내"가 켜진 채 아무 표시가 없음 | |
+| 요청 창 | 첫 창은 "허용"·"허용 안함". 두 번째부터 거부 버튼이 "허용하지 않고 다시 묻지 않음"으로 바뀌고, 이를 고르면(`USER_FIXED`) 다음부터 요청 창 없이 거부로 끝남 | [94_notification_prompt](shots/94_notification_prompt.png) |
+| 안내 | 알림이 꺼져 있으면 스위치 아래에 "알림이 꺼져 있어 주행 중 안내 카드가 뜨지 않아요"와 "알림 켜기"가 보임. 처음 열 때(묻기 전)도 보임 | [93_notification_notice](shots/93_notification_notice.png) |
+| "알림 켜기" | 첫 번째는 요청 창, 거부하면 앱에 머묾. 두 번째도 요청 창, "다시 묻지 않음"을 골라도 앱에 머묾. 세 번째는 요청 창 없이 설정 화면이 열림 | [notification_off_e2e](logs/notification_off_e2e.log) |
+| 설정 화면 | `ACTION_APP_NOTIFICATION_SETTINGS`가 Car Settings의 앱 정보를 엶. "알림" 스위치를 켜면 `POST_NOTIFICATIONS`가 허용되고 `USER_FIXED`가 풀림. 앱으로 돌아오면 안내가 사라짐 | [95_notification_settings](shots/95_notification_settings.png) |
+
+- **채널별 화면 없음:** 앱 정보에는 앱 단위 "알림" 스위치만 있고, 행을 눌러도 스위치만 바뀝니다. 설정 > 알림도 앱마다 스위치만 있습니다. `ACTION_CHANNEL_NOTIFICATION_SETTINGS`도 같은 앱 정보 화면으로 연결됩니다.
+- **새 작업으로 엶:** 앱 작업 안에 설정을 열면 설정 화면이 앱 위에 쌓입니다. 하단 바에 뒤로 버튼이 없고 앱 아이콘을 누르면 그 작업이 앞으로 와서 설정 화면이 다시 보였습니다. `FLAG_ACTIVITY_NEW_TASK`를 붙이면 Car Settings의 작업에 열리고, 앱을 다시 띄우면 앱 화면이 보입니다.
+- **앱 정보 설정:** `ACTION_APPLICATION_DETAILS_SETTINGS`는 Car Settings가 아니라 차량 제어 앱(`ai.umos.vehiclecontrol`)으로 연결됩니다. 그래서 알림 설정 이동에는 쓰지 않았습니다.
+
 ### 백그라운드 기록
 
 | 조건 | 결과 | 증거 |
@@ -250,6 +266,7 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | [tools/environment_card_e2e.py](tools/environment_card_e2e.py) | 환경 카드 자동 시험. 위치(델리·서울)와 내기 순환을 바꿔 카드와 저장 결과 확인. `--long`은 내기 순환 33분 주행 추가. 실행 시점의 예측 등급이 맞지 않으면 "NOT RUN" |
 | [tools/long_drive_card_e2e.py](tools/long_drive_card_e2e.py) | 주행 시간 카드 자동 시험. 30km/h로 2시간 5분 쉬지 않고 달려 카드가 2시간에 한 번 뜨고 저장되는지 확인. 약 2시간 10분 |
 | [tools/car_service_restart_e2e.py](tools/car_service_restart_e2e.py) | 기록 중 차량 서비스 재시작 자동 시험. 앱 프로세스 유지, 속도 재구독, 주행 종료, 재시작 뒤 바깥 온도 확인. `--apk`로 다른 빌드 지정. 약 3분 |
+| [tools/notification_off_e2e.py](tools/notification_off_e2e.py) | 알림 꺼짐 안내 자동 시험. "알림 켜기"로 요청 창 거부, "다시 묻지 않음", 설정 화면 열기와 켜기를 차례로 확인. 약 1분 |
 
 저장소에 넣지 않은 것:
 
@@ -335,6 +352,7 @@ ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_card_e2e.p
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_card_e2e.py --long    # 약 40분
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/long_drive_card_e2e.py          # 약 2시간 10분, 호스트에서 다른 무거운 작업을 하지 않음
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/car_service_restart_e2e.py      # 약 3분, 다른 차량 앱도 다시 시작됨
+ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/notification_off_e2e.py         # 약 1분
 ```
 
 공조는 Virtual Console의 `PUT /vehicle/hvac?power=1&recirc=1&driver_temp=24`로 바꿉니다. 페이지 소스에서 확인한 값입니다.
