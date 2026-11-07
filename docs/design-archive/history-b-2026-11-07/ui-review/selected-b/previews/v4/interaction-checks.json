@@ -1,0 +1,86 @@
+[
+  {
+    "check": "rating word follows choice",
+    "pass": true
+  },
+  {
+    "check": "rating saved to finished view",
+    "pass": true
+  },
+  {
+    "check": "report uses selected discomfort reason",
+    "pass": true
+  },
+  {
+    "check": "skip remains unanswered",
+    "pass": true
+  },
+  {
+    "check": "route selection acknowledged as demo",
+    "pass": true
+  },
+  {
+    "check": "route failure preserves existing navigation",
+    "pass": true
+  },
+  {
+    "check": "missing air is not zero: available",
+    "pass": true
+  },
+  {
+    "check": "stale state labeled: available",
+    "pass": true
+  },
+  {
+    "check": "missing air is not zero: permission",
+    "pass": true
+  },
+  {
+    "check": "stale state labeled: permission",
+    "pass": true
+  },
+  {
+    "check": "missing air is not zero: network",
+    "pass": true
+  },
+  {
+    "check": "stale state labeled: network",
+    "pass": true
+  },
+  {
+    "check": "missing air is not zero: unsupported",
+    "pass": true
+  },
+  {
+    "check": "stale state labeled: unsupported",
+    "pass": true
+  },
+  {
+    "check": "missing air is not zero: stale",
+    "pass": true
+  },
+  {
+    "check": "stale state labeled: stale",
+    "pass": true
+  },
+  {
+    "check": "missing air is not zero: loading",
+    "pass": true
+  },
+  {
+    "check": "stale state labeled: loading",
+    "pass": true
+  },
+  {
+    "check": "profile editor updates preference",
+    "pass": true
+  },
+  {
+    "check": "demo reset returns to two people",
+    "pass": true
+  },
+  {
+    "check": "demo reset restores original rating",
+    "pass": true
+  }
+]

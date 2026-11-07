@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>모션케어 · B 디자인</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="refined.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 28 24" fill="none"><path d="M3 13v-2m5 7V6m6 16V2m6 16V6m5 7v-2" stroke="#45ddff" stroke-width="3.2" stroke-linecap="round"/></svg></div>
+      <div><b>모션케어</b><small>함께 타는 사람까지 편안한 운전</small></div>
+    </div>
+    <div class="vehicle-status"><span class="status"><i class="live"></i>합성 시연</span><span class="optional">중형 전기차</span><details class="demo-tools"><summary aria-label="시연 도구">시연 도구</summary><div><b>촬영 리허설</b><small>합성 값 · 차량 연결 없음</small><button data-demo-reset>처음으로 초기화</button><button data-go="environment">환경 확인</button><button data-go="routes">경로 비교</button><button data-go="feedback">도착 후 평가</button><label>환경 입력 상태<select id="environmentMode"><option value="available">값 있음</option><option value="stale">오래된 값</option><option value="permission">위치 권한 없음</option><option value="network">네트워크 없음</option><option value="unsupported">미지원 기기</option><option value="loading">확인 중</option></select></label></div></details></div>
+  </header>
+  <main>
+    <section class="screen active" id="screen-home">
+      <div class="home-layout">
+        <div class="cockpit-zone">
+          <div class="seating-heading"><h1>함께 타는 사람</h1><span class="passenger-count" id="passengerCount">2명</span></div>
+          <div class="predeparture-links"><button data-go="environment">실내·외부 환경 <span>↗</span></button><button data-go="routes">경로 미리보기 <span>↗</span></button></div><div class="car-stage">
+            <div class="car" aria-label="5인승 차량 좌석 배치, 위쪽이 차 앞">
+              <img class="vehicle-illustration" src="assets/cabin-blue.png" alt="" draggable="false">
+              <div class="seat-grid">
+                <div class="front-row">
+                  <button class="seat front" data-seat="driver" aria-label="운전석"></button>
+                  <button class="seat front" data-seat="front-passenger" aria-label="조수석"></button>
+                </div>
+                <div class="rear-row">
+                  <button class="seat" data-seat="rear-left" aria-label="뒤 왼쪽"></button>
+                  <button class="seat" data-seat="rear-center" aria-label="뒤 가운데"></button>
+                  <button class="seat" data-seat="rear-right" aria-label="뒤 오른쪽"></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="right-column"><aside class="panel recent-panel">
+          <div class="recent-title">최근 운행</div><div class="trip-list" id="homeTrips"></div>
+          <div class="recent-summary"><small>정차 직전 속도 변화 · 10분당</small><strong>2.4 <span>→</span> 1.4<span> 회</span></strong><svg class="trend-spark" viewBox="0 0 260 65" fill="none" aria-hidden="true"><path d="M5 12 130 29 255 53" stroke="#b7c4a7" stroke-width="2"/><path d="M5 63H255" stroke="#3a3f35"/><circle cx="5" cy="12" r="4" fill="#656f5c"/><circle cx="130" cy="29" r="4" fill="#88957a"/><circle cx="255" cy="53" r="5" fill="#d3dec2"/></svg><p>최근 운행에서 관찰 빈도가 줄었어요.</p></div>
+        </aside><button class="advice-ribbon" data-go="why" aria-label="오늘의 제안, 정차 전 여유 있게 감속하기. 이유 보기"><div class="advice-copy"><small>오늘의 제안</small><h2>정차 전, 조금 일찍 감속해 보세요.</h2></div><span class="advice-action">이유 보기<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></div>
+      </div>
+    </section>
+    <section class="screen" id="screen-profiles">
+      <div class="screen-head"><div><div class="kicker">함께 타는 사람</div><h1>프로필을 선택하세요</h1><p class="desc">세부 정보와 최근 한줄 평을 확인할 사람을 선택하세요.</p></div></div>
+      <div class="profile-select" id="profileSelect"></div>
+    </section>
+    <section class="screen" id="screen-profile-detail">
+      <div class="screen-head">
+        <div><button class="btn back small" data-go="profiles">← 프로필 선택</button><div class="kicker detail-kicker">PERSONAL COMFORT</div><h1 id="profileTitle">프로필</h1></div>
+        <button class="btn" data-edit-person>프로필 편집</button>
+      </div>
+      <div class="profile-layout"><aside class="panel profile-summary" id="profileSummary"></aside><div class="profile-main" id="profileMain"></div></div>
+    </section>
+    <section class="screen" id="screen-records">
+      <div class="screen-head"><div><div class="kicker">TRIP JOURNAL</div><h1>운행 기록</h1><p class="desc">지난 이동의 흐름과 함께한 사람의 응답을 살펴봐요.</p></div></div>
+      <div class="records-layout"><aside class="panel record-list"><h2>최근 기록</h2><div id="recordList"></div></aside><article class="panel detail" id="tripDetail"></article></div>
+    </section>
+    <section class="screen" id="screen-why">
+      <button class="btn back small" data-go="home">← 돌아가기</button>
+      <article class="panel why">
+        <span class="tag">조언의 근거</span><h2>왜 조금 일찍 감속하라는 조언을 받았나요?</h2><p class="desc">차량 속도 변화에서 관찰된 운전 경향을 민준의 최근 기록과 비교했습니다.</p>
+        <div class="evidence"><div class="panel"><span>이번 운행</span><strong>5회</strong><small>정차 직전 속도 변화</small></div><div class="panel"><span>최근 3회</span><strong>1.4회</strong><small>10분당 관찰 빈도</small></div><div class="panel"><span>이전 3회</span><strong>2.4회</strong><small>10분당 관찰 빈도</small></div></div>
+        <ul class="tips"><li>앞차와 정차 지점을 조금 일찍 확인해보세요.</li><li>정차 직전 한 번에 감속하기보다 속도를 나누어 줄여보세요.</li><li>이 값은 멀미 진단 결과가 아니라 차량 움직임의 반복 경향입니다.</li></ul>
+      </article>
+    </section>
+
+<section class="screen" id="screen-feedback">
+<div class="screen-head"><div><div class="kicker">운행 완료</div><h1>오늘의 이동은 어땠나요?</h1><p class="desc">11월 4일 · 38분 · 민준 운전</p></div><button class="btn back" data-skip-feedback>건너뛰기</button></div>
+<div class="feedback-layout"><article class="feedback-card"><div class="feedback-person"><span class="avatar"><img src="assets/avatar-seoa.png" alt=""></span><div><h2>서아의 한마디</h2><p class="desc">동승자 · 합성 프로필</p></div><span class="feedback-step">01 / FEELING</span></div><div class="rating-prompt"><span>이동의 편안함을 남겨주세요.</span><strong id="ratingWord">어땠나요?</strong></div><div class="stars" role="group" aria-label="이동 만족도, 5점 만점" id="ratingStars"></div><div class="rating-scale"><span>많이 불편했어요</span><span>아주 편안했어요</span></div><div class="feedback-divider"></div><div class="reason-title"><span class="feedback-step">02 / MOMENTS</span><h3>불편했던 순간이 있었나요?</h3><p>해당하는 순간만 선택해 주세요. 없어도 괜찮아요.</p></div><div class="reason-chips" id="reasonChips"></div><button class="advice-ribbon save-rating" data-save-feedback><div class="advice-copy"><small>이번 이동의 기록에</small><h2>나의 응답 남기기</h2></div><span class="advice-action">저장 ↗</span></button></article><aside class="trip-recap"><div class="kicker">OUR JOURNEY</div><h2>함께한 이동</h2><div class="recap-number">38 <small>분</small></div><div class="journey-line"><span></span><i></i><span></span></div><div class="recap-row"><span>이동 거리</span><b>21.4 km</b></div><div class="recap-row"><span>유효 분석</span><b>37분</b></div><div class="recap-row"><span>함께 탄 사람</span><b>민준 · 서아</b></div><div class="response-note"><b>남기지 않아도 괜찮아요.</b><p>건너뛴 기록은 미응답으로 남겨요.<br>편안했다는 응답으로 대신하지 않아요.</p></div></aside></div></section>
+<section class="screen" id="screen-finished"><div class="finished-wrap"><div class="finish-symbol"><svg viewBox="0 0 48 48" fill="none"><path d="m12 25 8 8 17-19" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="kicker">이동 완료</div><h1>오늘의 이동을 남겼어요.</h1><p class="desc" id="finishedStatus">서아의 평가가 저장됐어요.</p><div class="metrics"><div class="panel metric"><small>운행 시간</small><strong>38분</strong></div><div class="panel metric"><small>이동 거리</small><strong>21.4km</strong></div><div class="panel metric"><small>동승자 평가</small><strong id="finishedRating">3 / 5</strong></div></div><button class="advice-ribbon" data-go="why"><div class="advice-copy"><small>다음 이동에서</small><h2>정차 전, 조금 일찍 감속해 보세요.</h2></div><span class="advice-action">이유 보기 ›</span></button><div class="finish-actions"><button class="btn" data-trip="t1">운행 상세</button><button class="btn primary" data-go="home">출발 안내로</button></div></div></section>
+  </main>
+  <nav aria-label="주요 화면">
+    <button class="nav active" data-go="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3V10Z"/><path d="M9 20v-7h6v7"/></svg>출발 안내</button><button class="nav" data-go="records"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>운행 기록</button><button class="nav" data-go="profiles"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-3a8 8 0 0 1 16 0v3"/></svg>프로필</button><button class="nav" id="feedbackNav" data-go="feedback"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>완료 평가</button>
+  </nav>
+  <div class="drawer-scrim" id="drawerScrim" data-close-drawer></div>
+  <aside class="seat-drawer" id="seatDrawer" inert aria-hidden="true" aria-label="좌석에 앉을 사람 선택"></aside>
+</div>
+<div class="toast" id="toast"><b>운행 후 평가</b><span>서아 3/5 · 가장 불편했던 상황: 출발·정차</span></div>
+<script src="app.js"></script>
+<script src="demo-extras.js"></script>
+</body>
+</html>

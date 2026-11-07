@@ -1,0 +1,14 @@
+[
+  {
+    "file": "BHistoryPanels.kt",
+    "sha256_lf_normalized": "e75c07bdf62c1de8c6a6dbc56d054890edea68b24d2dda3d75ca295d165d5f29"
+  },
+  {
+    "file": "EnvironmentPanel.kt",
+    "sha256_lf_normalized": "f707bf1c6addc28eb3d09cf7079847f3a7d1db4fcbf4fa30af4f7dbf821a7ed9"
+  },
+  {
+    "file": "EnvironmentPresentationTest.kt",
+    "sha256_lf_normalized": "806ab268deeef805b93ba97faf65aee35e232bb307d4ce94f2ca1550e9b6a209"
+  }
+]
