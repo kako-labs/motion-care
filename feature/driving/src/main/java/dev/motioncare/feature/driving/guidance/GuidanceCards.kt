@@ -43,6 +43,15 @@ internal fun guidanceCopy(topic: GuidanceTopic): String = when (topic) {
 }
 
 /**
+ * Whether the system lets the card through. Denying the notification permission turns off all of the app's
+ * notifications. Pleos settings only have this app-wide switch, with no screen for a single channel.
+ */
+fun guidanceCardsAllowed(context: Context): Boolean =
+    NotificationManagerCompat.from(context).areNotificationsEnabled() &&
+        (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
+
+/**
  * Shows a card over navigation. On Pleos only message and navigation categories pop up while another app
  * is in front. The card has no tap action so that it asks nothing of the driver.
  */
@@ -54,11 +63,8 @@ class NotificationGuidancePresenter(
     private val context = context.applicationContext
 
     override fun show(topic: GuidanceTopic): Boolean {
+        if (!guidanceCardsAllowed(context)) return false
         val manager = NotificationManagerCompat.from(context)
-        if (!manager.areNotificationsEnabled()) return false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) return false
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH))
         val card: Notification = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -70,7 +76,11 @@ class NotificationGuidancePresenter(
             .setAutoCancel(true)
             .setTimeoutAfter(CARD_LIFETIME_MS)
             .build()
-        manager.notify(NOTIFICATION_ID, card)
+        try {
+            manager.notify(NOTIFICATION_ID, card)
+        } catch (_: SecurityException) {
+            return false // The permission went away after the check above.
+        }
         audio.play(guidanceCopy(topic))
         return true
     }
