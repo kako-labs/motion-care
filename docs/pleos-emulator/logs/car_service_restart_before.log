@@ -1,0 +1,34 @@
+device: emulator-5600 avd: pleos console port: <forwarded>
+install: Success
+position: OK
+tap start: 운행 기록 시작
+service: running=True foreground=True
+before crash: app pid 12938 car service pid 23973
+crash: sent
+after crash: app pid None car service pid 23761
+service before finish: running=False foreground=False
+trips: [{'id': 'fc037b46-25af-4022-b756-e67deece8a1a', 'status': 'RECORDING'}]
+speed samples: 316 unavailable: []
+valid speed after the unavailable mark: 0 moving: 0 first after ms: None
+steering samples: [(1072, 0.0), (4114, 0.0), (7215, 0.0), (10214, -10.0), (13414, -10.0), (16514, -10.0), (19714, -10.0), (22814, -10.0), (26014, -10.0), (29114, -10.0), (32314, -10.0), (35514, -10.0), (38715, -10.0), (41814, -10.0), (44930, -10.0), (48015, -10.0)]
+steering after the unavailable mark: []
+outside temperature snapshots: [(25.0, 'AVAILABLE', None)]
+
+===== summary =====
+PASS the car service restarted
+FAIL the app process survived
+FAIL recording kept its foreground service
+FAIL speed was marked unavailable once at the restart
+FAIL speed was recorded again after the restart
+FAIL the trip finished normally
+FAIL outside temperature was read after the restart
+
+===== logcat of the app process at the crash =====
+11-07 14:12:13.465 12938 12938 W CAR.L   : **Car service has crashed. Client(null) is not handling it. Client should use Car.createCar(..., CarServiceLifecycleListener, ...) to handle it properly. Check printed callstack to check where other version of Car.createCar() was called. Killing the client process**
+11-07 14:12:13.465 12938 12938 W CAR.L   : java.lang.RuntimeException
+11-07 14:12:13.465 12938 12938 W CAR.L   : 	at android.car.Car.<init>(Car.java:2205)
+11-07 14:12:13.465 12938 12938 W CAR.L   : 	at android.car.Car.createCar(Car.java:1995)
+11-07 14:12:13.465 12938 12938 W CAR.L   : 	at android.car.Car.createCar(Car.java:1965)
+11-07 14:12:13.465 12938 12938 W CAR.L   : 	at dev.motioncare.data.environment.vehicle.CarClimateSource.outside(CarClimateSource.kt:98)
+11-07 14:12:13.465 12938 12938 W CAR.L   : 	at dev.motioncare.data.environment.vehicle.CarClimateSource.access$outside(CarClimateSource.kt:42)
+11-07 14:12:13.465 12938 12938 W CAR.L   : 	at dev.motioncare.data.environment.vehicle.CarClimateSource$read$2$1.invokeSuspend(CarClimateSource.kt:55)

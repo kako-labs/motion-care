@@ -169,7 +169,25 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 | 기록 | 종료 직전까지 기록 서비스가 포그라운드로 유지됨. 속도 샘플 47,610건, 샘플 간격 최대 242ms, 주행 중 정차 없음 | 같은 로그. 샘플 수와 간격은 시험 뒤 내려받은 DB를 조회한 값 |
 
 - **첫 실행 중단:** 같은 시각에 호스트에서 Gradle 빌드를 돌린 첫 실행은 주행 약 2.5분에 멈췄습니다. 에뮬레이터가 느려지자 carwatchdog이 상태 신호를 놓친 차량 HAL을 종료했고, 차량 서비스가 다시 시작되면서 앱도 다른 차량 앱들과 함께 종료됐습니다. 그동안 Virtual Console은 503 `emulator_inactive`를 돌려줬습니다. 그래서 시험 중에는 호스트에서 무거운 작업을 하지 않고, 스크립트는 503이 오면 세션을 다시 요청합니다. 첫 실행의 logcat은 실행 중에 확인했고 저장하지 않았습니다.
-- **앱이 함께 종료된 이유:** logcat에 "Car service has crashed. Client(null) is not handling it… Killing the client process"가 남았습니다. `Car.createCar(context)`를 `CarServiceLifecycleListener` 없이 쓰면 차량 서비스가 죽을 때 앱 프로세스도 종료됩니다. 앱은 아직 이 경우를 처리하지 않으며, 실차에서 차량 서비스가 다시 시작되면 기록이 끊길 수 있습니다.
+- **앱이 함께 종료된 이유:** logcat에 "Car service has crashed. Client(null) is not handling it… Killing the client process"가 남았습니다. `Car.createCar(context)`를 `CarServiceLifecycleListener` 없이 쓰면 차량 서비스가 죽을 때 앱 프로세스도 종료됩니다. 이후 고쳤고, 결과는 [차량 서비스 재시작](#차량-서비스-재시작)에 있습니다.
+
+### 차량 서비스 재시작
+
+2026-11-07에 기록 중인 실제 앱에서 시스템 사용자의 차량 서비스(`com.android.car`)를 `am crash <pid>`로 재시작했습니다. carwatchdog이 차량 HAL을 종료했을 때와 같은 재시작이며, 리스너 없이 연결한 다른 차량 앱들도 함께 종료되고 다시 뜹니다. 내비를 앞에 띄우고 30km/h로 약 50초 달린 뒤 재시작하고 60초를 더 달렸습니다. 수정 후는 두 번 실행해 모두 통과했고(속도 재개 1.3초·1.2초), 표와 로그는 마지막 실행입니다.
+
+| 항목 | 수정 전(main `6246a3b`) | 수정 후 |
+| --- | --- | --- |
+| 앱 프로세스 | 종료됨. `CarClimateSource`가 만든 `Car`가 "Killing the client process"를 남김 | 유지 |
+| 기록 서비스 | 멈춤 | 포그라운드로 유지 |
+| 속도 | 재시작 시점에서 끊김 | 재시작 시점에 `UNAVAILABLE` 1건, 1.2초 뒤부터 다시 기록 |
+| 주행 | `RECORDING`으로 남음 | 종료 버튼으로 `COMPLETED` |
+| 바깥 온도 | 시작 값만 저장 | 재시작 뒤 종료 때도 25.0°C 저장 |
+| 조향(Vehicle SDK) | 앱 종료로 끊김 | 재시작 뒤에도 들어오고 -10°→-20° 변경도 반영 |
+| 증거 | [car_service_restart_before](logs/car_service_restart_before.log) | [car_service_restart_e2e](logs/car_service_restart_e2e.log) |
+
+- **원인:** AOSP Android 14의 [`Car.java`](https://android.googlesource.com/platform/packages/services/Car/+/refs/heads/android14-release/car-lib/src/android/car/Car.java)에서 리스너 없이 만든 `Car`는 차량 서비스 연결이 끊기면 `finishClient()`로 앱 프로세스를 종료합니다. 앱에 이런 `Car`가 하나만 있어도 종료됩니다.
+- **고친 방식:** 두 곳 모두 `createCar(context, handler, waitTimeoutMs, CarServiceLifecycleListener)`로 만듭니다. 연결이 끊기면 리스너가 `ready=false`를 받고, 바인딩이 유지되어 서비스가 다시 뜨면 같은 `Car`가 `ready=true`를 받습니다. 끊길 때 관리자 객체가 비워지므로 속도는 `ready=true`마다 새 관리자에 다시 구독합니다. 바깥 온도는 읽을 때마다 관리자를 얻으므로, 끊긴 동안에는 값 없음으로 저장되고 다시 연결되면 읽힙니다.
+- **Pleos SDK:** Vehicle·FusedLocation·TextToSpeech SDK의 클래스에는 `android.car.Car` 사용이 없고 각자 서비스에 바인딩합니다. 위치와 음성은 재시작 뒤 동작을 확인하지 않았습니다.
 
 ### 백그라운드 기록
 
@@ -231,6 +249,7 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | [tools/environment_e2e.py](tools/environment_e2e.py) | 실제 앱의 환경 값 저장 자동 시험. 위치 허용·거부와 공조 변경. 에뮬레이터 인터넷 필요 |
 | [tools/environment_card_e2e.py](tools/environment_card_e2e.py) | 환경 카드 자동 시험. 위치(델리·서울)와 내기 순환을 바꿔 카드와 저장 결과 확인. `--long`은 내기 순환 33분 주행 추가. 실행 시점의 예측 등급이 맞지 않으면 "NOT RUN" |
 | [tools/long_drive_card_e2e.py](tools/long_drive_card_e2e.py) | 주행 시간 카드 자동 시험. 30km/h로 2시간 5분 쉬지 않고 달려 카드가 2시간에 한 번 뜨고 저장되는지 확인. 약 2시간 10분 |
+| [tools/car_service_restart_e2e.py](tools/car_service_restart_e2e.py) | 기록 중 차량 서비스 재시작 자동 시험. 앱 프로세스 유지, 속도 재구독, 주행 종료, 재시작 뒤 바깥 온도 확인. `--apk`로 다른 빌드 지정. 약 3분 |
 
 저장소에 넣지 않은 것:
 
@@ -315,6 +334,7 @@ ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_e2e.py
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_card_e2e.py           # 약 3분
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_card_e2e.py --long    # 약 40분
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/long_drive_card_e2e.py          # 약 2시간 10분, 호스트에서 다른 무거운 작업을 하지 않음
+ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/car_service_restart_e2e.py      # 약 3분, 다른 차량 앱도 다시 시작됨
 ```
 
 공조는 Virtual Console의 `PUT /vehicle/hvac?power=1&recirc=1&driver_temp=24`로 바꿉니다. 페이지 소스에서 확인한 값입니다.

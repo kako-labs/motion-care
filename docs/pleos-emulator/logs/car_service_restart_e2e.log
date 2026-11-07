@@ -1,0 +1,25 @@
+device: emulator-5600 avd: pleos console port: <forwarded>
+install: Success
+position: OK
+tap start: 운행 기록 시작
+service: running=True foreground=True
+before crash: app pid 5497 car service pid 21995
+crash: sent
+after crash: app pid 5497 car service pid 16687
+service before finish: running=True foreground=True
+tap finish: 운행 기록 종료
+trips: [{'id': '5a1eff00-7802-46db-90dd-81a74c67d96c', 'status': 'COMPLETED'}]
+speed samples: 786 unavailable: [(50305, 'UNAVAILABLE')]
+valid speed after the unavailable mark: 465 moving: 407 first after ms: 1216
+steering samples: [(1083, 0.0), (4123, 0.0), (7324, 0.0), (10123, -10.0), (13223, -10.0), (16323, -10.0), (19324, -10.0), (22423, -10.0), (25622, -10.0), (28723, -10.0), (31822, -10.0), (34923, -10.0), (38123, -10.0), (41223, -10.0), (44323, -10.0), (47523, -10.0), (51724, -10.0), (54923, -10.0), (55305, -20.0), (58323, -20.0), (61423, -20.0), (64623, -20.0), (67723, -20.0), (70823, -20.0), (73923, -20.0), (76923, -20.0), (80023, -20.0), (83024, -20.0), (86122, -20.0), (89224, -20.0), (92423, -20.0), (95624, -20.0), (98823, -20.0), (102023, -20.0), (105223, -20.0), (108324, -20.0), (111423, -20.0), (114424, -20.0), (115608, 0.0), (118623, 0.0), (121723, 0.0)]
+steering after the unavailable mark: [(51724, -10.0), (54923, -10.0), (55305, -20.0), (58323, -20.0), (61423, -20.0), (64623, -20.0), (67723, -20.0), (70823, -20.0), (73923, -20.0), (76923, -20.0), (80023, -20.0), (83024, -20.0), (86122, -20.0), (89224, -20.0), (92423, -20.0), (95624, -20.0), (98823, -20.0), (102023, -20.0), (105223, -20.0), (108324, -20.0), (111423, -20.0), (114424, -20.0), (115608, 0.0), (118623, 0.0), (121723, 0.0)]
+outside temperature snapshots: [(25.0, 'AVAILABLE', None), (25.0, 'AVAILABLE', None)]
+
+===== summary =====
+PASS the car service restarted
+PASS the app process survived
+PASS recording kept its foreground service
+PASS speed was marked unavailable once at the restart
+PASS speed was recorded again after the restart
+PASS the trip finished normally
+PASS outside temperature was read after the restart
