@@ -95,7 +95,9 @@ internal class CarClimateSource(
     }
 
     private fun outside(): EnvironmentReading<Double> = try {
-        val connected = car ?: Car.createCar(context).also { car = it }
+        // A Car without a lifecycle listener kills the app when the car service crashes. This one reconnects by
+        // itself; until then getCarManager returns null and the reading is missing.
+        val connected = car ?: Car.createCar(context, null, CALL_TIMEOUT_MS) { _, _ -> }.also { car = it }
         val manager = connected.getCarManager(Car.PROPERTY_SERVICE) as CarPropertyManager
         if (manager.getCarPropertyConfig(VehiclePropertyIds.ENV_OUTSIDE_TEMPERATURE) == null) {
             unsupported()
