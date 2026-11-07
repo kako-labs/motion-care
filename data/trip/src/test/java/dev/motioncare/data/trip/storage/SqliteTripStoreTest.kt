@@ -158,7 +158,7 @@ class SqliteTripStoreTest {
         } finally { db.close(); context.deleteDatabase(name) }
     }
 
-    @Test fun `cabin air cards are saved apart from pattern cards`() = runTest {
+    @Test fun `cabin air and rest cards are saved apart from pattern cards`() = runTest {
         val name = name()
         val db = MotionCareDatabase(context, name)
         try {
@@ -169,6 +169,7 @@ class SqliteTripStoreTest {
             val events = listOf(
                 GuidanceEvent(500, 400, GuidanceTopic.Environment(EnvironmentAdvice.REDUCE_OUTSIDE_AIR), GuidanceOutcome.SHOWN),
                 GuidanceEvent(600, 600, GuidanceTopic.Environment(EnvironmentAdvice.TRY_OUTSIDE_AIR), GuidanceOutcome.SKIPPED_OFF),
+                GuidanceEvent(650, 640, GuidanceTopic.LongDrive, GuidanceOutcome.SHOWN),
                 GuidanceEvent(700, 650, DrivingPattern.HARD_STOP, GuidanceOutcome.SHOWN),
             )
             store.appendSamples(first.copy(revision = 2), emptyList(), emptyList(), emptyList(), events)
@@ -178,7 +179,8 @@ class SqliteTripStoreTest {
 
     @Test fun `every card topic has a name of its own`() {
         val names = DrivingPattern.entries.map { topicName(GuidanceTopic.Pattern(it)) } +
-            EnvironmentAdvice.entries.map { topicName(GuidanceTopic.Environment(it)) }
+            EnvironmentAdvice.entries.map { topicName(GuidanceTopic.Environment(it)) } +
+            topicName(GuidanceTopic.LongDrive)
         assertEquals(names.size, names.toSet().size)
         names.forEach { assertEquals(it, topicName(topicOf(it))) }
     }

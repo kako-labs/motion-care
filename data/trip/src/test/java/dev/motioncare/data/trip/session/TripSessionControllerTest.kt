@@ -474,6 +474,21 @@ class TripSessionControllerTest {
         assertEquals(listOf(GuidanceEvent(3800, 0, advice, GuidanceOutcome.SHOWN)), store.get(trip.id)!!.guidance)
     }
 
+    @Test fun `two hours of driving shows a rest card and saves it`() = runTest {
+        val controller = controller()
+        val cards = mutableListOf<GuidanceTopic>()
+        val trip = startRecordingWithGuidance(controller) { cards += it; true }
+        val twoHours = 2 * 60 * 60_000L
+        for (ms in 1000L..twoHours + 60_000L step 1000) trip.readings.emit(reading(ms, value = 15.0))
+        runCurrent()
+        controller.finish()
+        runCurrent()
+        assertEquals(listOf<GuidanceTopic>(GuidanceTopic.LongDrive), cards)
+        val shownAt = 1000 + twoHours
+        assertEquals(listOf(GuidanceEvent(shownAt, shownAt, GuidanceTopic.LongDrive, GuidanceOutcome.SHOWN)),
+            store.get(trip.id)!!.guidance)
+    }
+
     @Test fun `a failing environment stream does not stop recording`() = runTest {
         val controller = controller()
         val environment = flow<EnvironmentSnapshot> { error("climate service died") }

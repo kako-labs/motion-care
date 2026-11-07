@@ -150,13 +150,18 @@ internal class SqliteTripStore(
     }
 }
 
-// guidance_events.pattern holds the card topic: a pattern name or a cabin air advice name. The two sets of
-// names never overlap, which SqliteTripStoreTest checks, so the column needs no migration.
+// guidance_events.pattern holds the card topic: a pattern name, a cabin air advice name or LONG_DRIVE. The names
+// never overlap, which SqliteTripStoreTest checks, so the column needs no migration.
+private const val LONG_DRIVE = "LONG_DRIVE"
+
 internal fun topicName(topic: GuidanceTopic): String = when (topic) {
     is GuidanceTopic.Pattern -> topic.pattern.name
     is GuidanceTopic.Environment -> topic.advice.name
+    GuidanceTopic.LongDrive -> LONG_DRIVE
 }
 
-internal fun topicOf(name: String): GuidanceTopic =
-    DrivingPattern.entries.firstOrNull { it.name == name }?.let { GuidanceTopic.Pattern(it) }
+internal fun topicOf(name: String): GuidanceTopic = when (name) {
+    LONG_DRIVE -> GuidanceTopic.LongDrive
+    else -> DrivingPattern.entries.firstOrNull { it.name == name }?.let { GuidanceTopic.Pattern(it) }
         ?: GuidanceTopic.Environment(EnvironmentAdvice.valueOf(name))
+}

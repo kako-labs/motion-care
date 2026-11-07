@@ -25,6 +25,12 @@ class TripModelsTest {
         val event = GuidanceEvent(10, 5, GuidanceTopic.Environment(EnvironmentAdvice.REDUCE_OUTSIDE_AIR), GuidanceOutcome.SHOWN)
         assertNotEquals(GuidanceEvent(10, 5, DrivingPattern.HARD_STOP, GuidanceOutcome.SHOWN), event)
     }
+    @Test fun `a long drive card is told apart from the other cards`() {
+        val event = GuidanceEvent(10, 5, GuidanceTopic.LongDrive, GuidanceOutcome.SHOWN)
+        assertNotEquals(GuidanceEvent(10, 5, DrivingPattern.HARD_STOP, GuidanceOutcome.SHOWN), event)
+        assertNotEquals(
+            GuidanceEvent(10, 5, GuidanceTopic.Environment(EnvironmentAdvice.REDUCE_OUTSIDE_AIR), GuidanceOutcome.SHOWN), event)
+    }
     @Test fun `snapshot has no observations unless given`() {
         val trip = TripRecord(TripId("trip"), 100, origin = DataOrigin.SYNTHETIC)
         assertTrue(TripSnapshot(trip).observations.isEmpty())

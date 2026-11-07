@@ -8,7 +8,7 @@
 - 실차와 App Market 심사 결과가 아닙니다.
 - 시험 앱의 권한은 adb로 강제 부여했습니다. 앱의 속도 권한은 실제 요청 창으로 확인했습니다. 마켓 승인은 확인하지 못했습니다.
 - 소리는 재생 상태와 출력 프레임으로 확인했습니다. 음성은 주행 담당이 에뮬레이터 출력을 듣고 잘 나오는 것을 확인했고, 앱에서 재생한 알림음은 듣고 확인하지 않았습니다. 실차의 음량과 음질은 모릅니다. ([소리와 음성](#소리와-음성))
-- 시험하지 않은 항목: 자동 시작, 앱 닫기 제스처, 시동 껐다 켜기, 앱 두 개 동시 표시, 3분을 넘는 기록, 공조 제어 호출
+- 시험하지 않은 항목: 자동 시작, 앱 닫기 제스처, 시동 껐다 켜기, 앱 두 개 동시 표시, 2시간 5분을 넘는 기록, 공조 제어 호출
 
 ## 결과
 
@@ -159,6 +159,18 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 
 측정 앱의 위치 권한은 앞선 실행에서 요청 창으로 허용한 상태라 로그에는 권한이 있는 경우만 남아 있습니다. 권한이 없을 때의 `SecurityException`은 첫 실행에서 확인했습니다.
 
+### 주행 시간 카드
+
+2026-11-07에 실제 앱을 설치하고 서울 위치, 내기 순환을 끈 상태로 내비를 앞에 띄운 채 30km/h로 2시간 5분 동안 멈추지 않고 주행했습니다. 규칙과 근거는 [안내 카드의 근거](../guidance-card.md)의 "주행 시간 카드"에 있습니다.
+
+| 항목 | 결과 | 증거 |
+| --- | --- | --- |
+| 표시 | 처음 움직인 4.2초에서 정확히 2시간 뒤인 7,204.2초에 후보가 되고, 같은 샘플에서 "2시간 넘게 달렸어요. 안전한 곳에서 쉬어가보세요"가 30km/h 주행 중 내비 위에 한 줄로 뜸. 카드는 한 번만 보였고 `LONG_DRIVE`·`SHOWN` 1건만 저장됨 | [long_drive_card_e2e](logs/long_drive_card_e2e.log), [92_long_drive_card](shots/92_long_drive_card.png) |
+| 기록 | 종료 직전까지 기록 서비스가 포그라운드로 유지됨. 속도 샘플 47,610건, 샘플 간격 최대 242ms, 주행 중 정차 없음 | 같은 로그. 샘플 수와 간격은 시험 뒤 내려받은 DB를 조회한 값 |
+
+- **첫 실행 중단:** 같은 시각에 호스트에서 Gradle 빌드를 돌린 첫 실행은 주행 약 2.5분에 멈췄습니다. 에뮬레이터가 느려지자 carwatchdog이 상태 신호를 놓친 차량 HAL을 종료했고, 차량 서비스가 다시 시작되면서 앱도 다른 차량 앱들과 함께 종료됐습니다. 그동안 Virtual Console은 503 `emulator_inactive`를 돌려줬습니다. 그래서 시험 중에는 호스트에서 무거운 작업을 하지 않고, 스크립트는 503이 오면 세션을 다시 요청합니다. 첫 실행의 logcat은 실행 중에 확인했고 저장하지 않았습니다.
+- **앱이 함께 종료된 이유:** logcat에 "Car service has crashed. Client(null) is not handling it… Killing the client process"가 남았습니다. `Car.createCar(context)`를 `CarServiceLifecycleListener` 없이 쓰면 차량 서비스가 죽을 때 앱 프로세스도 종료됩니다. 앱은 아직 이 경우를 처리하지 않으며, 실차에서 차량 서비스가 다시 시작되면 기록이 끊길 수 있습니다.
+
 ### 백그라운드 기록
 
 | 조건 | 결과 | 증거 |
@@ -218,6 +230,7 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | [tools/sound_e2e.py](tools/sound_e2e.py) | 실제 앱의 알림음·음성과 겹침 처리 자동 시험. 소리 측정 앱 APK 필요 |
 | [tools/environment_e2e.py](tools/environment_e2e.py) | 실제 앱의 환경 값 저장 자동 시험. 위치 허용·거부와 공조 변경. 에뮬레이터 인터넷 필요 |
 | [tools/environment_card_e2e.py](tools/environment_card_e2e.py) | 환경 카드 자동 시험. 위치(델리·서울)와 내기 순환을 바꿔 카드와 저장 결과 확인. `--long`은 내기 순환 33분 주행 추가. 실행 시점의 예측 등급이 맞지 않으면 "NOT RUN" |
+| [tools/long_drive_card_e2e.py](tools/long_drive_card_e2e.py) | 주행 시간 카드 자동 시험. 30km/h로 2시간 5분 쉬지 않고 달려 카드가 2시간에 한 번 뜨고 저장되는지 확인. 약 2시간 10분 |
 
 저장소에 넣지 않은 것:
 
@@ -301,6 +314,7 @@ adb logcat -d -s ENVPROBE:I
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_e2e.py
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_card_e2e.py           # 약 3분
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_card_e2e.py --long    # 약 40분
+ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/long_drive_card_e2e.py          # 약 2시간 10분, 호스트에서 다른 무거운 작업을 하지 않음
 ```
 
 공조는 Virtual Console의 `PUT /vehicle/hvac?power=1&recirc=1&driver_temp=24`로 바꿉니다. 페이지 소스에서 확인한 값입니다.

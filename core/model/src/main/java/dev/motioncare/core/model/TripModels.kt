@@ -65,10 +65,13 @@ enum class EnvironmentAdvice {
     TRY_OUTSIDE_AIR,
 }
 
-/** What an in-drive card is about: a driving pattern that repeated, or the cabin air. */
+/** What an in-drive card is about: a driving pattern that repeated, the cabin air, or a long stretch of driving. */
 sealed interface GuidanceTopic {
     data class Pattern(val pattern: DrivingPattern) : GuidanceTopic
     data class Environment(val advice: EnvironmentAdvice) : GuidanceTopic
+
+    /** The car has been driven for a long time without a break. */
+    data object LongDrive : GuidanceTopic
 }
 
 /** What happened to one in-drive card. Times are measured from the start of the trip. */
