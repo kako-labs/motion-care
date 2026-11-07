@@ -187,7 +187,23 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 
 - **원인:** AOSP Android 14의 [`Car.java`](https://android.googlesource.com/platform/packages/services/Car/+/refs/heads/android14-release/car-lib/src/android/car/Car.java)에서 리스너 없이 만든 `Car`는 차량 서비스 연결이 끊기면 `finishClient()`로 앱 프로세스를 종료합니다. 앱에 이런 `Car`가 하나만 있어도 종료됩니다.
 - **고친 방식:** 두 곳 모두 `createCar(context, handler, waitTimeoutMs, CarServiceLifecycleListener)`로 만듭니다. 연결이 끊기면 리스너가 `ready=false`를 받고, 바인딩이 유지되어 서비스가 다시 뜨면 같은 `Car`가 `ready=true`를 받습니다. 끊길 때 관리자 객체가 비워지므로 속도는 `ready=true`마다 새 관리자에 다시 구독합니다. 바깥 온도는 읽을 때마다 관리자를 얻으므로, 끊긴 동안에는 값 없음으로 저장되고 다시 연결되면 읽힙니다.
-- **Pleos SDK:** Vehicle·FusedLocation·TextToSpeech SDK의 클래스에는 `android.car.Car` 사용이 없고 각자 서비스에 바인딩합니다. 위치와 음성은 재시작 뒤 동작을 확인하지 않았습니다.
+- **Pleos SDK:** Vehicle·FusedLocation·TextToSpeech SDK의 클래스에는 `android.car.Car` 사용이 없고 각자 서비스에 바인딩합니다. 위치와 음성은 아래 [재시작 뒤 위치와 음성](#재시작-뒤-위치와-음성)에서 확인했습니다.
+
+#### 재시작 뒤 위치와 음성
+
+2026-11-07에 소리를 켠 에뮬레이터(`-no-audio` 없음)에서 같은 재시작을 일으켰습니다. 음성을 고르고 내기 순환을 켠 채 서울에서 기록을 시작했습니다. 내기 순환을 켠 것은 환경 카드가 15분 간격을 먼저 쓰지 않게 하기 위해서입니다. 내비를 앞에 띄우고 30km/h로 약 20초 달린 뒤 재시작했고, 재시작 직후 차를 부산으로 옮겼습니다. 이어 출발과 정지를 반복해 패턴 카드를 띄웠습니다. 대기질 캐시는 위치마다 따로 쓰므로, 종료 때 부산의 대기질이 저장되었다면 재시작 뒤 위치를 새로 읽은 것입니다. 두 번 실행해 모두 8개 항목이 통과했고, 아래 표와 로그는 마지막 실행입니다. 소리를 끈 에뮬레이터에서 먼저 한 번 돌렸을 때도 모두 통과했습니다.
+
+| 항목 | 결과 |
+| --- | --- |
+| 함께 종료된 프로세스 | 차량 서비스, `com.android.systemui`, `ai.umos.vehiclecontrol`, `ai.umos.mediaapp` 등. 위치 서비스(`ai.pleos.playground.service.location.fused`)와 음성 서비스(`ai.pleos.playground.caas`)는 두 번의 재시작에서 모두 같은 프로세스로 남음 |
+| 위치 | 시작 때 서울(37.6, 127.0), 재시작 뒤 종료 때 부산(35.2, 129.1)의 대기질이 `AVAILABLE`로 저장됨 |
+| 음성 | 재시작 뒤 정지 직전 감속 카드가 `SHOWN` 1건으로 저장되고 내비 위에 뜸. `GuidanceSound`에 `started: VOICE`·`finished`가 남았고, 음성 서비스가 앱의 요청으로 `USAGE_NOTIFICATION` 재생을 시작함 |
+| 앱과 주행 | 앱 프로세스 유지, 종료 버튼으로 `COMPLETED` |
+| 증거 | [restart_location_voice_e2e](logs/restart_location_voice_e2e.log) |
+
+- **SDK의 재연결은 쓰이지 않았습니다.** 두 SDK의 코드에는 서비스 연결이 끊기면 다시 붙는 처리가 있습니다. 위치 SDK는 `onServiceDisconnected`에서 서비스만 비우고 바인딩을 유지하며, 음성 SDK는 다시 연결되면 "recovered service connection"을 남깁니다. 다만 이번 재시작에서는 두 서비스가 종료되지 않아 이 경로는 실행되지 않았습니다. 위치나 음성 서비스 자체가 재시작되는 경우는 확인하지 않았습니다.
+- **오디오:** 재시작 때 차량 오디오 정책(`AudioPolicyProxy`)도 끊겼지만 이후 음성은 재생되었습니다. 알림음은 이 시험에서 확인하지 않았습니다.
+- **생략 기록:** 카드가 잔잔한 순간을 기다리는 동안 들어온 다른 패턴 두 건은 `SKIPPED_INTERVAL`로 저장되었습니다. 대기 중인 카드가 있을 때의 규칙대로이며 재시작과는 관계없습니다.
 
 ### 알림 권한 거부
 
@@ -266,6 +282,7 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | [tools/environment_card_e2e.py](tools/environment_card_e2e.py) | 환경 카드 자동 시험. 위치(델리·서울)와 내기 순환을 바꿔 카드와 저장 결과 확인. `--long`은 내기 순환 33분 주행 추가. 실행 시점의 예측 등급이 맞지 않으면 "NOT RUN" |
 | [tools/long_drive_card_e2e.py](tools/long_drive_card_e2e.py) | 주행 시간 카드 자동 시험. 30km/h로 2시간 5분 쉬지 않고 달려 카드가 2시간에 한 번 뜨고 저장되는지 확인. 약 2시간 10분 |
 | [tools/car_service_restart_e2e.py](tools/car_service_restart_e2e.py) | 기록 중 차량 서비스 재시작 자동 시험. 앱 프로세스 유지, 속도 재구독, 주행 종료, 재시작 뒤 바깥 온도 확인. `--apk`로 다른 빌드 지정. 약 3분 |
+| [tools/restart_location_voice_e2e.py](tools/restart_location_voice_e2e.py) | 차량 서비스 재시작 뒤 위치와 음성 자동 시험. 재시작 직후 위치를 옮겨 종료 때 대기질 좌표를 보고, 패턴 카드의 음성 재생을 확인. 에뮬레이터 인터넷 필요, 소리를 켠 에뮬레이터 권장. 약 3분 |
 | [tools/notification_off_e2e.py](tools/notification_off_e2e.py) | 알림 꺼짐 안내 자동 시험. "알림 켜기"로 요청 창 거부, "다시 묻지 않음", 설정 화면 열기와 켜기를 차례로 확인. 약 1분 |
 
 저장소에 넣지 않은 것:

@@ -1,0 +1,31 @@
+device: emulator-5600 avd: pleos console port: <forwarded>
+install: Success
+position: OK
+climate on, recirculation on: 200
+tap: 음성
+tap start: 운행 기록 시작
+service: running=True foreground=True
+before crash: {'app': '19569', 'car service': '28220', 'location service': '5066', 'speech service': '2998'}
+crash: sent
+processes that died at the restart: [('com.android.car', '28220'), ('com.android.systemui', '28302'), ('ai.umos.vehiclecontrol', '28341'), ('ai.umos.mediaapp', '28816'), ('ai.umos.mediaapp', '28716'), ('com.android.systemui', '27305')]
+position: OK
+after crash: {'app': '19569', 'car service': '27220', 'location service': '5066', 'speech service': '2998'}
+sound log: ['started: VOICE', 'finished']
+speech requests: ['dev.motioncare.scaffold']
+usages from the speech service: {'USAGE_NOTIFICATION'}
+card text seen in the notification list: ['정지 지점보다 조금 일찍 감속해보세요']
+tap finish: 운행 기록 종료
+trips: [{'id': 'b6dc1765-9e8a-4a63-9c9c-3fea8dca2d9f', 'status': 'COMPLETED'}]
+restart at trip ms: 30383
+guidance events: [(57269, 'RAPID_START', 'SKIPPED_INTERVAL'), (68654, 'REPEATED_SPEED_CHANGE', 'SKIPPED_INTERVAL'), (80169, 'HARD_STOP', 'SHOWN'), (89156, 'HARD_STOP', 'SKIPPED_INTERVAL')]
+outdoor air snapshots: [('AVAILABLE', None, 37.6, 127.0), ('AVAILABLE', None, 35.2, 129.1)]
+
+===== summary =====
+PASS the car service restarted
+PASS the app process survived
+PASS a card was shown after the restart
+PASS the card's voice started
+PASS the speech service spoke for the app
+PASS the trip finished normally
+PASS outdoor air at the start was for Seoul
+PASS outdoor air at the end was for Busan, read after the restart
