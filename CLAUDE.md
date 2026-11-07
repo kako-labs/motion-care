@@ -83,7 +83,7 @@ data:* ───────► core:model
 
 - **백그라운드:** 일반 서비스는 앱이 뒤로 가고 60초 뒤 종료됩니다. 기록은 포그라운드 서비스에서 돌립니다.
 - **주행 중 화면:** `distractionOptimized`를 선언하지 않은 Activity는 5km/h부터 시스템 화면으로 가려집니다. 현재 `MainActivity`에는 선언이 없습니다.
-- **알림:** 일반 알림은 내비 위에 뜨지 않고 종 배지도 표시되지 않습니다. 메시지·내비 카테고리만 뜹니다. 주행 중 안내는 `CATEGORY_MESSAGE` 카드로 표시합니다(약 9초, 두 줄까지). App Market 심사 통과 여부는 미확인입니다.
+- **알림:** 일반 알림은 내비 위에 뜨지 않고 종 배지도 표시되지 않습니다. 메시지·내비 카테고리만 뜹니다. 주행 중 안내는 `CATEGORY_MESSAGE` 카드로 표시합니다(약 9초, 두 줄까지). App Market 심사 통과 여부는 미확인입니다. 알림 설정은 Car Settings 앱 정보의 앱 단위 스위치뿐이고 채널별 화면이 없습니다. 하단 바에 뒤로 버튼이 없어 설정 화면은 `FLAG_ACTIVITY_NEW_TASK`로 엽니다.
 - **소리:** 알림 채널의 소리는 재생 기록이 없어 앱이 직접 냅니다. TextToSpeech SDK는 온디바이스 모드만 씁니다. 등록·키가 필요 없고 인터넷 권한 없이도 재생되며(앱은 대기질 때문에 인터넷 권한을 가짐), 서버 모드용 `universal-access`는 의존성에서 뺐습니다. SDK는 오디오 포커스를 잡지 않고 다른 앱에 포커스를 뺏겨도 멈추지 않으며, 포커스만으로는 내비 음성·통화와의 겹침이 막히지 않아 앱이 처리합니다.
 - **속도:** Vehicle SDK 2.3.2에는 속도 API가 없습니다. `CarPropertyManager`의 `PERF_VEHICLE_SPEED`를 `android.car.permission.CAR_SPEED` 권한으로 읽으며 단위는 m/s입니다. 이 권한은 위치 권한 그룹에 속해 요청 창에 위치 정보로 표시됩니다.
 - **차량 서비스 재시작:** `Car.createCar`를 `CarServiceLifecycleListener` 없이 부른 `Car`가 앱에 하나라도 있으면, 차량 서비스가 재시작될 때 앱 프로세스가 종료됩니다. 리스너를 넘기면 같은 `Car`가 다시 연결되지만 관리자와 콜백은 비워지므로 다시 얻고 다시 등록합니다. `CarSpeedSource`와 `CarClimateSource`가 이 방식입니다.

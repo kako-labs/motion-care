@@ -166,6 +166,35 @@
 - **SDK 일부를 뺌:** 서버 모드 로그인용 `universal-access`를 의존성에서 제외했습니다. 온디바이스 모드는 이 라이브러리 없이 동작했고(측정), 빼면 Material·네이티브 라이브러리가 들어오지 않아 시험 앱 APK가 25MB에서 5.3MB로 줄고 16KB 정렬 lint 오류도 사라집니다. 서버 모드를 쓰려면 다시 넣어야 합니다.
 - **인터넷 권한:** 온디바이스 모드는 `INTERNET` 없이 재생됐습니다(측정). 처음에는 SDK가 추가하는 권한을 지웠고, 2026-11-06부터는 [환경 데이터](environment.md)의 대기질 요청 때문에 앱이 이 권한을 갖습니다. 그 뒤에도 `sound_e2e.py` 6개 시나리오가 그대로 통과했습니다.
 
+## 알림이 꺼져 있을 때
+
+카드는 알림이라, 앱 알림이 꺼져 있으면 시스템이 띄우지 않습니다. 이때 소리도 내지 않고 `FAILED`로 저장합니다. 기록은 알림과 상관없이 계속됩니다. "주행 중 안내"가 켜져 있는데 알림이 꺼져 있으면 시작 화면 스위치 아래에 알리고, "알림 켜기"로 다시 켤 수 있게 합니다.
+
+```text
+"주행 중 안내" 켜짐 + 앱 알림 꺼짐
+   └─ 스위치 아래: "알림이 꺼져 있어 주행 중 안내 카드가 뜨지 않아요"  [알림 켜기]
+          │
+          └─ 알림 권한 요청
+                ├─ 허용 ───────────────────────── 안내 사라짐
+                ├─ 요청 창에서 거부, 다시 묻지 않음 ─ 그대로 둠
+                └─ 요청 창이 뜨지 않음 ──────────── 앱 알림 설정 화면을 엶
+```
+
+| 항목 | 현재 | 유형 | 근거 |
+| --- | --- | --- | --- |
+| 꺼짐을 알림 | 스위치 바로 아래, 빨간 글자 한 줄 | Android 문서 | 권한 가이드는 거부로 쓸 수 없게 된 기능을 사용자에게 알리고, 제한된 자리를 짚어 구체적으로 쓰며, 화면을 막지 말라고 합니다 |
+| 판단 기준 | `areNotificationsEnabled()`와 `POST_NOTIFICATIONS` 허용 | Android 문서 | 알림 권한 문서가 보내기 전에 `areNotificationsEnabled()`로 확인하라고 합니다. 카드를 띄우는 쪽과 같은 함수를 써서 표시와 실제가 어긋나지 않게 함 |
+| 문구 | "알림이 꺼져 있어 주행 중 안내 카드가 뜨지 않아요" | 제품 판단 | 무엇이 안 되는지를 적으라는 가이드를 따름. 문구 자체의 근거는 없음 |
+| 버튼 | "알림 켜기": 요청 창이 뜨면 요청 창, 뜨지 않을 때만 설정 화면 | Android 문서·제품 판단 | 가이드는 사용자가 기능을 쓰려 할 때 권한을 묻고, 거부한 결정을 바꾸게 하려고 설정으로 보내지 말라고 합니다. 채널 문서는 설정이 앱 기능을 막으면 설정을 여는 동작을 줄 수 있다고 합니다. 그래서 운전자가 버튼을 눌렀고 시스템이 더 묻지 않을 때만 설정을 엶. 2026-11-07 주행 담당 결정 |
+| 다시 확인 | 화면으로 돌아올 때마다 | 구현 판단 | 요청 창이나 설정 화면에서 돌아오면 바로 사라지게 함 |
+| 설정 화면 | `ACTION_APP_NOTIFICATION_SETTINGS`, 새 작업으로 | 실측 | Pleos에서는 Car Settings의 앱 정보가 열리고 "알림" 스위치를 켜면 권한이 돌아옴. 앱 작업 안에 열면 뒤로 버튼이 없어 앱 아이콘을 눌러도 설정 화면이 다시 보임 |
+
+- **요청 창이 뜨지 않음을 아는 방법:** 요청 전후의 `shouldShowRequestPermissionRationale`이 모두 false이면 시스템이 창을 띄우지 않은 것으로 봅니다(`opensSettingsAfterAsking`). 방금 요청 창에서 "다시 묻지 않음"을 고르면 요청 전 값이 true라 설정으로 보내지 않습니다. 처음 뜬 요청 창을 답하지 않고 닫은 경우도 두 값이 모두 false라 설정이 열립니다. Pleos에서 요청 창을 답 없이 닫을 수 있는지는 확인하지 않았습니다.
+- **처음 열 때도 보임:** "주행 중 안내"는 기본으로 켜져 있어, 알림을 아직 묻기 전에도 안내가 보입니다. 이때 "알림 켜기"는 설정이 아니라 요청 창을 띄웁니다. 기록 시작 버튼도 그대로 위치·알림 권한을 함께 묻습니다.
+- **채널만 끈 경우:** Pleos 설정에는 앱 단위 알림 스위치만 있고 채널별 화면이 없습니다(측정). 그래서 "주행 중 안내" 채널만 꺼져 카드 없이 소리가 나고 `SHOWN`으로 남는 경우는 사용자가 화면으로 만들 수 없어 처리하지 않았습니다.
+- **주행 중:** 앱 화면은 5km/h부터 가려지므로 이 안내는 주차 중에 봅니다.
+- **에뮬레이터:** 처음 열 때 안내가 보이고, 첫 요청 창 거부와 "다시 묻지 않음"에는 앱에 머물며, 그다음에는 Car Settings가 열리고, 거기서 켜고 돌아오면 안내가 사라지는 것을 확인했습니다([측정](pleos-emulator/README.md#알림-권한-거부)).
+
 ## 기록
 
 `TripSnapshot.guidance`에 `GuidanceEvent`로 저장합니다. 샘플과 같은 트랜잭션입니다. `guidance_events` 테이블에는 일부러 기본 키를 두지 않았습니다. 기록용 값이 겹쳤다고 주행 저장이 실패하면 안 되기 때문입니다.
@@ -241,7 +270,9 @@ python3 -I docs/detection-limits/measure_guidance.py <VED_*_week.csv 폴더> <�
 | [한국도로공사 권고, 파이낸셜뉴스 2026-07-07](https://www.fnnews.com/news/202607071051189361) | 2시간 이상 연속 운전하거나 피로하면 휴게소나 졸음쉼터에서 충분히 휴식 | 기사로만 확인. 보도자료 원문은 찾지 못함. 휴식 길이는 적혀 있지 않음 |
 | [CDC Yellow Book, Motion Sickness](https://www.cdc.gov/yellow-book/hcp/travel-air-sea/motion-sickness.html) | 이동 중 휴식에 대한 문장이 없음을 확인 | 원문(2026판) |
 | Notion 화면별 기능 분해 G02-F02, 멀미 리서치, 2차 시안 Driving2 | 주행 중 안내 후보의 주행시간, 안전한 곳에 멈춰 쉬기(즉시 정차 명령이 아님), 시안의 1시간 문구 | 팀 문서. 시안 문구의 근거는 적혀 있지 않음 |
-| Pleos 에뮬레이터 측정: [메시지 카드](pleos-emulator/README.md#메시지-카드로-안내-띄우기), [앱의 안내 카드](pleos-emulator/README.md#앱의-안내-카드), [소리와 음성](pleos-emulator/README.md#소리와-음성), [환경 값](pleos-emulator/README.md#환경-값), [주행 시간 카드](pleos-emulator/README.md#주행-시간-카드) | 카드 표시, 수명, 길이 제한, 끄기, 소리 재생과 겹침, 환경 카드 세 경우, 2시간 주행의 휴식 카드 | v2.1.0 측정. 실차 아님 |
+| [Android, Request runtime permissions](https://developer.android.com/training/permissions/requesting) | 거부 뒤 쓸 수 없는 기능을 알리고 자리를 짚어 구체적으로 쓰기, 화면을 막지 않기, 결정을 바꾸게 하려고 설정으로 보내지 않기, 두 번 거부하면 요청 창이 다시 뜨지 않음 | 공식 문서 |
+| [Android, Notification runtime permission](https://developer.android.com/develop/ui/views/notifications/notification-permission), [Create and manage notification channels](https://developer.android.com/develop/ui/views/notifications/channels) | 거부하면 모든 채널이 막힘, 보내기 전에 `areNotificationsEnabled()` 확인, 설정이 기능을 막으면 바꾸도록 제안하고 설정 화면을 여는 동작 제공 | 공식 문서 |
+| Pleos 에뮬레이터 측정: [메시지 카드](pleos-emulator/README.md#메시지-카드로-안내-띄우기), [앱의 안내 카드](pleos-emulator/README.md#앱의-안내-카드), [소리와 음성](pleos-emulator/README.md#소리와-음성), [환경 값](pleos-emulator/README.md#환경-값), [주행 시간 카드](pleos-emulator/README.md#주행-시간-카드), [알림 권한 거부](pleos-emulator/README.md#알림-권한-거부) | 카드 표시, 수명, 길이 제한, 끄기, 소리 재생과 겹침, 환경 카드 세 경우, 2시간 주행의 휴식 카드, 알림 요청 창과 설정 화면 | v2.1.0 측정. 실차 아님 |
 | [Pleos TextToSpeech SDK](https://document.pleos.ai/en/docs/pleos-only/connect-sdk-pleos/TextToSpeech/intro), [권한](https://document.pleos.ai/en/docs/pleos-only/connect-sdk-pleos/TextToSpeech/declaring-permissions), [지원 언어](https://document.pleos.ai/en/docs/pleos-only/connect-sdk-pleos/TextToSpeech/set-locale) | 모드 3종과 등록 조건, `TTS_SERVICE` 권한, 한국어 지원 | 공식 문서 |
 | [Pleos 오디오 포커스 가이드](https://document.pleos.ai/en/docs/pleos-only/vehicle-app-developer-guide/audio-focus-development-guide/audio-focus-development) | 재생 전 포커스 요청, 공존 문맥의 `MAY_DUCK`, 문맥과 용도의 대응 | 공식 문서. 상호작용 표는 이미지라 글로 설명된 칸만 확인 |
 | [Pleos 음성 안내 앞 묵음 가이드](https://document.pleos.ai/en/docs/pleos-only/vehicle-app-developer-guide/voice-guidance-preroll-silence-guide) | 150~200ms 묵음을 오디오 데이터에 넣기 | 공식 문서 |
@@ -264,4 +295,5 @@ Pleos의 운전자 주의 분산 문서에서는 글자 수나 시간 수치를 
 - 실차의 내기 순환 값, 공조를 끈 상태에서의 값. 에뮬레이터는 콘솔에서 바꾼 값을 그대로 읽음([환경 데이터](environment.md#읽는-값))
 - 환경 카드를 본 뒤 공조 조작이 바뀌는지, 동승자의 답답함이 줄어드는지. 실제 CO₂와 탑승 인원은 앱이 모름
 - 주행 시간 카드: 실차에서 쉬는 시간이 속도로 잘 잡히는지, 시동을 껐다 켠 경우(기록이 끊김), 음성이 "2시간"을 어떻게 읽는지, 카드를 본 뒤 실제로 쉬는지
-- 알림을 허용하지 않은 경우의 대안. 지금은 `FAILED`로만 기록하며, 기획의 앱 안 배너와 알림 센터 대안은 App Market 답을 받은 뒤 정합니다.
+- 알림을 허용하지 않은 경우의 카드 대안. 시작 화면에서 알리고 다시 켤 수 있게 했지만, 꺼져 있는 동안 카드는 `FAILED`로만 기록합니다. 기획의 앱 안 배너와 알림 센터 대안은 App Market 답을 받은 뒤 정합니다.
+- 알림 꺼짐 안내를 본 운전자가 실제로 알림을 켜는지, 처음 뜬 요청 창을 답 없이 닫을 수 있는지
