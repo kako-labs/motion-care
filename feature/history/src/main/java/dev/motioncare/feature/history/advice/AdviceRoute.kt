@@ -40,8 +40,8 @@ internal fun AdviceRoute(driverId: PersonId?, trips: TripRepository, profiles: P
             BoxWithConstraints(Modifier.fillMaxWidth()) {
                 val wide = maxWidth >= 900.dp
                 if (wide) Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                    Evidence(state.advice, Modifier.weight(1.15f)); PassengerAndTips(state.passengers, state.advice.tips, Modifier.weight(.85f))
-                } else Column(verticalArrangement = Arrangement.spacedBy(18.dp)) { Evidence(state.advice); PassengerAndTips(state.passengers, state.advice.tips) }
+                    Evidence(state.advice, Modifier.weight(1.15f)); PassengerAndTips(state.passengers, state.passengerRatings, state.advice.tips, Modifier.weight(.85f))
+                } else Column(verticalArrangement = Arrangement.spacedBy(18.dp)) { Evidence(state.advice); PassengerAndTips(state.passengers, state.passengerRatings, state.advice.tips) }
             }
         }
     }
@@ -70,14 +70,20 @@ internal fun AdviceRoute(driverId: PersonId?, trips: TripRepository, profiles: P
     }
 }
 
-@Composable private fun PassengerAndTips(passengers: List<PersonProfile>, tips: List<String>, modifier: Modifier = Modifier) {
+@Composable private fun PassengerAndTips(passengers: List<PersonProfile>, ratingsByPerson: Map<PersonId, List<Int>>, tips: List<String>, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(18.dp)) {
         GlassPanel(Modifier.fillMaxWidth()) {
             Text("함께 타는 사람", fontSize = 21.sp, fontWeight = FontWeight.Bold)
             if (passengers.isEmpty()) Text("동승자 없음", color = MotionSubtle)
             passengers.forEach { person -> Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                PersonAvatar(person, Modifier.size(52.dp)); Spacer(Modifier.width(10.dp)); Column { Text(person.displayName, fontWeight = FontWeight.Bold)
-                    Text(person.motionTriggers.joinToString(" · ") { it.short() }.ifBlank { "설정된 불편 상황 없음" }, color = MotionSubtle, fontSize = 13.sp) }
+                val ratings = ratingsByPerson[person.id].orEmpty()
+                PersonAvatar(person, Modifier.size(64.dp)); Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(person.displayName, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    if (ratings.size >= 2) Text("편안함 ★${ratings.first()} → ★${ratings.last()}", color = MotionCyan, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    else Text(person.motionTriggers.joinToString(" · ") { it.short() }.ifBlank { "평가 기록 없음" }, color = MotionSubtle, fontSize = 15.sp)
+                }
+                if (ratings.size >= 2) TrendBars(ratings.map { it.toDouble() }, Modifier.width(180.dp).height(64.dp))
             } }
         }
         GlassPanel(Modifier.fillMaxWidth()) {

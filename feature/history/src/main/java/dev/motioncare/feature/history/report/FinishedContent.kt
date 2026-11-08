@@ -21,8 +21,6 @@ import dev.motioncare.data.trip.TripRepository
 import dev.motioncare.feature.history.TripExperienceViewModel
 import dev.motioncare.feature.history.insights.*
 import dev.motioncare.feature.history.ui.*
-import java.text.DateFormat
-import java.util.Date
 
 /** Home card the app shows right after a trip; the full summary lives on the detail screen. */
 @Composable
@@ -55,7 +53,7 @@ fun FinishedRoute(
     val advice = adviceFor(state.participants?.driverId, state.recentDriverTrips)
     MotionCareBackground {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(22.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            ScreenTitle("운행을 마쳤어요", insight?.let { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(it.trip.startedAtEpochMs)) })
+            ScreenTitle("운행을 마쳤어요", insight?.let { tripTime(it.trip.startedAtEpochMs) })
             if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             if (insight != null) {

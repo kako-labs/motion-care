@@ -40,7 +40,7 @@ fun NavGraphBuilder.historyGraph(
             onRecords = { navigation.navigate(HistoryRoutes.RECORDS) })
     }
     composable(HistoryRoutes.RECORDS) {
-        HistoryListRoute(trips, onBack = { navigation.popBackStack() }, onSelect = { navigation.navigate(HistoryRoutes.trip(it)) })
+        HistoryListRoute(trips, onBack = { navigation.popBackStack() }, onSelect = { navigation.navigate(HistoryRoutes.trip(it)) }, profiles = profiles)
     }
     composable("profile/{$PERSON_ID}") { entry ->
         val id = PersonId(requireNotNull(entry.arguments?.getString(PERSON_ID)))

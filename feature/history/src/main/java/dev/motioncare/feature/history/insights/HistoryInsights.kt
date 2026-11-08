@@ -100,6 +100,15 @@ fun actionFor(pattern: DrivingPattern?): String = when (pattern) {
     null -> "출발과 감속을 여유 있게 해보세요."
 }
 
+/** One glyph per pattern so tiles read at a glance. */
+fun patternIcon(pattern: DrivingPattern): String = when (pattern) {
+    DrivingPattern.RAPID_START -> "⇡"
+    DrivingPattern.HARD_STOP -> "⇣"
+    DrivingPattern.REPEATED_SPEED_CHANGE -> "∿"
+    DrivingPattern.FAST_TURN -> "↻"
+    DrivingPattern.REPEATED_SWAY -> "⇄"
+}
+
 fun patternLabel(pattern: DrivingPattern): String = when (pattern) {
     DrivingPattern.HARD_STOP -> "정차 직전 속도 변화"
     DrivingPattern.RAPID_START -> "출발 직후 속도 증가"

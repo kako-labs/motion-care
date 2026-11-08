@@ -18,6 +18,8 @@ data class DepartureUiState(
     val seating: SeatingPlan = SeatingPlan(),
     val advice: AdviceInsight = adviceFor(null, emptyList()),
     val guidanceEnabled: Boolean = true,
+    /** The most recent finished trip in this car, whoever drove. */
+    val lastTrip: TripInsight? = null,
 )
 
 class DepartureViewModel(
@@ -34,7 +36,8 @@ class DepartureViewModel(
                 val insights = loadInsights(trips, profiles)
                 val seating = profiles.seating.value
                 mutable.value = DepartureUiState(false, null, profiles.people.value, seating,
-                    adviceFor(seating.driverId, insights), enabled)
+                    adviceFor(seating.driverId, insights), enabled,
+                    insights.filter { it.trip.status == TripStatus.COMPLETED }.maxByOrNull { it.trip.startedAtEpochMs })
             }
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { mutable.update { it.copy(loading = false, error = "정보를 불러오지 못했습니다.") } }
@@ -46,7 +49,12 @@ class DepartureViewModel(
         }
     }
     fun clear(seat: SeatPosition) = launchAction { profiles.clearSeat(seat) }
-    fun addPerson(name: String, kind: PersonKind) = launchAction { profiles.addPerson(name, kind) }
+    /** Adds a person and, when the drawer was opened from a seat, seats them there right away. */
+    fun addPerson(name: String, kind: PersonKind, seat: SeatPosition? = null) = launchAction {
+        val person = profiles.addPerson(name, kind)
+        if (seat != null) (profiles.placePerson(person.id, seat) as? SeatingResult.Rejected)
+            ?.let { rejected -> mutable.update { it.copy(error = rejected.reason) } }
+    }
     fun toggleGuidance() = profiles.setDepartureGuidanceEnabled(!mutable.value.guidanceEnabled)
     private fun launchAction(action: suspend () -> Unit) = viewModelScope.launch {
         try { mutable.update { it.copy(error = null) }; action() }
@@ -97,6 +105,8 @@ data class AdviceUiState(
     val error: String? = null,
     val advice: AdviceInsight = adviceFor(null, emptyList()),
     val passengers: List<PersonProfile> = emptyList(),
+    /** Each passenger's comfort ratings on this driver's recent trips, oldest first. */
+    val passengerRatings: Map<PersonId, List<Int>> = emptyMap(),
 )
 class AdviceViewModel(
     private val driverId: PersonId?,
@@ -113,8 +123,16 @@ class AdviceViewModel(
             changes(trips, profiles).collectLatest {
                 val all = loadInsights(trips, profiles)
                 val passengerIds = profiles.seating.value.passengerIds
+                val driven = all.filter { it.participants?.driverId == driverId && driverId != null }
+                    .sortedBy { it.trip.startedAtEpochMs }.map { it.trip.id }
+                val ratings = passengerIds.associateWith { passenger ->
+                    driven.mapNotNull { trip ->
+                        profiles.feedback.value.firstOrNull { it.tripId == trip && it.targetPersonId == passenger }
+                            ?.let { (it.answer as? FeedbackAnswer.Rating)?.value }
+                    }.takeLast(5)
+                }
                 mutable.value = AdviceUiState(false, null, adviceFor(driverId, all),
-                    profiles.people.value.filter { it.id in passengerIds })
+                    profiles.people.value.filter { it.id in passengerIds }, ratings)
             }
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { mutable.update { it.copy(loading = false, error = "조언 근거를 불러오지 못했습니다.") } }

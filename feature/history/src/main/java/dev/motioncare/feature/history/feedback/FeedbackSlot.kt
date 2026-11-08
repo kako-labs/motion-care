@@ -1,6 +1,8 @@
 package dev.motioncare.feature.history.feedback
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -19,8 +21,6 @@ import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.trip.TripRepository
 import dev.motioncare.feature.history.TripExperienceViewModel
 import dev.motioncare.feature.history.ui.*
-import java.text.DateFormat
-import java.util.Date
 
 private data class RatingDraft(
     val rating: Int = 0,
@@ -50,11 +50,13 @@ internal fun FeedbackRoute(
             drafts[saved.targetPersonId] = RatingDraft(answer.value, saved.reasons, saved.respondent, true)
         }
     }
-    val current = target?.let { drafts[it] } ?: RatingDraft()
+    // A child rarely answers on the head unit; the guardian does unless the record says otherwise.
+    val targetKind = passengers.firstOrNull { it.id == target }?.kind
+    val current = target?.let { drafts[it] } ?: RatingDraft(respondent = if (targetKind == PersonKind.CHILD) FeedbackRespondent.GUARDIAN else FeedbackRespondent.SELF)
     MotionCareBackground {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(22.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             val trip = state.insight?.trip
-            val subtitle = trip?.let { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(it.startedAtEpochMs)) + " · ${state.insight?.durationMs?.div(60_000)}분 · ${"%.1f".format((state.insight?.distanceMeters ?: 0.0) / 1000)}km" }
+            val subtitle = trip?.let { tripTime(it.startedAtEpochMs) + " · ${state.insight?.durationMs?.div(60_000)}분 · ${"%.1f".format((state.insight?.distanceMeters ?: 0.0) / 1000)}km" }
             ScreenTitle("이동 평가", subtitle, onBack = onDone)
             if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -64,33 +66,56 @@ internal fun FeedbackRoute(
             } else {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     passengers.forEach { person ->
-                        FilterChip(target == person.id, { target = person.id }, {
-                            Row(verticalAlignment = Alignment.CenterVertically) { PersonAvatar(person, Modifier.size(42.dp)); Spacer(Modifier.width(8.dp)); Text(person.displayName + if (drafts[person.id]?.handled == true) "  ✓" else "") }
-                        }, Modifier.heightIn(min = 64.dp))
+                        val chosen = target == person.id
+                        Surface(onClick = { target = person.id }, shape = RoundedCornerShape(22.dp),
+                            color = if (chosen) MotionBlue.copy(.35f) else MotionPanel, border = BorderStroke(if (chosen) 3.dp else 1.dp, if (chosen) MotionCyan else MotionLine)) {
+                            Row(Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                PersonAvatar(person, Modifier.size(64.dp))
+                                Text(person.displayName, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                                if (drafts[person.id]?.handled == true) Text("✓", fontSize = 24.sp, color = MotionCyan)
+                            }
+                        }
                     }
                 }
                 val person = passengers.firstOrNull { it.id == target }
                 if (person != null) GlassPanel(Modifier.fillMaxWidth()) {
                     Text("${person.displayName}님의 이동", color = MotionSubtle, fontWeight = FontWeight.Bold)
                     Text("오늘 이동은 편안했나요?", fontSize = 34.sp, fontWeight = FontWeight.ExtraBold)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                        (1..5).forEach { score -> TextButton(onClick = { drafts[person.id] = current.copy(rating = score, handled = false) }, modifier = Modifier.sizeIn(minWidth = 72.dp, minHeight = 76.dp)) {
-                            Text(if (current.rating >= score) "★" else "☆", fontSize = 46.sp, color = if (current.rating >= score) MotionCyan else MotionMuted)
-                        } }
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("많이 불편", color = MotionSubtle); Text("아주 편안", color = MotionSubtle) }
-                    Text(ratingLabel(current.rating), Modifier.fillMaxWidth(), fontSize = 21.sp, fontWeight = FontWeight.Bold, color = MotionCyan)
-                    Text("불편했던 점  ·  선택", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FeedbackReason.entries.forEach { reason ->
-                            FilterChip(reason in current.reasons, { drafts[person.id] = current.copy(reasons = toggleReason(current.reasons, reason), handled = false) }, { Text(reason.label()) }, Modifier.heightIn(min = 56.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
+                        (1..5).forEach { score ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Surface(onClick = { drafts[person.id] = current.copy(rating = score, handled = false) }, shape = RoundedCornerShape(24.dp),
+                                    color = if (current.rating >= score) MotionCyan.copy(.16f) else androidx.compose.ui.graphics.Color.Transparent,
+                                    modifier = Modifier.size(width = 120.dp, height = 112.dp)) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(if (current.rating >= score) "★" else "☆", fontSize = 76.sp, lineHeight = 80.sp,
+                                            color = if (current.rating >= score) MotionCyan else MotionMuted)
+                                    }
+                                }
+                                Text(when (score) { 1 -> "많이 불편"; 5 -> "아주 편안"; else -> " " }, color = MotionSubtle, fontSize = 17.sp)
+                            }
                         }
                     }
-                    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                        FeedbackRespondent.entries.forEachIndexed { index, respondent -> SegmentedButton(current.respondent == respondent,
-                            { drafts[person.id] = current.copy(respondent = respondent, handled = false) }, SegmentedButtonDefaults.itemShape(index, FeedbackRespondent.entries.size)) {
-                            Text(if (respondent == FeedbackRespondent.SELF) "직접" else "보호자")
-                        } }
+                    Text(ratingLabel(current.rating), Modifier.fillMaxWidth(), fontSize = 26.sp, fontWeight = FontWeight.Bold, color = MotionCyan,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    Text("불편했던 점  ·  선택", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        FeedbackReason.entries.forEach { reason ->
+                            ChoiceTile(reason.icon(), reason.label(), reason in current.reasons, Modifier.weight(1f)) {
+                                drafts[person.id] = current.copy(reasons = toggleReason(current.reasons, reason), handled = false)
+                            }
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        FeedbackRespondent.entries.forEach { respondent ->
+                            ChoiceTile("", if (respondent == FeedbackRespondent.SELF) "${person.displayName} 직접" else "보호자가 대신",
+                                current.respondent == respondent, Modifier.weight(1f), compact = true, face = {
+                                    if (respondent == FeedbackRespondent.SELF) PersonAvatar(person, Modifier.size(48.dp))
+                                    else KindFace(PersonKind.ADULT, Modifier.size(48.dp))
+                                }) {
+                                drafts[person.id] = current.copy(respondent = respondent, handled = false)
+                            }
+                        }
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         SecondaryAction("건너뛰기", { drafts[person.id] = current.copy(handled = true); moveNext(passengerIds, person.id, drafts, { target = it }, onDone) }, Modifier.weight(1f))
@@ -116,4 +141,22 @@ private fun toggleReason(current: Set<FeedbackReason>, reason: FeedbackReason): 
     else -> (current - FeedbackReason.UNKNOWN) + reason
 }
 private fun ratingLabel(value: Int) = when (value) { 1 -> "많이 불편했어요"; 2 -> "불편했어요"; 3 -> "보통이었어요"; 4 -> "편안했어요"; 5 -> "아주 편안했어요"; else -> " " }
+@Composable private fun ChoiceTile(icon: String, label: String, selected: Boolean, modifier: Modifier, compact: Boolean = false,
+    face: (@Composable () -> Unit)? = null, onClick: () -> Unit) {
+    Surface(onClick = onClick, shape = RoundedCornerShape(20.dp), color = if (selected) MotionCyan.copy(.18f) else MotionPanel,
+        border = BorderStroke(if (selected) 3.dp else 1.dp, if (selected) MotionCyan else MotionLine), modifier = modifier.height(if (compact) 72.dp else 104.dp)) {
+        if (compact) Row(horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
+            face?.invoke()
+            Text(label, fontSize = 21.sp, fontWeight = FontWeight.Bold, color = if (selected) MotionText else MotionSubtle)
+        } else Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)) {
+            Text(icon, fontSize = 42.sp, lineHeight = 44.sp, fontWeight = FontWeight.Bold, color = if (selected) MotionCyan else MotionMuted)
+            Text(label, fontSize = 19.sp, fontWeight = FontWeight.Bold, color = if (selected) MotionText else MotionSubtle)
+        }
+    }
+}
+
+private fun FeedbackReason.icon() = when (this) {
+    FeedbackReason.START_STOP -> "⇥"; FeedbackReason.REPEATED_SPEED_CHANGE -> "∿"; FeedbackReason.CURVE -> "↪"
+    FeedbackReason.CABIN_ENVIRONMENT -> "◌"; FeedbackReason.UNKNOWN -> "?"
+}
 private fun FeedbackReason.label() = when (this) { FeedbackReason.START_STOP -> "출발·정차"; FeedbackReason.REPEATED_SPEED_CHANGE -> "반복 가감속"; FeedbackReason.CURVE -> "커브"; FeedbackReason.CABIN_ENVIRONMENT -> "차 안 환경"; FeedbackReason.UNKNOWN -> "잘 모르겠어요" }

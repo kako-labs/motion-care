@@ -1,6 +1,7 @@
 package dev.motioncare.feature.history.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -8,15 +9,28 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.motioncare.core.model.PersonKind
 import dev.motioncare.core.model.PersonProfile
+import dev.motioncare.feature.history.R
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.max
+
+/** Trip times read the same on every screen, whatever the device locale: "11월 5일 (목) 오후 2:48". */
+fun tripTime(epochMs: Long): String = SimpleDateFormat("M월 d일 (E) a h:mm", Locale.KOREAN).format(Date(epochMs))
+fun tripDate(epochMs: Long): String = SimpleDateFormat("M월 d일 (E)", Locale.KOREAN).format(Date(epochMs))
 
 val MotionBackground = Color(0xFF050F20)
 val MotionPanel = Color(0xCC102844)
@@ -32,28 +46,38 @@ private val motionColors = darkColorScheme(
     primary = MotionCyan, onPrimary = Color(0xFF03111F), secondary = MotionBlue,
     background = MotionBackground, onBackground = MotionText, surface = MotionPanel,
     onSurface = MotionText, outline = MotionLine, error = Color(0xFFFFA8A8),
+    secondaryContainer = Color(0xFF1B426A), onSecondaryContainer = MotionText,
+    surfaceVariant = Color(0xFF16365A), onSurfaceVariant = MotionSubtle,
+    surfaceContainerHigh = Color(0xFF0E2A48), outlineVariant = MotionLine,
 )
 
+/** The host app keeps a light theme, so every history surface brings its own dark scheme and text color. */
 @Composable fun MotionCareTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = motionColors, content = content)
+    MaterialTheme(colorScheme = motionColors) {
+        CompositionLocalProvider(LocalContentColor provides MotionText, content = content)
+    }
 }
 
 @Composable fun MotionCareBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
-    Box(modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF061325), Color(0xFF0C2F55), Color(0xFF050F20)))), content = content)
+    MotionCareTheme {
+        Box(modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF061325), Color(0xFF0C2F55), Color(0xFF050F20)))), content = content)
+    }
 }
 
 @Composable fun GlassPanel(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Column(modifier.background(Brush.linearGradient(listOf(MotionPanelLight, MotionPanel)), RoundedCornerShape(22.dp))
-        .border(1.dp, MotionLine, RoundedCornerShape(22.dp)).padding(22.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp), content = content)
+    MotionCareTheme {
+        Column(modifier.background(Brush.linearGradient(listOf(MotionPanelLight, MotionPanel)), RoundedCornerShape(22.dp))
+            .border(1.dp, MotionLine, RoundedCornerShape(22.dp)).padding(22.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp), content = content)
+    }
 }
 
-@Composable fun ScreenTitle(title: String, subtitle: String? = null, onBack: (() -> Unit)? = null, action: (@Composable () -> Unit)? = null) {
+@Composable fun ScreenTitle(title: String, subtitle: String? = null, onBack: (() -> Unit)? = null,
+    leading: (@Composable () -> Unit)? = null, action: (@Composable () -> Unit)? = null) {
     Row(Modifier.fillMaxWidth().heightIn(min = 72.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (onBack != null) FilledTonalButton(onClick = onBack, modifier = Modifier.size(64.dp), contentPadding = PaddingValues(0.dp)) {
-            Text("‹", fontSize = 40.sp, lineHeight = 40.sp)
-        }
+        if (onBack != null) RoundIconButton("‹", onBack)
+        leading?.invoke()
         Column(Modifier.weight(1f)) {
             Text(title, fontSize = 34.sp, lineHeight = 40.sp, fontWeight = FontWeight.ExtraBold)
             subtitle?.let { Text(it, color = MotionSubtle, fontSize = 17.sp) }
@@ -62,18 +86,38 @@ private val motionColors = darkColorScheme(
     }
 }
 
-@Composable fun PersonAvatar(person: PersonProfile, modifier: Modifier = Modifier) {
-    val colors = if (person.displayName.hashCode() % 2 == 0) listOf(Color(0xFF52C8E8), Color(0xFF1761A8))
-    else listOf(Color(0xFF73A6E8), Color(0xFF304D9A))
-    Box(modifier.background(Brush.radialGradient(colors), CircleShape).border(2.dp, MotionCyan.copy(.75f), CircleShape),
-        contentAlignment = Alignment.Center) {
-        Text(person.displayName.take(1), fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+@Composable fun RoundIconButton(symbol: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(onClick = onClick, shape = CircleShape, color = MotionPanelLight, border = androidx.compose.foundation.BorderStroke(1.dp, MotionLine),
+        modifier = modifier.size(64.dp)) {
+        Box(contentAlignment = Alignment.Center) { Text(symbol, fontSize = 34.sp, lineHeight = 34.sp, color = MotionText) }
     }
+}
+
+private val adultFaces = listOf(R.drawable.mc_avatar_adult, R.drawable.mc_avatar_woman)
+private val childFaces = listOf(R.drawable.mc_avatar_child, R.drawable.mc_avatar_boy)
+
+/** Same face for the same person every time; children always get a child face. */
+fun avatarFor(person: PersonProfile): Int {
+    val faces = if (person.kind == PersonKind.CHILD) childFaces else adultFaces
+    return faces[Math.floorMod(person.id.hashCode(), faces.size)]
+}
+
+@Composable fun KindFace(kind: PersonKind, modifier: Modifier = Modifier) {
+    FaceImage(if (kind == PersonKind.CHILD) childFaces.first() else adultFaces.first(), modifier)
+}
+
+@Composable fun PersonAvatar(person: PersonProfile, modifier: Modifier = Modifier) {
+    FaceImage(avatarFor(person), modifier, person.displayName)
+}
+
+@Composable private fun FaceImage(face: Int, modifier: Modifier, description: String? = null) {
+    Image(painterResource(face), description, modifier.clip(CircleShape).border(2.dp, MotionCyan.copy(.75f), CircleShape),
+        contentScale = ContentScale.Crop)
 }
 
 @Composable fun PrimaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     Button(onClick = onClick, enabled = enabled, modifier = modifier.heightIn(min = 64.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = MotionBlue), shape = RoundedCornerShape(18.dp)) {
+        colors = ButtonDefaults.buttonColors(containerColor = MotionBlue, contentColor = Color.White), shape = RoundedCornerShape(18.dp)) {
         Text(text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
     }
 }
@@ -96,7 +140,7 @@ private val motionColors = darkColorScheme(
             val left = gap + index * (width + gap)
             drawRoundRect(if (highlightLast && index >= safe.size - 3) MotionCyan else MotionMuted.copy(.65f),
                 topLeft = Offset(left, size.height - height), size = androidx.compose.ui.geometry.Size(width, height),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(width / 3, width / 3))
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(minOf(14.dp.toPx(), width / 4), minOf(14.dp.toPx(), width / 4)))
         }
         drawLine(MotionLine, Offset(0f, size.height - 1f), Offset(size.width, size.height - 1f), 2f)
     }

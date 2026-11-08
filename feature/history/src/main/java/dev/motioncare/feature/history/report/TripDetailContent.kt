@@ -1,5 +1,11 @@
 package dev.motioncare.feature.history.report
 
+import dev.motioncare.feature.history.insights.adviceFor
+import dev.motioncare.feature.history.insights.patternIcon
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -14,8 +20,6 @@ import dev.motioncare.core.model.*
 import dev.motioncare.feature.history.TripExperienceUiState
 import dev.motioncare.feature.history.insights.patternLabel
 import dev.motioncare.feature.history.ui.*
-import java.text.DateFormat
-import java.util.Date
 
 internal fun observationSummary(observations: List<Observation>): String {
     if (observations.isEmpty()) return "관찰된 패턴 없음"
@@ -84,7 +88,7 @@ internal fun TripDetailContent(
 @Composable private fun DetailBody(state: TripExperienceUiState, onFeedback: () -> Unit) {
     val insight = requireNotNull(state.insight)
     val trip = insight.trip
-    val date = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(trip.startedAtEpochMs))
+    val date = tripTime(trip.startedAtEpochMs)
     GlassPanel(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -102,16 +106,20 @@ internal fun TripDetailContent(
     }
 
     GlassPanel(Modifier.fillMaxWidth()) {
-        Text("관찰된 운전 패턴", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Text("속도 변화로 계산한 근사치이며 탑승자의 실제 멀미 여부를 뜻하지 않아요.", color = MotionSubtle)
-        DrivingPattern.entries.forEach { pattern ->
-            val recentAverage = state.recentDriverTrips
-                .filter { it.trip.id != trip.id }
-                .take(3)
-                .mapNotNull { it.rate(pattern) }
-                .takeIf { it.isNotEmpty() }
-                ?.average()
-            PatternRow(patternLabel(pattern), insight.count(pattern), insight.rate(pattern), recentAverage)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("관찰된 운전 패턴", Modifier.weight(1f), fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text("속도 변화로 본 근사치 · 멀미 여부 아님", color = MotionMuted, fontSize = 16.sp)
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            DrivingPattern.entries.forEach { pattern ->
+                val recentAverage = state.recentDriverTrips
+                    .filter { it.trip.id != trip.id }
+                    .take(3)
+                    .mapNotNull { it.rate(pattern) }
+                    .takeIf { it.isNotEmpty() }
+                    ?.average()
+                PatternTile(pattern, insight.count(pattern), insight.rate(pattern), recentAverage, Modifier.weight(1f))
+            }
         }
     }
 
@@ -125,23 +133,44 @@ internal fun TripDetailContent(
         }
     }
 
-    GlassPanel(Modifier.fillMaxWidth()) {
-        Text("데이터 기준", fontSize = 21.sp, fontWeight = FontWeight.Bold)
-        Text("거리와 패턴 빈도는 저장된 차량 속도 샘플 중 유효한 구간으로 계산했어요. 5초보다 긴 데이터 공백은 거리 계산에서 제외하고, 1분 미만 기록에는 10분당 빈도를 표시하지 않아요.", color = MotionSubtle)
+    // Same calculation as the departure screen, so the report and the next start never disagree.
+    val next = adviceFor(state.participants?.driverId, state.recentDriverTrips)
+    if (next.pattern != null) GlassPanel(Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+            Text(patternIcon(next.pattern), fontSize = 44.sp, color = MotionCyan)
+            Column(Modifier.weight(1f)) {
+                Text("다음 출발", color = MotionSubtle, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                Text(next.headline, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.ExtraBold)
+            }
+            next.recentAverage?.let {
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("%.1f회".format(it), fontSize = 30.sp, color = MotionCyan, fontWeight = FontWeight.ExtraBold)
+                    Text("최근 10분당", fontSize = 15.sp, color = MotionMuted)
+                }
+            }
+        }
     }
+
+    Text("ⓘ  유효한 속도 구간만 계산 · 5초 넘는 공백은 거리에서 제외 · 1분 미만 기록은 10분당 빈도 없음",
+        color = MotionMuted, fontSize = 15.sp)
 }
 
-@Composable private fun PatternRow(label: String, count: Int, rate: Double?, recentAverage: Double?) {
-    Row(Modifier.fillMaxWidth().heightIn(min = 70.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, Modifier.weight(1f), fontWeight = FontWeight.Bold)
-        Column(horizontalAlignment = Alignment.End) {
-            Text("${count}회", fontSize = 22.sp, color = MotionCyan, fontWeight = FontWeight.ExtraBold)
-            Text(rate?.let { "%.1f회/10분".format(it) } ?: "빈도 계산 대기", color = MotionSubtle)
-        }
-        Spacer(Modifier.width(28.dp))
-        Text(recentAverage?.let { "최근 평균 %.1f".format(it) } ?: "비교 기록 없음", color = MotionSubtle)
+@Composable private fun PatternTile(pattern: DrivingPattern, count: Int, rate: Double?, recentAverage: Double?, modifier: Modifier) {
+    val seen = count > 0
+    Column(modifier.heightIn(min = 196.dp)
+        .background(if (seen) MotionBlue.copy(.28f) else MotionPanel, RoundedCornerShape(20.dp))
+        .border(if (seen) 2.dp else 1.dp, if (seen) MotionCyan else MotionLine, RoundedCornerShape(20.dp)).padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(patternIcon(pattern), fontSize = 34.sp, color = if (seen) MotionCyan else MotionMuted)
+        Text("$count", fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.ExtraBold, color = if (seen) MotionText else MotionMuted)
+        Text(patternLabel(pattern), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MotionSubtle, textAlign = TextAlign.Center)
+        val trend = if (rate != null && recentAverage != null) when {
+            rate < recentAverage -> "↓ 평소보다 적음"
+            rate > recentAverage -> "↑ 평소보다 많음"
+            else -> "＝ 평소와 같음"
+        } else rate?.let { "%.1f / 10분".format(it) }
+        trend?.let { Text(it, fontSize = 15.sp, color = if (it.startsWith("↓")) MotionCyan else MotionMuted) }
     }
-    HorizontalDivider(color = MotionLine)
 }
 
 @Composable private fun ParticipantsPanel(state: TripExperienceUiState, modifier: Modifier = Modifier) {
@@ -170,8 +199,19 @@ internal fun TripDetailContent(
             passengerIds.isEmpty() -> Text("이 운행에는 등록된 동승자가 없어요.", color = MotionSubtle)
             ratings.isEmpty() -> Text("${passengerIds.size}명의 평가가 아직 없어요.", color = MotionSubtle)
             else -> {
-                Text("평균 ${"%.1f".format(ratings.average())} / 5", fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, color = MotionCyan)
-                Text("${ratings.size} / ${passengerIds.size}명 응답", color = MotionSubtle)
+                val people = state.people.associateBy { it.id }
+                val byPerson = state.feedback.associate { it.targetPersonId to (it.answer as? FeedbackAnswer.Rating)?.value }
+                passengerIds.forEach { id ->
+                    val person = people[id] ?: return@forEach
+                    val score = byPerson[id]
+                    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        PersonAvatar(person, Modifier.size(44.dp))
+                        Text(person.displayName, Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                        Text(score?.let { "★".repeat(it) + "☆".repeat(5 - it) } ?: "— 응답 없음", fontSize = if (score != null) 30.sp else 18.sp,
+                            color = if (score != null) MotionCyan else MotionMuted, letterSpacing = 2.sp)
+                    }
+                }
             }
         }
         SecondaryAction(if (ratings.isEmpty()) "평가 남기기" else "평가 수정", onFeedback, Modifier.fillMaxWidth())
