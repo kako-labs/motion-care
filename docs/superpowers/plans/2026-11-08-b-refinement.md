@@ -20,7 +20,7 @@
 - [x] HTML: add a focused refinement stylesheet after existing styles in index/review; remove excess decorative labels through targeted markup/JS only as needed. Preserve data and navigation. Inspect home/records/profile/advice/feedback/environment/routes at representative widths.
 - [x] Android: refine MotionCareComponents.kt, BHistoryPanels.kt, departure seat overlay and owned screen headings/forms. Preserve the vehicle asset hash. Keep touch targets accessible while reducing visible ornament.
 - [x] Verify: standard verify, UI/storage tests and screenshots; inspect normal app boundary and provide unapplied app-theme review patch. Capture before/after and limits.
-- [ ] Review/save: one fresh final branch reviewer, resolve findings, commit/push approved feature branch and update PR/Notion/handoff. Confirm remote CI status and main unchanged.
+- [x] Review/save: one fresh final branch reviewer, resolve findings, commit/push approved feature branch and update PR/Notion/handoff. Confirm remote CI status and main unchanged.
 
 ## Ledger
 
@@ -30,3 +30,4 @@
 
 - Final review: no Critical/Important issues; refreshed captures/ledgers. 6/6 isolated UI/storage tests pass at both1024 and1682; normal DB unchanged.
 - Ruling: keep review-only B test overlays out of app sources after local tests; only explicitly requested ScaffoldFlowTest fix is committed in app.
+- Saved UI revision: 63bba24, pushed to the approved branch and PR #19; Notion refinement section persisted after reload. At this documentation save, latest UI CI was running; recovery revision 1a20003 had passed both jobs. Final live result: PR #19 Checks. No main merge or push.

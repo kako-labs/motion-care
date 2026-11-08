@@ -30,6 +30,8 @@
 
 근거: [검증 JSON](refinement/verification.json), [1024 검사](refinement/ui-1024x768.json), [1682 검사](refinement/ui-1682x1210.json).
 
+UI 소스는 `63bba24`로 저장·푸시했다. [팀 Notion 인계](https://app.notion.com/p/412ae4c07fd68016ab62df5763ee0487)에 정교화·CI 복구·실제 적용 범위와 남은 통합을 추가하고, 페이지 재열기 후 저장을 확인했다. 이 문서 후속 커밋은 인계 문서와 미적용 패치의 문맥 정리만 포함한다.
+
 ## 실제 Android 화면
 
 | 화면 | 1024×768 | 1682×1210 |
