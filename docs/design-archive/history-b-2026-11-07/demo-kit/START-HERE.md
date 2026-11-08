@@ -4,6 +4,7 @@
 
 ## 바로 확인
 
+- [다른 세션에서 이어갈 때: 작업 위치·범위·실행 순서](NEXT-SESSION-HANDOFF.md)
 - [사용자가 확인한 화면과 기본 시나리오 기준](APPROVED-BASELINE-2026-11-08.md)
 - [B 화면과 환경·경로 시연 열기](../ui-review/selected-b/review.html)
 - [90초 촬영 순서](SHOT-LIST.md)
