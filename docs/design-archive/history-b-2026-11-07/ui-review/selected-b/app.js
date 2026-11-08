@@ -34,6 +34,21 @@ try {
   else {localStorage.setItem('motion-care-demo-seats',JSON.stringify(defaultSeats));localStorage.setItem('motion-care-demo-scenario','populated-v2');}
 } catch (_) {}
 
+// Apply the requested demo driver before any screen renders, including restored seats.
+const requestedDriver=typeof location!=='undefined'?new URLSearchParams(location.search).get('driver'):null;
+if(demo.people[requestedDriver]?.kind==='성인')assignPerson(requestedDriver,'driver');
+
+function driverTrips(){
+  const driverName=demo.people[seatAssignments.driver]?.name;
+  return demo.trips.filter(t=>t.driver===driverName);
+}
+
+function syncSelectedTrip(){
+  const trips=driverTrips();
+  if(!trips.some(t=>t.id===selectedTrip))selectedTrip=trips[0]?.id??null;
+  return trips;
+}
+
 function tripButton(t) {
   return `<button class="trip" data-trip="${t.id}"><div class="trip-top"><b>${t.date}</b><span class="rating">${t.feedback === null ? '미응답' : '평가 '+t.feedback+'/5'}</span></div><p>${t.duration}분 · ${t.distance.toFixed(1)}km<br>${t.driver} 운전 · ${t.passenger} 동승</p></button>`;
 }
@@ -42,10 +57,10 @@ const seatLabels = { 'rear-left': '뒤 왼쪽', 'rear-center': '뒤 가운데', 
 let openSeat = null;
 
 function renderSeats() {
+  const trips=syncSelectedTrip();
   document.querySelector('#passengerCount').textContent = Object.values(seatAssignments).filter(Boolean).length + '명';
   if(typeof syncHomeAdvice === 'function')syncHomeAdvice();
-  const driverName=demo.people[seatAssignments.driver]?.name;
-  document.querySelector('#homeTrips').innerHTML=demo.trips.filter(t=>t.driver===driverName).slice(0,3).map(tripButton).join('');
+  document.querySelector('#homeTrips').innerHTML=trips.slice(0,3).map(tripButton).join('');
   document.querySelectorAll('[data-seat]').forEach(seat => {
     const seatId = seat.dataset.seat;
     const person = seatAssignments[seatId] ? demo.people[seatAssignments[seatId]] : null;
@@ -103,7 +118,6 @@ function assignPerson(personId, seatId) {
 }
 
 function renderHome() {
-  document.querySelector('#homeTrips').innerHTML = demo.trips.map(tripButton).join('');
   renderSeats();
 }
 
@@ -128,8 +142,14 @@ function renderProfile() {
 }
 
 function renderRecords() {
-  document.querySelector('#recordList').innerHTML = demo.trips.map((t,i)=>`<button class="trip ${t.id===selectedTrip?'selected':''}" data-trip="${t.id}"><span class="journal-index">0${i+1}</span><div><b>${t.date}</b><p>${t.duration}분 · ${t.distance}km</p></div><span class="journal-arrow">↗</span></button>`).join('');
-  const t=demo.trips.find(x=>x.id===selectedTrip),variant=demo.trips.indexOf(t);
+  const trips=syncSelectedTrip();
+  if(!trips.length){
+    document.querySelector('#recordList').innerHTML='';
+    document.querySelector('#tripDetail').innerHTML='<p class="desc">운전자를 선택하면 해당 운전자의 운행 기록을 볼 수 있어요.</p>';
+    return;
+  }
+  document.querySelector('#recordList').innerHTML = trips.map((t,i)=>`<button class="trip ${t.id===selectedTrip?'selected':''}" data-trip="${t.id}"><span class="journal-index">0${i+1}</span><div><b>${t.date}</b><p>${t.duration}분 · ${t.distance}km</p></div><span class="journal-arrow">↗</span></button>`).join('');
+  const t=demo.trips.find(x=>x.id===selectedTrip),variant=trips.indexOf(t);
   document.querySelector('#tripDetail').innerHTML=`<div class="report-heading"><div><div class="kicker">TRIP JOURNAL · 0${variant+1}</div><h2>${t.date}</h2><p class="desc">${t.driver} 운전 <span>·</span> ${t.passenger} 동승</p></div></div><div class="report-metrics"><div><small>함께한 시간</small><strong>${t.duration}<em>분</em></strong></div><div><small>이동 거리 근사</small><strong>${t.distance}<em>km</em></strong></div><div><small>유효 분석 구간</small><strong>${t.analyzed}<em>분</em></strong></div></div><div class="report-body"><div class="report-primary">${journeyChart(t)}</div><aside class="report-side"><div class="rating-orbit"><span>동승자의 응답</span><strong>${t.feedback===null?'—':t.feedback}<small>/ 5</small></strong><p>${t.feedback===null?'아직 남긴 응답이 없어요.':t.feedbackReasons?.length?'불편했던 순간 · '+t.feedbackReasons.join(' · '):t.feedbackReasons?'추가로 남긴 불편 상황 없음':'불편했던 순간 · 출발·정차'}</p><button class="text-action" data-feedback>${t.feedback===null?'평가 남기기':'평가 수정'} ↗</button></div><div class="report-patterns"><div class="pattern-heading"><h3>관찰된 움직임</h3></div><div class="movement-grid">${Object.keys(labels).map(k=>`<div class="movement"><span>${labels[k]}</span><strong>${t.patterns[k]}<small>회</small></strong><i style="--extent:${Math.max(3,t.patterns[k]*9)}%"></i></div>`).join('')}</div></div><div class="guidance-note"><span class="kicker"></span><h3>주행 안내</h3><p>${t.guidance||'표시된 안내 없음'}</p><small>${t.time||'—'}</small></div><button class="environment-teaser" data-go="environment"><span>실내·외부 환경 표시</span><b>환경 화면 살펴보기 ↗</b><small></small></button></aside></div>`;
   selectJourneyEvent(0);
 }
@@ -138,6 +158,7 @@ function go(name) {
   document.querySelectorAll('.screen').forEach(x => x.classList.toggle('active', x.id === `screen-${name}`));
   document.querySelectorAll('.nav').forEach(x => x.classList.toggle('active', x.dataset.go === name || (name === 'profile-detail' && x.dataset.go === 'profiles') || ((['why','finished','environment','routes'].includes(name)) && x.dataset.go === 'home')));
   if (name === 'profiles') renderSelector();
+  if (name === 'home') renderHome();
   if (name === 'profile-detail') renderProfile();
   if (name === 'records') renderRecords();
   if (name === 'feedback') renderFeedback();
