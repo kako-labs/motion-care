@@ -1,0 +1,527 @@
+[
+  {
+    "viewport": [
+      1600,
+      900
+    ],
+    "car": {
+      "x": 197.6640625,
+      "y": 96,
+      "width": 525.328125,
+      "height": 788
+    },
+    "zoneHeight": 788,
+    "overflow": false,
+    "mainOverflow": false,
+    "carColumnChildren": [
+      "car-stage"
+    ],
+    "picker": [
+      {
+        "seat": "driver",
+        "left": 736.9921875,
+        "top": 275.9921875,
+        "right": 1040.9921875,
+        "bottom": 704.1875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "front-passenger",
+        "left": 736.9921875,
+        "top": 274.9921875,
+        "right": 1040.9921875,
+        "bottom": 705.1875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-left",
+        "left": 736.9921875,
+        "top": 448.3515625,
+        "right": 1040.9921875,
+        "bottom": 878.546875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-center",
+        "left": 736.9921875,
+        "top": 448.3515625,
+        "right": 1040.9921875,
+        "bottom": 878.546875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-right",
+        "left": 736.9921875,
+        "top": 449.3515625,
+        "right": 1040.9921875,
+        "bottom": 877.546875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      }
+    ]
+  },
+  {
+    "viewport": [
+      1440,
+      760
+    ],
+    "car": {
+      "x": 194.296875,
+      "y": 84,
+      "width": 440,
+      "height": 660
+    },
+    "zoneHeight": 660,
+    "overflow": false,
+    "mainOverflow": false,
+    "carColumnChildren": [
+      "car-stage"
+    ],
+    "picker": [
+      {
+        "seat": "driver",
+        "left": 648.296875,
+        "top": 199.9921875,
+        "right": 952.296875,
+        "bottom": 628.1875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "front-passenger",
+        "left": 648.296875,
+        "top": 198.9921875,
+        "right": 952.296875,
+        "bottom": 629.1875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-left",
+        "left": 648.296875,
+        "top": 316,
+        "right": 952.296875,
+        "bottom": 746.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-center",
+        "left": 648.296875,
+        "top": 316,
+        "right": 952.296875,
+        "bottom": 746.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-right",
+        "left": 648.296875,
+        "top": 318,
+        "right": 952.296875,
+        "bottom": 746.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      }
+    ]
+  },
+  {
+    "viewport": [
+      1024,
+      768
+    ],
+    "car": {
+      "x": 66.8984375,
+      "y": 86,
+      "width": 444,
+      "height": 666
+    },
+    "zoneHeight": 666,
+    "overflow": false,
+    "mainOverflow": false,
+    "carColumnChildren": [
+      "car-stage"
+    ],
+    "picker": [
+      {
+        "seat": "driver",
+        "left": 524.8984375,
+        "top": 204.9921875,
+        "right": 828.8984375,
+        "bottom": 633.1875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "front-passenger",
+        "left": 524.8984375,
+        "top": 203.9921875,
+        "right": 828.8984375,
+        "bottom": 634.1875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-left",
+        "left": 524.8984375,
+        "top": 324,
+        "right": 828.8984375,
+        "bottom": 754.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-center",
+        "left": 524.8984375,
+        "top": 324,
+        "right": 828.8984375,
+        "bottom": 754.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-right",
+        "left": 524.8984375,
+        "top": 326,
+        "right": 828.8984375,
+        "bottom": 754.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      }
+    ]
+  },
+  {
+    "viewport": [
+      1024,
+      600
+    ],
+    "car": {
+      "x": 118.6953125,
+      "y": 86,
+      "width": 332,
+      "height": 498
+    },
+    "zoneHeight": 498,
+    "overflow": false,
+    "mainOverflow": false,
+    "carColumnChildren": [
+      "car-stage"
+    ],
+    "picker": [
+      {
+        "seat": "driver",
+        "left": 464.6953125,
+        "top": 120.9921875,
+        "right": 768.6953125,
+        "bottom": 549.1875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "front-passenger",
+        "left": 464.6953125,
+        "top": 119.9921875,
+        "right": 768.6953125,
+        "bottom": 550.1875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-left",
+        "left": 464.6953125,
+        "top": 156,
+        "right": 768.6953125,
+        "bottom": 586.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-center",
+        "left": 464.6953125,
+        "top": 156,
+        "right": 768.6953125,
+        "bottom": 586.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-right",
+        "left": 464.6953125,
+        "top": 158,
+        "right": 768.6953125,
+        "bottom": 586.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      }
+    ]
+  },
+  {
+    "viewport": [
+      768,
+      900
+    ],
+    "car": {
+      "x": 111.1640625,
+      "y": 88,
+      "width": 530.6640625,
+      "height": 796
+    },
+    "zoneHeight": 796,
+    "overflow": false,
+    "mainOverflow": false,
+    "carColumnChildren": [
+      "car-stage"
+    ],
+    "picker": [
+      {
+        "seat": "driver",
+        "left": 450,
+        "top": 271.9921875,
+        "right": 754,
+        "bottom": 700.1875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "front-passenger",
+        "left": 450,
+        "top": 270.9921875,
+        "right": 754,
+        "bottom": 701.1875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-left",
+        "left": 450,
+        "top": 446.109375,
+        "right": 754,
+        "bottom": 876.3046875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-center",
+        "left": 450,
+        "top": 446.109375,
+        "right": 754,
+        "bottom": 876.3046875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-right",
+        "left": 450,
+        "top": 447.109375,
+        "right": 754,
+        "bottom": 875.3046875,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      }
+    ]
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "car": {
+      "x": 23,
+      "y": 206.25,
+      "width": 329,
+      "height": 493.5
+    },
+    "zoneHeight": 750,
+    "overflow": false,
+    "mainOverflow": false,
+    "carColumnChildren": [
+      "car-stage"
+    ],
+    "picker": [
+      {
+        "seat": "driver",
+        "left": 14,
+        "top": 463,
+        "right": 376,
+        "bottom": 830.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "front-passenger",
+        "left": 14,
+        "top": 528,
+        "right": 376,
+        "bottom": 830.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-left",
+        "left": 14,
+        "top": 528,
+        "right": 376,
+        "bottom": 830.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-center",
+        "left": 14,
+        "top": 528,
+        "right": 376,
+        "bottom": 830.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-right",
+        "left": 14,
+        "top": 463,
+        "right": 376,
+        "bottom": 830.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      }
+    ]
+  },
+  {
+    "viewport": [
+      320,
+      568
+    ],
+    "car": {
+      "x": 23,
+      "y": 120.75,
+      "width": 259,
+      "height": 388.5
+    },
+    "zoneHeight": 474,
+    "overflow": false,
+    "mainOverflow": false,
+    "carColumnChildren": [
+      "car-stage"
+    ],
+    "picker": [
+      {
+        "seat": "driver",
+        "left": 14,
+        "top": 187,
+        "right": 306,
+        "bottom": 554.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "front-passenger",
+        "left": 14,
+        "top": 252,
+        "right": 306,
+        "bottom": 554.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-left",
+        "left": 14,
+        "top": 252,
+        "right": 306,
+        "bottom": 554.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-center",
+        "left": 14,
+        "top": 252,
+        "right": 306,
+        "bottom": 554.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      },
+      {
+        "seat": "rear-right",
+        "left": 14,
+        "top": 187,
+        "right": 306,
+        "bottom": 554.1953125,
+        "scrollX": 0,
+        "mainScroll": 0,
+        "blur": "none",
+        "focusInDialog": true
+      }
+    ]
+  }
+]

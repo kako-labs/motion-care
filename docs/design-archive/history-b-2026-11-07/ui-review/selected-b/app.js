@@ -94,13 +94,13 @@ function renderDrawer() {
   drawer.innerHTML = `
     <div class="drawer-head"><h2>${seatLabels[openSeat]}</h2><button class="btn icon" data-close-drawer aria-label="닫기">✕</button></div>
     ${occupant ? `<div class="occupant"><span class="avatar"><img src="${occupant.avatar}" alt=""></span><b>${occupant.name}</b><button class="btn primary" data-open-person="${occupant.id}">프로필</button><button class="btn" data-clear-seat>비우기</button></div>` : ''}
-    ${Object.values(demo.people).filter(p => p.id !== occupantId).map(p => {
+    <p class="picker-intro">${occupant?'다른 사람으로 바꿀 수 있어요.':'이 좌석에 앉을 사람을 선택하세요.'}</p><div class="drawer-people">${Object.values(demo.people).filter(p => p.id !== occupantId).map(p => {
       const here = occupantId === p.id;
       const elsewhere = Object.keys(seatAssignments).find(key => key !== openSeat && seatAssignments[key] === p.id);
       return `<button class="drawer-person ${here ? 'here' : ''}" data-pick="${p.id}" ${here || !canSit(p, openSeat) ? 'disabled' : ''}>
         <span class="avatar"><img src="${p.avatar}" alt=""></span><span><b>${p.name}</b><small class="${elsewhere ? 'seated' : ''}">${elsewhere ? seatLabels[elsewhere] : p.role}</small></span><i>${here ? '✓' : ''}</i>
       </button>`;
-    }).join('')}`;
+    }).join('')}</div><p class="picker-hint">다른 좌석의 사람을 고르면 자리가 바뀌어요.</p>`;
 }
 
 function setDrawer(seatId) {
@@ -116,8 +116,9 @@ function setDrawer(seatId) {
   document.querySelector('#seatDrawer').inert = !seatId;
   document.querySelector('#drawerScrim').classList.toggle('open', Boolean(seatId));
   renderSeats();
-  if(seatId)document.querySelector('#seatDrawer button:not([disabled])')?.focus?.();
-  else if(wasOpen){document.querySelector(drawerReturnSelector)?.focus?.();drawerReturnSelector=null;}
+  if(typeof positionSeatPicker==='function')positionSeatPicker(seatId);
+  if(seatId)document.querySelector('#seatDrawer button:not([disabled])')?.focus?.({preventScroll:true});
+  else if(wasOpen){document.querySelector(drawerReturnSelector)?.focus?.({preventScroll:true});drawerReturnSelector=null;}
 }
 
 function saveSeats() {

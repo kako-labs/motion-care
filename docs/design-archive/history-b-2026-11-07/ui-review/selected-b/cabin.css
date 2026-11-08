@@ -1,0 +1,131 @@
+/* A dedicated vehicle column. No journal, caption or heading occupies its vertical space. */
+.app { --cabin-header:88px; }
+.app:has(#screen-home.active)>main { padding-top:8px; padding-bottom:16px; overflow:hidden; }
+#screen-home { height:100%; }
+#screen-home .departure-composition { height:calc(100dvh - var(--cabin-header) - 24px); min-height:0; display:grid; grid-template-columns:minmax(0,1.15fr) minmax(340px,.9fr); gap:clamp(35px,4vw,80px); align-items:stretch; }
+#screen-home .cockpit-zone { container-type:size; height:100%; min-height:0; margin:0; grid-column:1; grid-row:1; }
+#screen-home .car-stage { width:100%; height:100%; min-height:0; max-height:none; flex:none; display:flex; align-items:center; justify-content:center; }
+#screen-home .car { height:min(100cqh,150cqw); width:auto; max-width:none; aspect-ratio:2/3; }
+#screen-home .car-stage:before { inset:10% -5%; }
+.departure-console { min-width:0; min-height:0; height:100%; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column; justify-content:safe center; gap:26px; padding:16px 8px 16px 0; scrollbar-width:thin; scrollbar-color:#5e78924d transparent; }
+.departure-console>* { flex-shrink:0; }
+.console-title { display:flex; align-items:center; justify-content:space-between; gap:25px; }
+.console-title>div>small { display:block; color:#829ab2; font-size:11px; }
+.console-title h1 { font-size:32px; font-weight:450; letter-spacing:-1.1px; margin-top:9px; line-height:1.3; }
+.console-title .seating-heading { margin:20px 0 0; gap:10px; }
+.console-title .seating-heading h2 { font-size:10px; color:#7e95ac; }
+.console-title #passengerCount { font-size:13px; color:#c6d9eb; }
+.departure-console .home-people { display:flex; flex-direction:row; flex-wrap:wrap; gap:4px 28px; margin-top:14px; max-width:none; }
+.departure-console .roster-person { flex:0 1 auto; min-width:100px; padding:5px 0; border:0; gap:10px; min-height:49px; }
+.departure-console .roster-person .avatar { width:31px; height:34px; }
+.departure-console .roster-person b { font-size:12px; }
+.departure-console .roster-person small { font-size:9px; }
+.departure-console .roster-person i { display:none; }
+.departure-console .preparation-list { margin:0; display:block; }
+.departure-console .preparation-list>button { display:flex; min-height:79px; padding:17px 0; gap:15px; }
+.departure-console .preparation-list b { font-size:13px; }
+.departure-console .preparation-list small { font-size:10px; }
+.departure-console .preparation-list i { display:block; }
+.departure-console .utility-icon { width:38px; height:38px; }
+/* The suggestion is an open piece of information, rather than another large card. */
+#screen-home .home-advice { padding:0; margin:0; border:0; border-radius:0; background:none; min-height:0; text-align:left; display:block; }
+#screen-home .home-advice:before,#screen-home .home-advice:after { display:none; }
+#screen-home .home-advice .advice-copy>small { display:block; margin:0 0 11px; color:#8ba5bf; font-size:10px; }
+#screen-home .home-advice .advice-copy h2 { font-size:22px; font-weight:450; letter-spacing:-.7px; line-height:1.55; max-width:490px; color:#dde9f5; }
+#screen-home .home-advice:hover .advice-copy h2 { color:#c4e3fa; }
+.advice-foot { display:flex; align-items:flex-end; justify-content:space-between; gap:25px; margin-top:17px; }
+#screen-home .recent-summary { margin:0; padding:0; border:0; display:block; }
+#screen-home .recent-summary small { display:block; font-size:9px; max-width:none; color:#788fa7; }
+#screen-home .recent-summary strong { display:block; margin-top:9px; font-size:21px; color:#bad1e6; font-weight:350; }
+#screen-home .recent-summary strong span { font-size:10px; color:#819bb3; margin:0 5px; }
+#screen-home .home-advice .advice-action { display:flex; align-items:center; gap:16px; font-size:10px; color:#96b5d0; white-space:nowrap; margin:0 0 3px; }
+#screen-home .home-advice .advice-action>span { font-size:19px; }
+.departure-console .trip-shelf { margin:0; padding-top:16px; border-top:1px solid var(--line); }
+.departure-console .shelf-heading { margin-bottom:8px; }
+.departure-console .shelf-heading h2 { font-size:11px; }
+.departure-console .shelf-heading .text-action { font-size:9px; }
+.departure-console .trip-list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:17px; }
+.departure-console .trip { padding:8px 9px 8px 0; min-height:85px; border:0; border-right:1px solid var(--line); border-radius:0; }
+.departure-console .trip:last-child { border:0; }
+.departure-console .trip-top { display:block; }
+.departure-console .trip b { font-size:15px; font-weight:450; }
+.departure-console .trip-time { display:block; margin-top:6px; font-size:9px; }
+.departure-console .trip p { font-size:9px; line-height:1.8; margin-top:7px; }
+.departure-console .trip p span { padding:0 2px; }
+.departure-console .shelf-trace { display:none; }
+.departure-console .trip-arrow { font-size:11px; right:7px; top:13px; }
+
+/* Contextual seat dialog; it does not slide from outside the viewport. */
+.drawer-scrim { position:fixed; inset:0; z-index:55; background:#0000000c; backdrop-filter:none; opacity:0; visibility:hidden; pointer-events:none; transition:none; }
+.drawer-scrim.open { opacity:1; visibility:visible; pointer-events:auto; background:#0000000c; backdrop-filter:none; }
+.seat-drawer { position:fixed; inset:auto; left:14px; top:14px; right:auto; bottom:auto; z-index:60; width:304px; height:auto; max-height:calc(100dvh - 28px); padding:18px; display:flex; flex-direction:column; gap:0; overflow-y:auto; border:1px solid #c9e1fa30; border-radius:22px; background:#172438f5; backdrop-filter:blur(24px); box-shadow:0 22px 80px #0006,inset 0 1px #e6f2ff08; transform:none; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .12s ease; }
+.seat-drawer.open { transform:none; opacity:1; visibility:visible; pointer-events:auto; }
+.seat-drawer .drawer-head { margin:0; min-height:44px; gap:15px; }
+.seat-drawer .drawer-head h2 { font-size:19px; font-weight:500; letter-spacing:-.5px; }
+.seat-drawer .drawer-head .btn { flex:none; width:44px; height:44px; min-height:44px; padding:0; border:0; border-radius:50%; background:#e0eeff07; font-size:17px; color:#b3c9dd; }
+.picker-intro { font-size:10px; color:#91a8bd; margin:8px 0 14px; line-height:1.7; }
+.drawer-people { display:grid; gap:2px; }
+.seat-drawer .drawer-person { display:grid; grid-template-columns:36px minmax(0,1fr) 12px; align-items:center; gap:12px; width:100%; min-height:65px; padding:10px 7px; border:0; border-bottom:1px solid var(--line); border-radius:0; background:none; }
+.seat-drawer .drawer-person:last-child { border-bottom:0; }
+.seat-drawer .drawer-person:hover:not(:disabled) { background:#d8e9ff0a; border-color:var(--line); border-radius:12px; }
+.seat-drawer .drawer-person:disabled { opacity:.3; }
+.seat-drawer .avatar { width:34px; height:36px; border:0; background:none; box-shadow:none; }
+.seat-drawer .drawer-person b { font-size:14px; font-weight:450; }
+.seat-drawer .drawer-person small { font-size:10px; margin-top:5px; color:#8ba5bc; }
+.seat-drawer .drawer-person small.seated { color:#a8c8e1; }
+.picker-hint { margin:14px 0 0; padding-top:12px; border-top:1px solid var(--line); color:#8197ad; font-size:9px; line-height:1.8; }
+.seat-drawer .occupant { display:grid; grid-template-columns:34px minmax(0,1fr) auto auto; gap:9px; align-items:center; padding:10px 0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:none; }
+.seat-drawer .occupant b { font-size:13px; font-weight:500; }
+.seat-drawer .occupant .btn { grid-column:auto; grid-row:auto; min-height:44px; padding:7px; font-size:10px; border:0; border-radius:11px; background:#c8e1f30a; color:#a9c6de; }
+@media(min-width:1250px) and (max-height:850px) { .app { --cabin-header:76px; } }
+@media(max-width:1249px) and (min-width:951px) {
+  .app { --cabin-header:78px; }
+  .departure-console { gap:20px; padding-top:10px; padding-bottom:10px; }
+  .console-title h1 { font-size:28px; }
+  .departure-console .home-people { margin-top:10px; gap:2px 20px; }
+  .departure-console .preparation-list>button { min-height:75px; padding:14px 0; }
+  #screen-home .home-advice .advice-copy h2 { font-size:21px; }
+  .advice-foot { gap:15px; }
+  #screen-home .recent-summary small { max-width:190px; line-height:1.7; }
+  #screen-home .home-advice .advice-action { font-size:9px; gap:8px; }
+  .departure-console .trip-list { gap:10px; }
+  .departure-console .trip b { font-size:13px; }
+  .departure-console .trip-arrow { display:none; }
+}
+@media(max-width:950px) {
+  .app { --cabin-header:80px; }
+  .app:has(#screen-home.active)>main { overflow:visible; padding-bottom:110px; }
+  #screen-home .departure-composition { display:block; height:auto; }
+  #screen-home .cockpit-zone { width:100%; height:calc(100svh - var(--cabin-header) - 24px); min-height:430px; }
+  .departure-console { height:auto; overflow:visible; max-width:650px; margin:35px auto 0; padding:0; gap:28px; }
+  .departure-console .preparation-list>button { min-height:84px; }
+  .departure-console .trip { min-height:88px; }
+  .departure-console .trip b { font-size:16px; }
+}
+@media(max-width:600px) {
+  .app { --cabin-header:70px; }
+  #screen-home .cockpit-zone { min-height:420px; }
+  .departure-console { margin-top:28px; gap:26px; }
+  .console-title h1 { font-size:29px; }
+  .console-title .seating-heading { margin-top:20px; }
+  .departure-console .roster-person { flex:0 1 calc(50% - 14px); }
+  .departure-console .preparation-list>button { gap:15px; padding:17px 0; min-height:84px; }
+  .departure-console .preparation-list b { font-size:13px; }
+  #screen-home .home-advice .advice-copy h2 { font-size:23px; }
+  .advice-foot { display:block; margin-top:17px; }
+  #screen-home .home-advice .advice-action { justify-content:space-between; width:100%; font-size:11px; margin:22px 0 0; }
+  #screen-home .recent-summary small { font-size:9px; }
+  .departure-console .trip-list { gap:12px; }
+  .departure-console .trip { min-height:100px; padding-right:5px; }
+  .departure-console .trip b { font-size:13px; }
+  .departure-console .trip-time { margin-top:8px; }
+  .departure-console .trip-arrow { display:none; }
+  .seat-drawer { width:calc(100vw - 28px); max-width:400px; border-radius:22px; padding:18px; }
+  .drawer-people { grid-template-columns:1fr 1fr; gap:4px 10px; }
+  .seat-drawer .drawer-person { grid-template-columns:31px minmax(0,1fr); gap:10px; min-height:67px; border:0; border-radius:12px; padding:9px 5px; }
+  .seat-drawer .drawer-person i { display:none; }
+  .seat-drawer .drawer-person b { font-size:13px; }
+  .seat-drawer .drawer-person small { font-size:9px; }
+  .seat-drawer .avatar { width:30px; height:34px; }
+}
+@media(prefers-reduced-motion:reduce) { .seat-drawer { transition:none; } }
