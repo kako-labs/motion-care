@@ -18,6 +18,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.motioncare.core.model.PersonKind
@@ -94,7 +96,7 @@ private val motionColors = darkColorScheme(
 
 @Composable fun RoundIconButton(symbol: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(onClick = onClick, shape = CircleShape, color = MotionPanelLight, border = androidx.compose.foundation.BorderStroke(1.dp, MotionLine),
-        modifier = modifier.size(64.dp)) {
+        modifier = modifier.size(64.dp).semantics { contentDescription = if (symbol == "‹") "뒤로" else symbol }) {
         Box(contentAlignment = Alignment.Center) { Text(symbol, fontSize = 34.sp, lineHeight = 34.sp, color = MotionText) }
     }
 }
