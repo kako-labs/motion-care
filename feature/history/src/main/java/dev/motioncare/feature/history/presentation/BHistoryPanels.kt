@@ -10,11 +10,14 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
@@ -200,6 +203,7 @@ internal fun BPassengerProfilePanel(
 }
 
 /** State is caller-owned. This component neither stores feedback nor turns a skipped answer into a rating. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun BFeedbackPanel(
     name: String, rating: Int?, reasons: List<BReason>, selectedReasons: Set<String>, saving: Boolean,
@@ -210,13 +214,16 @@ internal fun BFeedbackPanel(
         Text("${name}의 한마디", color = BText, fontSize = 25.sp)
         Text("01 / FEELING", color = BSubtle, fontSize = 12.sp)
         Text(when (rating) { 1 -> "많이 불편했어요"; 2 -> "조금 불편했어요"; 3 -> "보통이었어요"; 4 -> "편안했어요"; 5 -> "아주 편안했어요"; else -> "이동은 어땠나요?" }, color = BCyan, fontSize = 29.sp)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            (1..5).forEach { score ->
-                val selected = rating != null && score <= rating
-                Surface(onClick = { onRating(score) }, enabled = !saving, shape = RoundedCornerShape(20.dp),
-                    color = if (selected) Color(0x407BBCE8) else Color(0x184D7FAC), border = BorderStroke(1.dp, if (selected) BCyan else BLine),
-                    modifier = Modifier.weight(1f).heightIn(min = 72.dp).semantics { contentDescription = "${score}점" }) {
-                    Box(Modifier.padding(10.dp), contentAlignment = Alignment.Center) { Text(if (selected) "★" else "☆", color = if (selected) BCyan else BSubtle, fontSize = 38.sp) }
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val starWidth = if (maxWidth < 320.dp) 56.dp else (maxWidth - 40.dp) / 5
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                (1..5).forEach { score ->
+                    val selected = rating != null && score <= rating
+                    Surface(onClick = { onRating(score) }, enabled = !saving, shape = RoundedCornerShape(20.dp),
+                        color = if (selected) Color(0x407BBCE8) else Color(0x184D7FAC), border = BorderStroke(1.dp, if (selected) BCyan else BLine),
+                        modifier = Modifier.width(starWidth).heightIn(min = 72.dp).semantics { contentDescription = "${score}점" }) {
+                        Box(Modifier.padding(10.dp), contentAlignment = Alignment.Center) { Text(if (selected) "★" else "☆", color = if (selected) BCyan else BSubtle, fontSize = 38.sp) }
+                    }
                 }
             }
         }
@@ -227,14 +234,12 @@ internal fun BFeedbackPanel(
         HorizontalDivider(color = BLine)
         Text("02 / MOMENTS", color = BSubtle, fontSize = 12.sp)
         Text("불편했던 순간이 있었나요?", color = BText, fontSize = 22.sp)
-        reasons.chunked(3).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                row.forEach { reason -> FilterChip(selected = reason.id in selectedReasons, onClick = { onReason(reason.id) }, enabled = !saving,
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                reasons.forEach { reason -> FilterChip(selected = reason.id in selectedReasons, onClick = { onReason(reason.id) }, enabled = !saving,
                     colors = FilterChipDefaults.filterChipColors(containerColor = Color(0x184D7FAC), labelColor = BSubtle,
                         selectedContainerColor = Color(0x407BBCE8), selectedLabelColor = BText),
                     border = BorderStroke(1.dp, if (reason.id in selectedReasons) BCyan else BLine),
                     label = { Text(reason.label) }, modifier = Modifier.heightIn(min = 56.dp)) }
-            }
         }
         BActionRibbon("이번 이동의 기록에", if (saving) "저장 중이에요" else "나의 응답 남기기", enabled = rating in 1..5 && !saving, onClick = onSave)
         OutlinedButton(onClick = onSkip, enabled = !saving, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("건너뛰기") }

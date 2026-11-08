@@ -45,6 +45,7 @@ internal fun PersonDetailRoute(
     PersonDetailContent(state, onBack, onAdvice, model::update)
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PersonDetailContent(
     state: dev.motioncare.feature.history.PersonDetailUiState,
@@ -68,7 +69,7 @@ private fun PersonDetailContent(
                 SecondaryAction("수정", { editing = true })
             }
             // A child only rides, so there is nothing to switch between.
-            if (person.kind == PersonKind.ADULT) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (person.kind == PersonKind.ADULT) FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 TabTile("◉", "운전할 때", tab == ProfileTab.DRIVER) { tab = ProfileTab.DRIVER }
                 TabTile("♙", "동승할 때", tab == ProfileTab.PASSENGER) { tab = ProfileTab.PASSENGER }
             }

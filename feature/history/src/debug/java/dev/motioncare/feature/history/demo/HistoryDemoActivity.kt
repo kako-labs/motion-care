@@ -4,10 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
@@ -24,10 +31,18 @@ import dev.motioncare.feature.history.ui.MotionCareBackground
 class HistoryDemoActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val repositories = DemoRepositories(applicationContext, intent.getBooleanExtra("empty", false), intent.getBooleanExtra("unanswered", false))
-        setContent { DemoHost(repositories) }
+        val empty = intent.getBooleanExtra("empty", false)
+        val unanswered = intent.getBooleanExtra("unanswered", false)
+        val interrupted = intent.getBooleanExtra("interrupted", false)
+        val scenario = "$empty/$unanswered/$interrupted"
+        val session = ViewModelProvider(this, viewModelFactory {
+            initializer { DemoSession(DemoRepositories(applicationContext, empty, unanswered, interrupted)) }
+        })["demo-$scenario", DemoSession::class.java]
+        setContent { key(scenario) { DemoHost(session.repositories) } }
     }
 }
+
+private class DemoSession(val repositories: DemoRepositories) : ViewModel()
 
 @Composable private fun DemoHost(repositories: DemoRepositories) {
     val navigation = rememberNavController()
@@ -44,7 +59,7 @@ class HistoryDemoActivity : ComponentActivity() {
                         onDone = { navigation.popBackStack(HistoryRoutes.PROFILES, false) })
                 }
             }
-            Row(Modifier.fillMaxWidth().heightIn(min = 64.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).heightIn(min = 64.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                 listOf("출발 안내" to HistoryRoutes.PROFILES, "운행 기록" to HistoryRoutes.RECORDS,
                     "프로필" to HistoryRoutes.profile(PersonId("jiyoung")), "완료 평가" to HistoryRoutes.feedback(id),
                     "종료 요약" to "demo-finished").forEach { (label, route) ->

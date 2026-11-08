@@ -87,12 +87,13 @@ fun DepartureRoute(
     onProfile: (PersonId) -> Unit,
     onAdvice: (PersonId?) -> Unit,
     onRecords: () -> Unit,
+    onTrip: (TripId) -> Unit = { onRecords() },
 ) {
     val model: DepartureViewModel = viewModel(factory = viewModelFactory {
         initializer { DepartureViewModel(trips, profiles) }
     })
     val state by model.uiState.collectAsStateWithLifecycle()
-    DepartureContent(state, model::place, model::clear, model::addPerson, model::toggleGuidance, onBack, onProfile, onAdvice, onRecords)
+    DepartureContent(state, model::place, model::clear, model::addPerson, model::toggleGuidance, onBack, onProfile, onAdvice, onRecords, onTrip)
 }
 
 @Composable
@@ -106,6 +107,7 @@ private fun DepartureContent(
     onProfile: (PersonId) -> Unit,
     onAdvice: (PersonId?) -> Unit,
     onRecords: () -> Unit,
+    onTrip: (TripId) -> Unit,
 ) {
     var addDialog by remember { mutableStateOf(false) }
     var addSeat by remember { mutableStateOf<SeatPosition?>(null) }
@@ -126,7 +128,7 @@ private fun DepartureContent(
                 if (wide) Row(Modifier.fillMaxWidth().height(950.dp), horizontalArrangement = Arrangement.spacedBy(28.dp)) {
                     SeatingPanel(state, openSeat, { openSeat = it }, Modifier.weight(1.5f))
                     Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(22.dp)) {
-                        DepartureRecent(state, onRecords, Modifier.weight(1f))
+                        DepartureRecent(state, onTrip, Modifier.weight(1f))
                         BActionRibbon("오늘의 제안", if (state.guidanceEnabled) state.advice.headline else "출발 안내 꺼짐") { onAdvice(state.seating.driverId) }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("출발 안내", Modifier.weight(1f), color = MotionSubtle)
@@ -135,7 +137,7 @@ private fun DepartureContent(
                     }
                 } else Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
                     SeatingPanel(state, openSeat, { openSeat = it })
-                    DepartureRecent(state, onRecords)
+                    DepartureRecent(state, onTrip)
                     BActionRibbon("오늘의 제안", if (state.guidanceEnabled) state.advice.headline else "출발 안내 꺼짐") { onAdvice(state.seating.driverId) }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("출발 안내", Modifier.weight(1f), color = MotionSubtle)
@@ -319,11 +321,12 @@ private val adviceSteps = listOf("◉" to "자리", "▶" to "운행", "★" to 
         val height = width * 1.5f
         Box(Modifier.size(width, height)) {
             Image(painterResource(R.drawable.mc_cabin_b), "차량 좌석", Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
+            val narrow = width < 360.dp
             val positions = listOf(
                 Triple(SeatPosition.DRIVER, .34f, .48f), Triple(SeatPosition.FRONT_PASSENGER, .675f, .48f),
-                Triple(SeatPosition.REAR_LEFT, .315f, .70f), Triple(SeatPosition.REAR_CENTER, .502f, .70f), Triple(SeatPosition.REAR_RIGHT, .695f, .70f))
+                Triple(SeatPosition.REAR_LEFT, if (narrow) .22f else .315f, .70f), Triple(SeatPosition.REAR_CENTER, .502f, .70f), Triple(SeatPosition.REAR_RIGHT, if (narrow) .78f else .695f, .70f))
             positions.forEach { (seat, x, y) ->
-                val size = (width * .17f).coerceAtLeast(64.dp)
+                val size = (width * .17f).coerceAtLeast(56.dp)
                 Box(Modifier.offset(width * x - size / 2, height * y - size / 2)) {
                     SeatCircle(seat, size, state, openSeat, onSeat)
                 }
@@ -332,12 +335,12 @@ private val adviceSteps = listOf("◉" to "자리", "▶" to "운행", "★" to 
     }
 }
 
-@Composable private fun DepartureRecent(state: DepartureUiState, onRecords: () -> Unit, modifier: Modifier = Modifier) {
+@Composable private fun DepartureRecent(state: DepartureUiState, onTrip: (TripId) -> Unit, modifier: Modifier = Modifier) {
     GlassPanel(modifier.fillMaxWidth()) {
         Text("최근 운행", fontSize = 26.sp, fontWeight = FontWeight.Medium)
         if (state.recentTrips.isEmpty()) Text("아직 운전 기록이 없어요.", color = MotionSubtle)
         state.recentTrips.forEach { trip ->
-            Surface(onClick = onRecords, color = MotionPanelLight.copy(.4f), shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth().heightIn(min = 94.dp)) {
+            Surface(onClick = { onTrip(trip.trip.id) }, color = MotionPanelLight.copy(.4f), shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth().heightIn(min = 94.dp)) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(tripTime(trip.trip.startedAtEpochMs), fontSize = 21.sp)
                     Text("${trip.durationMs / 60_000}분 · ${"%.1f".format(trip.distanceMeters / 1000)}km", color = MotionSubtle)
@@ -345,7 +348,7 @@ private val adviceSteps = listOf("◉" to "자리", "▶" to "운행", "★" to 
             }
         }
         Spacer(Modifier.weight(1f))
-        state.advice.recentAverage?.let { Text("최근 ${minOf(3, state.recentTrips.size)}회 평균 · ${"%.1f".format(it)}회/10분", color = MotionCyan, fontSize = 21.sp) }
+        state.advice.recentAverage?.let { Text("최근 분석 가능한 운행 평균 · ${"%.1f".format(it)}회/10분", color = MotionCyan, fontSize = 21.sp) }
     }
 }
 

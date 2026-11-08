@@ -1,0 +1,14 @@
+{
+  "tests": 5,
+  "failures": 0,
+  "cases": [
+    "skippingAnUnansweredTripDoesNotCreateARating",
+    "selectedObservationOpensTheSameTripAndEvent",
+    "noHistoryStaysEmptyAndInterruptedStatusRemainsVisible",
+    "ratingUsesExistingSaveAndSurvivesRecreation",
+    "rearSeatsHaveSeparateTouchTargetsAndRatingsStayLarge"
+  ],
+  "device": "mc_car Android API 35 x86_64",
+  "size": "1682x1210",
+  "density": 160
+}

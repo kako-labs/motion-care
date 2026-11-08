@@ -1,9 +1,9 @@
 """Observe and exercise a connected debug build through Android's own UI hierarchy."""
-import json, os, re, subprocess, sys, time
+import json, os, re, shutil, subprocess, sys, time
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-ADB=os.environ.get('HISTORY_B_ADB','C:/Users/hhson/AppData/Local/Android/Sdk/platform-tools/adb.exe')
+ADB=os.environ.get('HISTORY_B_ADB') or shutil.which('adb') or str(Path(os.environ.get('ANDROID_HOME',''))/'platform-tools'/('adb.exe' if os.name=='nt' else 'adb'))
 OUT=Path('docs/history-b-android/device-checks'); OUT.mkdir(parents=True,exist_ok=True)
 def adb(*args):
     p=subprocess.run([ADB,'-s','emulator-5554',*args],capture_output=True)

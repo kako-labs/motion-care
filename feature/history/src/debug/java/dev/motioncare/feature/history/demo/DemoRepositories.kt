@@ -11,7 +11,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** Synthetic replay and separate demo preferences only. Never calls a database factory. */
-internal class DemoRepositories(context: Context, empty: Boolean = false, unanswered: Boolean = false) {
+internal class DemoRepositories(context: Context, empty: Boolean = false, unanswered: Boolean = false, interrupted: Boolean = false) {
     private val preferences = context.getSharedPreferences(if (unanswered) "history_b_debug_unanswered" else "history_b_debug_only", Context.MODE_PRIVATE)
     private val fixture = JSONObject(context.assets.open("history-b-synthetic.json").bufferedReader().use { it.readText() })
     private val snapshots: List<TripSnapshot> = if (empty) emptyList() else fixture.getJSONArray("trips").let { array ->
@@ -37,7 +37,7 @@ internal class DemoRepositories(context: Context, empty: Boolean = false, unansw
             }
             val start = item.getLong("started")
             TripSnapshot(TripRecord(TripId(item.getString("id")), start, start + item.getLong("duration") * 60_000,
-                TripStatus.COMPLETED, origin = DataOrigin.SYNTHETIC), samples.values.toList(), observations)
+                if (interrupted && index == 0) TripStatus.INTERRUPTED else TripStatus.COMPLETED, origin = DataOrigin.SYNTHETIC), samples.values.toList(), observations)
         }
     }
     val trips: TripRepository = object : TripRepository {

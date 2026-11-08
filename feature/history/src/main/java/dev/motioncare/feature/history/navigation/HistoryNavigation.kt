@@ -39,7 +39,8 @@ fun NavGraphBuilder.historyGraph(
             onBack = { navigation.popBackStack() },
             onProfile = { navigation.navigate(HistoryRoutes.profile(it)) },
             onAdvice = { navigation.navigate(HistoryRoutes.advice(it)) },
-            onRecords = { navigation.navigate(HistoryRoutes.RECORDS) })
+            onRecords = { navigation.navigate(HistoryRoutes.RECORDS) },
+            onTrip = { navigation.navigate(HistoryRoutes.trip(it)) })
     }
     composable(HistoryRoutes.RECORDS) {
         HistoryListRoute(trips, onBack = { navigation.popBackStack() }, onSelect = { navigation.navigate(HistoryRoutes.trip(it)) }, profiles = profiles)

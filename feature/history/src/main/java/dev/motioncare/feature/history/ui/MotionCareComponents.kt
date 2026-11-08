@@ -74,15 +74,21 @@ private val motionColors = darkColorScheme(
 
 @Composable fun ScreenTitle(title: String, subtitle: String? = null, onBack: (() -> Unit)? = null,
     leading: (@Composable () -> Unit)? = null, action: (@Composable () -> Unit)? = null) {
-    Row(Modifier.fillMaxWidth().heightIn(min = 72.dp), verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (onBack != null) RoundIconButton("‹", onBack)
-        leading?.invoke()
-        Column(Modifier.weight(1f)) {
-            Text(title, fontSize = 34.sp, lineHeight = 40.sp, fontWeight = FontWeight.Medium)
-            subtitle?.let { Text(it, color = MotionSubtle, fontSize = 17.sp) }
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val compact = maxWidth < 600.dp
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(Modifier.fillMaxWidth().heightIn(min = 72.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (onBack != null) RoundIconButton("‹", onBack)
+                leading?.invoke()
+                Column(Modifier.weight(1f)) {
+                    Text(title, fontSize = 34.sp, lineHeight = 40.sp, fontWeight = FontWeight.Medium)
+                    subtitle?.let { Text(it, color = MotionSubtle, fontSize = 17.sp) }
+                }
+                if (!compact) action?.invoke()
+            }
+            if (compact && action != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { action() }
         }
-        action?.invoke()
     }
 }
 

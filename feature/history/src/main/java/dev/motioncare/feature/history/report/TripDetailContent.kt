@@ -89,6 +89,7 @@ internal fun TripDetailContent(
 
 @Composable private fun DetailBody(state: TripExperienceUiState, onFeedback: () -> Unit, initialEvent: Int) {
     val insight = requireNotNull(state.insight)
+    Text(when (insight.trip.status) { TripStatus.COMPLETED -> "완료된 운행"; TripStatus.INTERRUPTED -> "중단된 운행"; TripStatus.RECORDING -> "기록 중" }, color = MotionSubtle, fontSize = 18.sp)
     val names = state.people.associateBy { it.id }
     val riders = listOfNotNull(state.participants?.driverId).plus(state.participants?.passengerIds.orEmpty())
         .mapNotNull { names[it]?.displayName }.joinToString(" · ").ifBlank { "탑승 정보 없음" }
