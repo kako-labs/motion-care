@@ -1,26 +1,32 @@
 package dev.motioncare.feature.history.report
 
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import dev.motioncare.core.model.DataOrigin
-import dev.motioncare.core.model.DrivingPattern
-import dev.motioncare.core.model.GuidanceOutcome
-import dev.motioncare.core.model.Observation
-import dev.motioncare.core.model.TripSnapshot
-import dev.motioncare.core.ui.ScaffoldSection
-
-private const val MAX_SAMPLE_ROWS = 20
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import dev.motioncare.core.model.*
+import dev.motioncare.feature.history.TripExperienceUiState
+import dev.motioncare.feature.history.insights.patternLabel
+import dev.motioncare.feature.history.ui.*
+import java.text.DateFormat
+import java.util.Date
 
 internal fun observationSummary(observations: List<Observation>): String {
     if (observations.isEmpty()) return "관찰된 패턴 없음"
     val counts = observations.groupingBy { it.pattern }.eachCount()
     val parts = DrivingPattern.entries.mapNotNull { pattern ->
-        counts[pattern]?.let { count -> "${label(pattern)} ${count}회" }
+        counts[pattern]?.let { count -> "${legacyLabel(pattern)} ${count}회" }
     }
     return "관찰된 패턴: " + parts.joinToString(" · ")
 }
 
-private fun label(pattern: DrivingPattern) = when (pattern) {
+private fun legacyLabel(pattern: DrivingPattern) = when (pattern) {
     DrivingPattern.RAPID_START -> "빠른 출발"
     DrivingPattern.HARD_STOP -> "정차 직전 큰 감속"
     DrivingPattern.REPEATED_SPEED_CHANGE -> "반복 가감속"
@@ -47,25 +53,144 @@ internal fun guidanceSummary(snapshot: TripSnapshot): String? {
 }
 
 @Composable
-fun TripDetailContent(snapshot: TripSnapshot?, loading: Boolean, onBack: () -> Unit, onFeedback: () -> Unit) {
-    ScaffoldSection("주행 상세 · 원본 연결 확인") {
-        when {
-            loading -> Text("기록 확인 중")
-            snapshot == null -> Text("기록이 없습니다.")
-            else -> {
-                Text("출처: ${snapshot.trip.origin.name} · ${snapshot.trip.status.name}")
-                Text("샘플 ${snapshot.samples.size}개 · 버전 ${snapshot.trip.revision}")
-                Text(observationSummary(snapshot.observations))
-                steeringNote(snapshot)?.let { Text(it) }
-                guidanceSummary(snapshot)?.let { Text(it) }
-                // Real trips hold thousands of samples; a text row for each would stall the screen.
-                snapshot.samples.takeLast(MAX_SAMPLE_ROWS).forEach { sample ->
-                    Text("${sample.elapsedMs} ms · ${sample.metersPerSecond ?: "정보 없음"} m/s · ${sample.quality}")
+internal fun TripDetailContent(
+    state: TripExperienceUiState,
+    onBack: () -> Unit,
+    onHome: () -> Unit,
+    onFeedback: () -> Unit,
+) {
+    MotionCareBackground {
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(28.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            ScreenTitle("운행 상세", "저장된 차량 속도 변화와 연결된 탑승 정보", onBack)
+            when {
+                state.loading -> Box(Modifier.fillMaxWidth().height(320.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-                Text("분석·비교·AI 요약은 기능 구현 단계에서 연결합니다.")
-                TextButton(onClick = onFeedback) { Text("평가 연결 자리") }
+                state.error != null -> ErrorPanel(state.error)
+                state.insight == null -> ErrorPanel("운행 기록을 찾을 수 없어요.")
+                else -> DetailBody(state, onFeedback)
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                SecondaryAction("홈으로", onHome, Modifier.weight(1f))
+                if (state.insight != null) PrimaryAction("동승자 평가", onFeedback, Modifier.weight(1f))
             }
         }
-        Button(onClick = onBack) { Text("메인으로") }
     }
+}
+
+@Composable private fun DetailBody(state: TripExperienceUiState, onFeedback: () -> Unit) {
+    val insight = requireNotNull(state.insight)
+    val trip = insight.trip
+    val date = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(trip.startedAtEpochMs))
+    GlassPanel(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(date, color = MotionSubtle, fontSize = 18.sp)
+                Text(if (trip.status == TripStatus.COMPLETED) "완료된 운행" else "중단된 운행", fontSize = 31.sp, fontWeight = FontWeight.ExtraBold)
+            }
+            AssistChip(onClick = {}, label = { Text(if (trip.origin == DataOrigin.VEHICLE) "차량 데이터" else "합성 데이터") })
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            MetricTile(formatDuration(insight.durationMs), "운행 시간", Modifier.weight(1f), true)
+            MetricTile("%.1f km".format(insight.distanceMeters / 1_000.0), "거리 근사", Modifier.weight(1f))
+            MetricTile("${insight.analyzedDurationMs / 60_000}분", "유효 분석", Modifier.weight(1f))
+            MetricTile("${insight.snapshot.samples.size}", "속도 샘플", Modifier.weight(1f))
+        }
+    }
+
+    GlassPanel(Modifier.fillMaxWidth()) {
+        Text("관찰된 운전 패턴", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text("속도 변화로 계산한 근사치이며 탑승자의 실제 멀미 여부를 뜻하지 않아요.", color = MotionSubtle)
+        DrivingPattern.entries.forEach { pattern ->
+            val recentAverage = state.recentDriverTrips
+                .filter { it.trip.id != trip.id }
+                .take(3)
+                .mapNotNull { it.rate(pattern) }
+                .takeIf { it.isNotEmpty() }
+                ?.average()
+            PatternRow(patternLabel(pattern), insight.count(pattern), insight.rate(pattern), recentAverage)
+        }
+    }
+
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        if (maxWidth >= 850.dp) Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+            ParticipantsPanel(state, Modifier.weight(1f))
+            FeedbackPanel(state, onFeedback, Modifier.weight(1f))
+        } else Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            ParticipantsPanel(state)
+            FeedbackPanel(state, onFeedback)
+        }
+    }
+
+    GlassPanel(Modifier.fillMaxWidth()) {
+        Text("데이터 기준", fontSize = 21.sp, fontWeight = FontWeight.Bold)
+        Text("거리와 패턴 빈도는 저장된 차량 속도 샘플 중 유효한 구간으로 계산했어요. 5초보다 긴 데이터 공백은 거리 계산에서 제외하고, 1분 미만 기록에는 10분당 빈도를 표시하지 않아요.", color = MotionSubtle)
+    }
+}
+
+@Composable private fun PatternRow(label: String, count: Int, rate: Double?, recentAverage: Double?) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 70.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, Modifier.weight(1f), fontWeight = FontWeight.Bold)
+        Column(horizontalAlignment = Alignment.End) {
+            Text("${count}회", fontSize = 22.sp, color = MotionCyan, fontWeight = FontWeight.ExtraBold)
+            Text(rate?.let { "%.1f회/10분".format(it) } ?: "빈도 계산 대기", color = MotionSubtle)
+        }
+        Spacer(Modifier.width(28.dp))
+        Text(recentAverage?.let { "최근 평균 %.1f".format(it) } ?: "비교 기록 없음", color = MotionSubtle)
+    }
+    HorizontalDivider(color = MotionLine)
+}
+
+@Composable private fun ParticipantsPanel(state: TripExperienceUiState, modifier: Modifier = Modifier) {
+    val people = state.people.associateBy { it.id }
+    GlassPanel(modifier) {
+        Text("이 운행의 탑승자", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        val seats = state.participants?.seatAssignments.orEmpty()
+        if (seats.isEmpty()) Text("연결된 탑승 정보가 없어요.", color = MotionSubtle)
+        SeatPosition.entries.forEach { seat ->
+            val person = seats[seat]?.let(people::get) ?: return@forEach
+            Row(Modifier.fillMaxWidth().heightIn(min = 62.dp), verticalAlignment = Alignment.CenterVertically) {
+                PersonAvatar(person, Modifier.size(50.dp)); Spacer(Modifier.width(12.dp))
+                Text(person.displayName, Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                Text(seat.label(), color = MotionSubtle)
+            }
+        }
+    }
+}
+
+@Composable private fun FeedbackPanel(state: TripExperienceUiState, onFeedback: () -> Unit, modifier: Modifier = Modifier) {
+    val passengerIds = state.participants?.passengerIds.orEmpty()
+    val ratings = state.feedback.mapNotNull { feedback -> (feedback.answer as? FeedbackAnswer.Rating)?.value }
+    GlassPanel(modifier) {
+        Text("동승자 편안함 평가", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        when {
+            passengerIds.isEmpty() -> Text("이 운행에는 등록된 동승자가 없어요.", color = MotionSubtle)
+            ratings.isEmpty() -> Text("${passengerIds.size}명의 평가가 아직 없어요.", color = MotionSubtle)
+            else -> {
+                Text("평균 ${"%.1f".format(ratings.average())} / 5", fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, color = MotionCyan)
+                Text("${ratings.size} / ${passengerIds.size}명 응답", color = MotionSubtle)
+            }
+        }
+        SecondaryAction(if (ratings.isEmpty()) "평가 남기기" else "평가 수정", onFeedback, Modifier.fillMaxWidth())
+    }
+}
+
+@Composable private fun ErrorPanel(message: String) = GlassPanel(Modifier.fillMaxWidth()) {
+    Text(message, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+}
+
+private fun formatDuration(milliseconds: Long): String {
+    val minutes = milliseconds / 60_000
+    return if (minutes >= 60) "${minutes / 60}시간 ${minutes % 60}분" else "${minutes}분"
+}
+
+private fun SeatPosition.label() = when (this) {
+    SeatPosition.DRIVER -> "운전석"
+    SeatPosition.FRONT_PASSENGER -> "앞좌석"
+    SeatPosition.REAR_LEFT -> "뒷좌석 왼쪽"
+    SeatPosition.REAR_CENTER -> "뒷좌석 가운데"
+    SeatPosition.REAR_RIGHT -> "뒷좌석 오른쪽"
 }
