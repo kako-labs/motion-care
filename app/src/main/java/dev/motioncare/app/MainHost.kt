@@ -2,6 +2,7 @@ package dev.motioncare.app
 
 import android.Manifest
 import android.os.Build
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -10,7 +11,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -31,7 +35,6 @@ import dev.motioncare.feature.history.report.FinishedContent
 import dev.motioncare.feature.history.ui.RecentTripsRoute
 
 private const val HOME_ROUTE = "home"
-private const val CAR_SPEED_PERMISSION = "android.car.permission.CAR_SPEED"
 // Outdoor air needs the car's position. Recording goes on without it.
 private const val LOCATION_PERMISSION = "pleos.car.permission.FUSED_LOCATION"
 
@@ -55,12 +58,22 @@ fun MainHost(
         initializer { DrivingViewModel(trips) }
     })
     val drivingState by driving.uiState.collectAsStateWithLifecycle()
-    var speedPermissionDenied by remember { mutableStateOf(false) }
+    val activity = LocalActivity.current
+    val context = LocalContext.current
+    var speedNotice by remember { mutableStateOf(SpeedPermissionNotice.NONE) }
+    var speedRationaleBefore by remember { mutableStateOf(false) }
     var permissionsAnswered by remember { mutableIntStateOf(0) }
     val permissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
-        speedPermissionDenied = results[CAR_SPEED_PERMISSION] != true
+        val speedGranted = results[CAR_SPEED_PERMISSION] == true
+        speedNotice = speedPermissionNotice(speedGranted, speedRationaleBefore, speedRationale(activity))
         permissionsAnswered += 1
-        if (!speedPermissionDenied) driving.start()
+        if (speedGranted) driving.start()
+    }
+    // Back from settings with the permission granted, the notice goes. Recording waits for the driver to start it.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        if (speedNotice != SpeedPermissionNotice.NONE && speedPermissionGranted(context)) {
+            speedNotice = SpeedPermissionNotice.NONE
+        }
     }
     // Read once on opening and again after the permission answer, which may allow outdoor air.
     LaunchedEffect(permissionsAnswered) { environment.refresh() }
@@ -82,9 +95,7 @@ fun MainHost(
                     Column(Modifier.verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         drivingState.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                        if (speedPermissionDenied) {
-                            Text("차량 속도 권한이 있어야 운행을 기록할 수 있습니다.", color = MaterialTheme.colorScheme.error)
-                        }
+                        SpeedPermissionMessage(speedNotice, onOpenSettings = { openPermissionSettings(context) })
                         val active = drivingState.active
                         val finished = drivingState.finishedId
                         if (guidance != null && finished == null) {
@@ -110,6 +121,7 @@ fun MainHost(
                                 vehicleConnected = vehicleConnected,
                                 onStart = {
                                     if (vehicleConnected) {
+                                        speedRationaleBefore = speedRationale(activity)
                                         permissions.launch(recordingPermissions())
                                     } else driving.start()
                                 },
