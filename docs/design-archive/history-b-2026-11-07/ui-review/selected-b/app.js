@@ -50,20 +50,28 @@ function syncSelectedTrip(){
 }
 
 function tripButton(t) {
-  return `<button class="trip" data-trip="${t.id}"><div class="trip-top"><b>${t.date}</b><span class="rating">${t.feedback === null ? '미응답' : '평가 '+t.feedback+'/5'}</span></div><p>${t.duration}분 · ${t.distance.toFixed(1)}km</p></button>`;
+  const samples=t.replay.samples.filter((p,i)=>i%8===0);
+  const max=Math.max(1,...samples.map(p=>p.kmh??0));
+  let connected=false;
+  const path=samples.map((p,i)=>{if(p.kmh===null){connected=false;return '';}const command=connected?'L':'M';connected=true;return command+(i/Math.max(1,samples.length-1)*96).toFixed(1)+' '+(29-p.kmh/max*24).toFixed(1);}).join(' ');
+  const [month,day,time]=t.date.split(' ');
+  return `<button class="trip" data-trip="${t.id}"><div class="trip-top"><b>${month} ${day}</b><span class="trip-time">${time}</span></div><p>${t.duration}분 <span>·</span> ${t.distance.toFixed(1)}km <span>·</span> ${t.feedback===null?'미응답':'평가 '+t.feedback+'/5'}</p><svg class="shelf-trace" viewBox="0 0 100 34" aria-hidden="true"><path d="${path}"/></svg><span class="trip-arrow">↗</span></button>`;
 }
 
 const seatLabels = { 'rear-left': '뒤 왼쪽', 'rear-center': '뒤 가운데', 'rear-right': '뒤 오른쪽', 'front-passenger': '조수석', driver: '운전석' };
 let openSeat = null;
+let drawerReturnSelector = null;
 
 function renderSeats() {
   const trips=syncSelectedTrip();
   const driver=demo.people[seatAssignments.driver];
   document.querySelector('.recent-title').textContent=driver?`${driver.name}의 최근 운행`:'최근 운행';
   document.querySelector('#passengerCount').textContent = Object.values(seatAssignments).filter(Boolean).length + '명';
+  const roster=document.querySelector('#homePeople');
+  if(roster)roster.innerHTML=Object.entries(seatAssignments).filter(([,id])=>id).sort(([a],[b])=>(a==='driver'?-1:b==='driver'?1:0)).map(([seat,id])=>{const p=demo.people[id];return `<button data-seat="${seat}" class="roster-person" aria-label="${seatLabels[seat]}: ${p.name}, 좌석 변경"><span class="avatar"><img src="${p.avatar}" alt=""></span><span><b>${p.name}</b><small>${seat==='driver'?'운전자':seatLabels[seat]}</small></span><i>↗</i></button>`;}).join('');
   if(typeof syncHomeAdvice === 'function')syncHomeAdvice();
   document.querySelector('#homeTrips').innerHTML=trips.slice(0,3).map(tripButton).join('');
-  document.querySelectorAll('[data-seat]').forEach(seat => {
+  document.querySelectorAll('.car [data-seat]').forEach(seat => {
     const seatId = seat.dataset.seat;
     const person = seatAssignments[seatId] ? demo.people[seatAssignments[seatId]] : null;
     seat.classList.toggle('filled', Boolean(person));
@@ -96,6 +104,11 @@ function renderDrawer() {
 }
 
 function setDrawer(seatId) {
+  const wasOpen=Boolean(openSeat);
+  if(seatId&&!wasOpen){
+    const fromRoster=document.activeElement?.closest?.('#homePeople');
+    drawerReturnSelector=`${fromRoster?'#homePeople':'.car'} [data-seat="${seatId}"]`;
+  }
   openSeat = seatId;
   renderDrawer();
   document.querySelector('#seatDrawer').classList.toggle('open', Boolean(seatId));
@@ -103,6 +116,8 @@ function setDrawer(seatId) {
   document.querySelector('#seatDrawer').inert = !seatId;
   document.querySelector('#drawerScrim').classList.toggle('open', Boolean(seatId));
   renderSeats();
+  if(seatId)document.querySelector('#seatDrawer button:not([disabled])')?.focus?.();
+  else if(wasOpen){document.querySelector(drawerReturnSelector)?.focus?.();drawerReturnSelector=null;}
 }
 
 function saveSeats() {
@@ -191,7 +206,15 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-feedback]')) { go('feedback'); return; }
 });
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && openSeat) setDrawer(null); });
+document.addEventListener('keydown', e => {
+  if(!openSeat)return;
+  if(e.key==='Escape'){e.preventDefault();setDrawer(null);return;}
+  if(e.key==='Tab'){
+    const controls=[...document.querySelectorAll('#seatDrawer button:not([disabled])')],first=controls[0],last=controls.at(-1);
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}
+  }
+});
 
 renderHome(); renderSelector(); renderProfile(); renderRecords();
 
