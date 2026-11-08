@@ -48,3 +48,5 @@ adb shell am start -S -n dev.motioncare.scaffold/dev.motioncare.feature.history.
 별도 `feat/history-b-android` 브랜치다. 선행 PR #10/#17을 함께 검토해야 하므로 main에 바로 병합하지 않는다. 기존 PR 두 개의 변경이 이 브랜치의 이력에도 포함된다. 이번 신규 표시 변경만 보려면 `315bee2..HEAD`를 비교한다. 기존 미커밋 화면의 보존 커밋은 `315bee2`, 최초 B 연결은 `f8ab752`, 중단 시점 저장은 `698d3a2`다. 최신 연결 지점·적용 준비·팀원 확인 순서는 [통합 검토](INTEGRATION-REVIEW.md)를 기준으로 한다.
 
 공유 시 사용할 파일은 APK·기기 캡처·이 문서이며, 로컬 SDK·AVD·키·DB 파일은 Git에 넣지 않는다.
+
+최신 로컬 소스는 `0d8f057`에 저장했다. 원격 push는 자동 승인 검토에서 명시적 승인 부족으로 거절돼 실행되지 않았다. [전달 상태와 승인 대상](DELIVERY.md)을 확인한다. Draft PR 본문과 적용 패치는 준비 완료 상태다.
