@@ -91,7 +91,6 @@ internal fun EnvironmentPanel(snapshot: EnvironmentSnapshot?, modifier: Modifier
         }
         Text("실내 PM2.5·CO₂: 지원 신호 없음", color = Color(0xFF8BAAC5), fontSize = 14.sp)
         Text("대기질: Open-Meteo, CAMS 예측 · 실측이 아닌 모델 예측이에요.", color = Color(0xFF8BAAC5), fontSize = 14.sp)
-        Text("환경 값은 멀미 진단 기준이나 운전 점수가 아니에요. 공조 설정은 바꾸지 않아요.", color = Color(0xFF8BAAC5), fontSize = 14.sp)
     }
 }
 

@@ -112,12 +112,11 @@ private fun BMetrics(metrics: List<BMetric>, modifier: Modifier = Modifier) {
 @Composable
 internal fun BReportPanel(state: BReportUi, onFeedback: () -> Unit, modifier: Modifier = Modifier) {
     BGlass(modifier.fillMaxWidth()) {
-        Text(state.sourceLabel, color = BSubtle, fontSize = 12.sp)
         Text(state.title, color = BText, fontSize = 29.sp, fontWeight = FontWeight.Medium)
         Text(state.participants, color = BSubtle, fontSize = 15.sp)
         BMetrics(state.metrics)
         HorizontalDivider(color = BLine)
-        Text("이동의 흐름", color = BText, fontSize = 19.sp)
+        Text("주행 속도 · km/h", color = BText, fontSize = 19.sp)
         if (state.speedSegments.isEmpty()) Text("표시할 유효 속도 구간이 없어요.", color = BSubtle, fontSize = 16.sp)
         else Canvas(Modifier.fillMaxWidth().height(180.dp).semantics { contentDescription = "유효한 속도 구간의 흐름. 신호 공백은 이어 그리지 않음" }) {
             (0..2).forEach { line ->
@@ -146,7 +145,6 @@ internal fun BReportPanel(state: BReportUi, onFeedback: () -> Unit, modifier: Mo
                 BReportGuidance(state.guidance, Modifier.fillMaxWidth())
             }
         }
-        Text("관찰 패턴은 멀미 여부나 예방 효과를 뜻하지 않아요. 도로·교통 상황의 영향이 포함될 수 있어요.", color = BSubtle, fontSize = 13.sp)
     }
 }
 
@@ -162,7 +160,7 @@ private fun BReportResponse(feedback: String?, onFeedback: () -> Unit, modifier:
 @Composable
 private fun BReportGuidance(guidance: String?, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("이동 중 전한 한마디", color = BSubtle, fontSize = 14.sp)
+        Text("주행 안내", color = BSubtle, fontSize = 14.sp)
         Text(guidance ?: "표시된 안내 없음", color = BText, fontSize = 19.sp)
     }
 }
@@ -197,7 +195,6 @@ internal fun BPassengerProfilePanel(
                 }
             }
         }
-        Text("직접 등록한 선호와 이동 후 응답이에요. 의학적 예측이나 진단 정보가 아니에요.", color = BSubtle, fontSize = 13.sp)
     }
 }
 
