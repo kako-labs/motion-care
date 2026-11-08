@@ -41,5 +41,7 @@ document.addEventListener('click',e=>{
   const event=e.target.closest('[data-advice-event]');if(event){adviceEventIndex=Number(event.dataset.adviceEvent);const top=document.querySelector('main').scrollTop;renderAdviceDetail();document.querySelector('main').scrollTop=top;}
   const report=e.target.closest('[data-advice-report]');if(report){const c=adviceContext();if(!c.latest)return;selectedTrip=c.latest.id;go('records');selectJourneyEvent(Number(report.dataset.adviceReport));document.querySelector('#brakingDetail').scrollIntoView({block:'center',behavior:'smooth'});}
 });
+const requestedAdviceDriver=typeof location!=='undefined'?new URLSearchParams(location.search).get('driver'):null;
+if(requestedAdviceDriver&&demo.people[requestedAdviceDriver]?.kind==='성인'){assignPerson(requestedAdviceDriver,'driver');renderSeats();}
 syncHomeAdvice();
 if(document.querySelector('#screen-why').classList.contains('active'))renderAdviceDetail();

@@ -13,11 +13,17 @@ const demo = {
   ]
 };
 
+// Separate synthetic history for the second adult driver.
+for(const [index,source] of demo.trips.slice(0,3).entries()){
+ const stops=[4,6,7][index];
+ demo.trips.push({...source,id:'j'+(index+1),date:['11월 4일 09:20','11월 3일 14:10','11월 1일 17:35'][index],driver:'지영',duration:[32,35,29][index],feedback:[4,3,4][index],patterns:{stop:stops,start:[2,3,3][index],repeat:[1,2,2][index],curve:[1,1,2][index],sway:[0,1,0][index]},rates:{...source.rates},guidance:index===0?'정차 전, 조금 일찍 감속해 보세요.':undefined});
+}
+
 for(const [i,t] of demo.trips.entries()) { t.replay=buildJourneyReplay(t.duration,t.patterns.stop,t.patterns.start,i);t.distance=Number(t.replay.distanceKm.toFixed(1));t.samples=t.replay.samples.length;t.analyzed=Math.round(t.replay.validSeconds/60);if(t.guidance)t.time=clockTime(t,t.replay.events[Math.min(2,t.replay.events.length-1)].end);for(const k of Object.keys(t.rates))t.rates[k]=Number((t.patterns[k]*600/t.replay.validSeconds).toFixed(1));}
 
 const labels = { stop: '정차 직전 속도 변화', start: '출발 직후 속도 증가', repeat: '반복 가감속', curve: '빠른 회전', sway: '반복 좌우 움직임' };
 const previous = { stop: 2.4, start: 1.4, repeat: .9, curve: .6, sway: .3 };
-for(const key of Object.keys(previous))previous[key]=Number((demo.trips.slice(1).reduce((sum,t)=>sum+t.patterns[key]*600/t.replay.validSeconds,0)/(demo.trips.length-1)).toFixed(1));
+for(const key of Object.keys(previous))previous[key]=Number((demo.trips.filter(t=>t.driver==='민준').slice(1).reduce((sum,t)=>sum+t.patterns[key]*600/t.replay.validSeconds,0)/2).toFixed(1));
 let selectedTrip = 't1';
 let selectedPerson = 'driver';
 const defaultSeats = { 'rear-left': null, 'rear-center': null, 'rear-right': 'passenger', 'front-passenger': null, driver: 'driver' };
@@ -37,6 +43,8 @@ let openSeat = null;
 function renderSeats() {
   document.querySelector('#passengerCount').textContent = Object.values(seatAssignments).filter(Boolean).length + '명';
   if(typeof syncHomeAdvice === 'function')syncHomeAdvice();
+  const driverName=demo.people[seatAssignments.driver]?.name;
+  document.querySelector('#homeTrips').innerHTML=demo.trips.filter(t=>t.driver===driverName).slice(0,3).map(tripButton).join('');
   document.querySelectorAll('[data-seat]').forEach(seat => {
     const seatId = seat.dataset.seat;
     const person = seatAssignments[seatId] ? demo.people[seatAssignments[seatId]] : null;
