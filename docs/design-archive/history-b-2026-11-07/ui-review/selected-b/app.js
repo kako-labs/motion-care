@@ -24,13 +24,14 @@ for(const [i,t] of demo.trips.entries()) { t.replay=buildJourneyReplay(t.duratio
 const labels = { stop: '정차 직전 속도 변화', start: '출발 직후 속도 증가', repeat: '반복 가감속', curve: '빠른 회전', sway: '반복 좌우 움직임' };
 const previous = { stop: 2.4, start: 1.4, repeat: .9, curve: .6, sway: .3 };
 for(const key of Object.keys(previous))previous[key]=Number((demo.trips.filter(t=>t.driver==='민준').slice(1).reduce((sum,t)=>sum+t.patterns[key]*600/t.replay.validSeconds,0)/2).toFixed(1));
-let selectedTrip = 't1';
-let selectedPerson = 'driver';
-const defaultSeats = { 'rear-left': null, 'rear-center': null, 'rear-right': 'passenger', 'front-passenger': null, driver: 'driver' };
+let selectedTrip = 'j1';
+let selectedPerson = 'jiyoung';
+const defaultSeats = { 'rear-left': null, 'rear-center': null, 'rear-right': 'passenger', 'front-passenger': null, driver: 'jiyoung' };
 let seatAssignments = { ...defaultSeats };
 try {
   const savedSeats = JSON.parse(localStorage.getItem('motion-care-demo-seats'));
-  if (savedSeats && Object.keys(defaultSeats).every(key => key in savedSeats)) seatAssignments = savedSeats;
+  if (localStorage.getItem('motion-care-demo-scenario')==='populated-v2' && savedSeats && Object.keys(defaultSeats).every(key => key in savedSeats) && demo.people[savedSeats.driver]?.kind==='성인') seatAssignments = savedSeats;
+  else {localStorage.setItem('motion-care-demo-seats',JSON.stringify(defaultSeats));localStorage.setItem('motion-care-demo-scenario','populated-v2');}
 } catch (_) {}
 
 function tripButton(t) {

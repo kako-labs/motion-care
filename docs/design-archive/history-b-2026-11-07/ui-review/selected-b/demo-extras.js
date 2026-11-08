@@ -65,7 +65,7 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-route-failure]')){go('routes');document.querySelector('#routeFeedback').textContent='내비와 연결하지 못했어요. 기존 경로를 유지해요.';document.querySelector('.demo-tools').open=false;}
   if(e.target.closest('[data-demo-reset]')){
     seatAssignments={...defaultSeats};chosenRating=null;chosenReasons.clear();environmentMode='available';chosenRoute='comfortable';appliedRoute=null;
-    demo.people=JSON.parse(JSON.stringify(originalDemoFixture.people));demo.trips=JSON.parse(JSON.stringify(originalDemoFixture.trips));selectedTrip='t1';selectedPerson='driver';
+    demo.people=JSON.parse(JSON.stringify(originalDemoFixture.people));demo.trips=JSON.parse(JSON.stringify(originalDemoFixture.trips));selectedTrip='j1';selectedPerson='jiyoung';
     ['motion-care-demo-seats','motion-care-b-feedback'].forEach(k=>localStorage.removeItem(k));
     document.querySelector('#environmentMode').value='available';renderHome();renderRecords();renderFeedback();go('home');
     document.querySelector('.demo-tools').open=false;

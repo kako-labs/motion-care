@@ -16,16 +16,27 @@ function buildJourneyReplay(durationMinutes, hardStopCount, rapidStartCount, var
     const dwell=nextIndex===0?3:[18,34,21,45,14,28,22,31][(nextIndex-1)%8];
     const brakeSeconds=brakeDuration(nextIndex);
     if(t===0||t===duration||since<=dwell)return 0;
-    if(next-t<=brakeSeconds)return Math.max(0,base(next-brakeSeconds)*(next-t)/brakeSeconds);
+    if(next-t<=brakeSeconds){
+      const u=1-(next-t)/brakeSeconds;
+      const pressure=.08*u+.92*(3*u*u-2*u*u*u);
+      return Math.max(0,base(next-brakeSeconds)*(1-pressure));
+    }
     const accelerationSeconds=nextIndex>0&&nextIndex<=rapidStartCount?4:25;
-    if(since<dwell+accelerationSeconds)return base(t)*(since-dwell)/accelerationSeconds;
+    if(since<dwell+accelerationSeconds){const u=(since-dwell)/accelerationSeconds;return base(t)*(.1*u+.9*(3*u*u-2*u*u*u));}
     return base(t);
   }
   const samples=Array.from({length:duration+1},(_,t)=>({second:t,kmh:t>gapStart&&t<gapEnd?null:Math.round(speedAt(t)*10)/10}));
   let distanceKm=0,validSeconds=0;
   for(let i=1;i<samples.length;i++)if(samples[i-1].kmh!==null&&samples[i].kmh!==null){distanceKm+=(samples[i-1].kmh+samples[i].kmh)/2/3600;validSeconds++;}
-  const events=stops.map((t,i)=>({t,i})).filter(p=>hardIndices.has(p.i)).map((p,i)=>({id:'stop-'+i,type:'stop',start:p.t-brakeDuration(p.i),end:p.t,before:samples[p.t-brakeDuration(p.i)].kmh,after:0}));
-  return {origin:'SYNTHETIC',sampleIntervalSeconds:1,samples,events,gap:{start:gapStart,end:gapEnd},distanceKm,validSeconds,maxKmh:Math.max(...samples.map(p=>p.kmh??0))};
+  const events=stops.map((t,i)=>({t,i})).filter(p=>hardIndices.has(p.i)).map((p,i)=>{
+    const start=p.t-brakeDuration(p.i),detailStart=Math.max(0,start-24),detailEnd=Math.min(duration,p.t+36);
+    const detailSamples=Array.from({length:(detailEnd-detailStart)*5+1},(_,j)=>{
+      const second=detailStart+j/5;
+      return {second,kmh:second>gapStart&&second<gapEnd?null:Math.round(speedAt(second)*10)/10};
+    });
+    return {id:'stop-'+i,type:'stop',start,end:p.t,before:samples[start].kmh,after:0,detailSamples};
+  });
+  return {origin:'SYNTHETIC',sampleIntervalSeconds:1,detailSampleIntervalSeconds:.2,samples,events,gap:{start:gapStart,end:gapEnd},distanceKm,validSeconds,maxKmh:Math.max(...samples.map(p=>p.kmh??0))};
 }
 function elapsedTime(seconds){return Math.floor(seconds/60)+':'+String(Math.floor(seconds%60)).padStart(2,'0');}
 function clockTime(trip,second){const match=trip.date.match(/(\d{2}):(\d{2})/);const minutes=Number(match[1])*60+Number(match[2])+Math.floor(second/60);return String(Math.floor(minutes/60)%24).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0');}

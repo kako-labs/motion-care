@@ -1,0 +1,9 @@
+[
+  "plain URL defaults to populated driver history",
+  "event selection renders dense detailed trace",
+  "pointer reads timestamp and speed",
+  "report opens the same trip and selected event",
+  "reset restores populated scenario",
+  "reload preserves populated default",
+  "previous empty scenario migrates to populated history"
+]

@@ -22,11 +22,17 @@ function syncHomeAdvice(){
   document.querySelector('#screen-home .advice-copy h2').textContent='정차 전, 조금 일찍 감속해 보세요.';
 }
 function adviceEventPlot(trip,event){
-  const start=Math.max(0,event.start-12),end=event.end+8,points=trip.replay.samples.filter(p=>p.second>=start&&p.second<=end),ceiling=Math.max(30,Math.ceil(event.before/10)*10);
-  const x=t=>42+(t-start)/(end-start)*566,y=v=>159-v/ceiling*126;
-  const path=points.filter(p=>p.kmh!==null).map((p,i)=>(i?'L':'M')+x(p.second).toFixed(1)+' '+y(p.kmh).toFixed(1)).join(' ');
-  return `<svg viewBox="0 0 640 195" class="advice-event-plot" role="img" aria-label="${adviceClock(trip,event.start)} 감속, ${Math.round(event.before)}km/h에서 0km/h까지 ${event.end-event.start}초"><rect x="${x(event.start)}" y="25" width="${x(event.end)-x(event.start)}" height="134" fill="#e8bd8420"/>${[0,Math.round(ceiling/2),ceiling].map(v=>`<line x1="42" x2="608" y1="${y(v)}" y2="${y(v)}"/><text x="8" y="${y(v)+4}">${v}</text>`).join('')}<path d="${path}"/><circle cx="${x(event.start)}" cy="${y(event.before)}" r="4"/><circle cx="${x(event.end)}" cy="159" r="4"/><text x="42" y="186">${adviceClock(trip,start)}</text><text x="${x(event.start)}" y="186" text-anchor="middle">${adviceClock(trip,event.start)}</text><text x="608" y="186" text-anchor="end">${adviceClock(trip,end)}</text></svg>`;
+  const points=event.detailSamples||trip.replay.samples.filter(p=>p.second>=Math.max(0,event.start-24)&&p.second<=event.end+36);
+  const start=points[0].second,end=points.at(-1).second,ceiling=Math.max(60,Math.ceil(Math.max(...points.map(p=>p.kmh??0))/20)*20);
+  const x=t=>50+(t-start)/(end-start)*766,y=v=>226-v/ceiling*180;
+  const line=samples=>{let open=false;return samples.map(p=>{if(p.kmh===null){open=false;return '';}const command=open?'L':'M';open=true;return command+x(p.second).toFixed(2)+' '+y(p.kmh).toFixed(2);}).join(' ');};
+  const braking=points.filter(p=>p.second>=event.start&&p.second<=event.end),restart=points.find(p=>p.second>event.end&&p.kmh>.5)?.second??end;
+  const ticks=[start];for(let t=Math.ceil((start+7)/15)*15;t<end-7;t+=15)ticks.push(t);ticks.push(end);
+  const grid=[];for(let t=Math.ceil(start/5)*5;t<end;t+=5)grid.push(`<line x1="${x(t)}" x2="${x(t)}" y1="39" y2="226" class="event-grid-vertical"/>`);
+  const dots=points.filter(p=>p.kmh!==null&&Math.abs(p.second-Math.round(p.second))<.01);
+  return `<div class="event-chart-meta"><span><i></i>주행 속도 <i class="brake-key"></i>감속 구간</span><span>${Math.round(end-start)}초 확대 · 0.2초 간격</span></div><div class="event-chart-wrap"><svg id="adviceEventChart" viewBox="0 0 840 279" class="advice-event-plot" role="img" aria-label="${adviceClock(trip,event.start)} 전후의 주행 속도. 접근, 감속, 정차, 재출발을 0.2초 간격으로 표시"><defs><linearGradient id="eventArea" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#96d7ff" stop-opacity=".17"/><stop offset="1" stop-color="#96d7ff" stop-opacity="0"/></linearGradient></defs><rect x="${x(event.end)}" y="39" width="${x(restart)-x(event.end)}" height="187" class="event-stop-band"/><rect x="${x(event.start)}" y="39" width="${x(event.end)-x(event.start)}" height="187" class="event-brake-band"/>${grid.join('')}${Array.from({length:ceiling/20+1},(_,i)=>i*20).map(v=>`<line x1="50" x2="816" y1="${y(v)}" y2="${y(v)}" class="event-grid-horizontal"/><text x="14" y="${y(v)+4}">${v}</text>`).join('')}<text x="13" y="24" class="event-unit">km/h</text><path d="${line(points)} L816 226 L50 226Z" class="event-area"/><path d="${line(points)}" class="event-speed-line"/>${dots.map(p=>`<circle cx="${x(p.second)}" cy="${y(p.kmh)}" r="1.5" class="event-sample"/>`).join('')}<path d="${line(braking)}" class="event-brake-line"/><circle cx="${x(event.start)}" cy="${y(event.before)}" r="4.5" class="event-boundary"/><circle cx="${x(event.end)}" cy="226" r="4.5" class="event-boundary"/><line x1="${x(event.start)}" x2="${x(event.start)}" y1="39" y2="226" class="event-boundary-line"/><line x1="${x(event.end)}" x2="${x(event.end)}" y1="39" y2="226" class="event-boundary-line"/><text x="${x((event.start+event.end)/2)}" y="24" text-anchor="middle" class="event-brake-label">감속 ${event.end-event.start}초</text><text x="${x((event.end+restart)/2)}" y="211" text-anchor="middle" class="event-stop-label">정차</text>${ticks.map((t,i)=>`<text x="${x(t)}" y="252" text-anchor="${i===0?'start':i===ticks.length-1?'end':'middle'}">${adviceClock(trip,t)}</text>`).join('')}<line id="eventCrosshair" x1="50" x2="50" y1="39" y2="226" style="display:none"/><circle id="eventCursor" r="4" style="display:none"/></svg><div class="event-value-readout" id="eventValueReadout"><span>${adviceClock(trip,event.start)}</span><strong>${event.before.toFixed(1)}<small>km/h</small></strong></div></div>`;
 }
+
 function renderAdviceDetail(){
   const c=adviceContext(),host=document.querySelector('#screen-why');
   if(!c.latest){host.innerHTML=`<button class="btn back small" data-go="home">← 출발 안내</button><article class="panel advice-empty"><div class="kicker">BEFORE THE FIRST TRIP</div><h1>출발과 감속을 여유 있게 해보세요.</h1><p>${c.person?escapeHtml(c.person.name)+'의':'운전자'} 기록이 쌓이면 어떤 움직임이 자주 나타나는지 함께 살펴볼 수 있어요.</p><button class="btn" data-go="home">출발 준비로</button></article>`;return;}
@@ -45,3 +51,12 @@ const requestedAdviceDriver=typeof location!=='undefined'?new URLSearchParams(lo
 if(requestedAdviceDriver&&demo.people[requestedAdviceDriver]?.kind==='성인'){assignPerson(requestedAdviceDriver,'driver');renderSeats();}
 syncHomeAdvice();
 if(document.querySelector('#screen-why').classList.contains('active'))renderAdviceDetail();
+
+document.addEventListener('pointermove',e=>{
+ const svg=e.target.closest('#adviceEventChart');if(!svg)return;
+ const point=new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.getScreenCTM().inverse());if(point.x<50||point.x>816)return;
+ const event=adviceContext().latest.replay.events[adviceEventIndex],samples=event.detailSamples;
+ const index=Math.max(0,Math.min(samples.length-1,Math.round((point.x-50)/766*(samples.length-1)))),sample=samples[index],ceiling=Math.max(60,Math.ceil(Math.max(...samples.map(p=>p.kmh??0))/20)*20);
+ const cross=document.querySelector('#eventCrosshair'),dot=document.querySelector('#eventCursor');cross.style.display='';cross.setAttribute('x1',point.x);cross.setAttribute('x2',point.x);dot.style.display=sample.kmh===null?'none':'';dot.setAttribute('cx',point.x);dot.setAttribute('cy',226-(sample.kmh??0)/ceiling*180);
+ const seconds=Math.floor(sample.second),fraction=Math.round((sample.second-seconds)*10);document.querySelector('#eventValueReadout').innerHTML='<span>'+adviceClock(adviceContext().latest,seconds)+'.'+fraction+'</span><strong>'+(sample.kmh===null?'—':sample.kmh.toFixed(1))+'<small>km/h</small></strong>';
+});
