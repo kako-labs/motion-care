@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/app/src/androidTest/java/dev/motioncare/app/HistoryBStorageFlowTest.kt
-@@ -0,0 +1,127 @@
+@@ -0,0 +1,135 @@
 +package dev.motioncare.app
 +
 +import android.content.Context
@@ -85,7 +85,15 @@
 +            click(title)
 +            compose.onNodeWithText("완료된 운행").assertExists()
 +            click("평가 남기기", substring = true)
-+            compose.onNodeWithContentDescription("5점").performClick()
++            // NavHost may briefly expose the destination only in the unmerged transition tree.
++            // Wait for the user-facing destination, then keep exercising a real touch.
++            compose.waitUntil(20_000) {
++                compose.onAllNodesWithText("이동 평가").fetchSemanticsNodes().isNotEmpty() &&
++                    compose.onAllNodesWithContentDescription("5점").fetchSemanticsNodes().size == 1
++            }
++            val fiveStars = compose.onNodeWithContentDescription("5점")
++            if (!fiveStars.isDisplayed()) fiveStars.performScrollTo()
++            fiveStars.performClick()
 +            click("커브")
 +            click("나의 응답 남기기")
 +            compose.waitUntil(20_000) { profiles.feedback.value.any { it.tripId == tripId && (it.answer as? FeedbackAnswer.Rating)?.value == 5 } }

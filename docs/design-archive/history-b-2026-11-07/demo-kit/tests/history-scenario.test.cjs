@@ -11,6 +11,9 @@ for(const driver of ['driver',null]){
  assert.equal(run('seatAssignments.driver'),'jiyoung','explicit populated scenario wins over saved seats');
  assert.equal(run('Object.values(seatAssignments).filter(x=>x==="jiyoung").length'),1);
  c.renderHome();c.renderRecords();
+ c.renderProfile();
+ assert.ok(node('#profileMain').innerHTML.includes('최근 운전 경향'),'the selected adult driver uses their own driving profile');
+ assert.ok(node('#profileMain').innerHTML.includes('3<small>회'),'profile count matches the three displayed trips');
  assert.equal((node('#homeTrips').innerHTML.match(/data-trip=/g)||[]).length,3);
  assert.equal((node('#recordList').innerHTML.match(/data-trip=/g)||[]).length,3);
  assert.ok(!node('#recordList').innerHTML.includes('data-trip="t1"'));

@@ -34,15 +34,15 @@ import kotlin.math.max
 fun tripTime(epochMs: Long): String = SimpleDateFormat("M월 d일 (E) a h:mm", Locale.KOREAN).format(Date(epochMs))
 fun tripDate(epochMs: Long): String = SimpleDateFormat("M월 d일 (E)", Locale.KOREAN).format(Date(epochMs))
 
-val MotionBackground = Color(0xFF050F20)
-val MotionPanel = Color(0xCC102844)
-val MotionPanelLight = Color(0xAA1B426A)
-val MotionCyan = Color(0xFFB0E6FF)
-val MotionBlue = Color(0xFF278DDB)
-val MotionText = Color(0xFFEAF4FF)
-val MotionSubtle = Color(0xFFAEC3DA)
-val MotionMuted = Color(0xFF829BB7)
-val MotionLine = Color(0x3DA4CDF5)
+val MotionBackground = Color(0xFF0C1729)
+val MotionPanel = Color(0xFF142237)
+val MotionPanelLight = Color(0xFF1B2B42)
+val MotionCyan = Color(0xFFB0DDF5)
+val MotionBlue = Color(0xFF578CB4)
+val MotionText = Color(0xFFEDF3FA)
+val MotionSubtle = Color(0xFFB6C5D7)
+val MotionMuted = Color(0xFF879BB4)
+val MotionLine = Color(0x24B9D5F0)
 
 private val motionColors = darkColorScheme(
     primary = MotionCyan, onPrimary = Color(0xFF03111F), secondary = MotionBlue,
@@ -62,14 +62,14 @@ private val motionColors = darkColorScheme(
 
 @Composable fun MotionCareBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     MotionCareTheme {
-        Box(modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF061325), Color(0xFF0C2F55), Color(0xFF050F20)))), content = content)
+        Box(modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF14243A), MotionBackground, Color(0xFF0A1424)))), content = content)
     }
 }
 
 @Composable fun GlassPanel(modifier: Modifier = Modifier, compact: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     MotionCareTheme {
-        Column(modifier.background(Brush.linearGradient(listOf(Color(0x352B547F), Color(0x40172D4B))), RoundedCornerShape(22.dp))
-            .border(1.dp, MotionLine, RoundedCornerShape(22.dp)).padding(if (compact) 16.dp else 22.dp),
+        Column(modifier.background(Brush.linearGradient(listOf(Color(0xFF17263C), MotionPanel)), RoundedCornerShape(20.dp))
+            .border(1.dp, MotionLine, RoundedCornerShape(20.dp)).padding(if (compact) 18.dp else 24.dp),
             verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 14.dp), content = content)
     }
 }
@@ -84,8 +84,8 @@ private val motionColors = darkColorScheme(
                 if (onBack != null) RoundIconButton("‹", onBack)
                 leading?.invoke()
                 Column(Modifier.weight(1f)) {
-                    Text(title, fontSize = 34.sp, lineHeight = 40.sp, fontWeight = FontWeight.Medium)
-                    subtitle?.let { Text(it, color = MotionSubtle, fontSize = 17.sp) }
+                    Text(title, fontSize = 30.sp, lineHeight = 38.sp, fontWeight = FontWeight.Medium)
+                    subtitle?.let { Text(it, color = MotionMuted, fontSize = 16.sp, lineHeight = 24.sp) }
                 }
                 if (!compact) action?.invoke()
             }
@@ -95,9 +95,9 @@ private val motionColors = darkColorScheme(
 }
 
 @Composable fun RoundIconButton(symbol: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(onClick = onClick, shape = CircleShape, color = MotionPanelLight, border = androidx.compose.foundation.BorderStroke(1.dp, MotionLine),
-        modifier = modifier.size(64.dp).semantics { contentDescription = if (symbol == "‹") "뒤로" else symbol }) {
-        Box(contentAlignment = Alignment.Center) { Text(symbol, fontSize = 34.sp, lineHeight = 34.sp, color = MotionText) }
+    Surface(onClick = onClick, shape = RoundedCornerShape(14.dp), color = Color.Transparent,
+        modifier = modifier.size(52.dp).semantics { contentDescription = when (symbol) { "‹" -> "뒤로"; "✕" -> "닫기"; else -> symbol } }) {
+        Box(contentAlignment = Alignment.Center) { Text(symbol, fontSize = 27.sp, lineHeight = 30.sp, color = MotionSubtle) }
     }
 }
 
@@ -119,21 +119,22 @@ fun avatarFor(person: PersonProfile): Int {
 }
 
 @Composable private fun FaceImage(face: Int, modifier: Modifier, description: String? = null) {
-    Image(painterResource(face), description, modifier.clip(CircleShape).border(2.dp, MotionCyan.copy(.75f), CircleShape),
+    Image(painterResource(face), description, modifier.clip(CircleShape),
         contentScale = ContentScale.Crop)
 }
 
 @Composable fun PrimaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     Button(onClick = onClick, enabled = enabled, modifier = modifier.heightIn(min = 64.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = MotionBlue, contentColor = Color.White), shape = RoundedCornerShape(18.dp)) {
-        Text(text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        colors = ButtonDefaults.buttonColors(containerColor = MotionCyan, contentColor = Color(0xFF112337)), shape = RoundedCornerShape(14.dp)) {
+        Text(text, fontSize = 18.sp, fontWeight = FontWeight.Medium)
     }
 }
 
 @Composable fun SecondaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     OutlinedButton(onClick = onClick, enabled = enabled, modifier = modifier.heightIn(min = 64.dp),
-        border = ButtonDefaults.outlinedButtonBorder(enabled), shape = RoundedCornerShape(18.dp)) {
-        Text(text, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+        border = androidx.compose.foundation.BorderStroke(1.dp, MotionLine), shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MotionText)) {
+        Text(text, fontSize = 18.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -170,10 +171,9 @@ fun avatarFor(person: PersonProfile): Int {
 }
 
 @Composable fun MetricTile(value: String, label: String, modifier: Modifier = Modifier, highlighted: Boolean = false) {
-    Column(modifier.background(if (highlighted) MotionBlue.copy(.34f) else MotionPanel, RoundedCornerShape(18.dp))
-        .border(1.dp, if (highlighted) MotionCyan.copy(.8f) else MotionLine, RoundedCornerShape(18.dp)).padding(18.dp),
+    Column(modifier.padding(horizontal = 12.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
-        Text(value, fontSize = 30.sp, fontWeight = FontWeight.Medium)
+        Text(value, color = if (highlighted) MotionCyan else MotionText, fontSize = 30.sp, fontWeight = FontWeight.Medium)
         Text(label, color = MotionSubtle, fontSize = 15.sp)
     }
 }

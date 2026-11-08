@@ -100,8 +100,8 @@ private fun EnvironmentFields(fields: List<EnvironmentFieldUi>, modifier: Modifi
         fields.forEach { field ->
             Column(
                 Modifier.fillMaxWidth()
-                    .background(Brush.linearGradient(listOf(Color(0x352B547F), Color(0x20172D4B))), RoundedCornerShape(22.dp))
-                    .border(1.dp, Color(0x40AACFEE), RoundedCornerShape(22.dp)).padding(22.dp),
+                    .background(Brush.linearGradient(listOf(Color(0xFF17263C), Color(0xFF142237))), RoundedCornerShape(20.dp))
+                    .border(1.dp, Color(0x24B9D5F0), RoundedCornerShape(20.dp)).padding(22.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(field.label, color = Color(0xFFA6C2D9), fontSize = 15.sp)

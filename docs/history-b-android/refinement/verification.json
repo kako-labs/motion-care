@@ -1,0 +1,68 @@
+{
+  "unit": {
+    "tests": 274,
+    "failures": 0,
+    "errors": 0,
+    "suites": 32
+  },
+  "ui": [
+    {
+      "size": "1024x768",
+      "tests": 6,
+      "passed": true,
+      "normalDatabaseBefore": {
+        "motion-care-profile.db": "cf37b163dc784e2b90308fe9aabbabe82336cfa480c0b63d9f10d0ec948551eb",
+        "motion-care-sample.db": "2fa3b0cdf6e848ad040ff25c57f9a2f543d58ba05b12be88a84e45eeec8516f6"
+      },
+      "normalDatabaseAfter": {
+        "motion-care-profile.db": "cf37b163dc784e2b90308fe9aabbabe82336cfa480c0b63d9f10d0ec948551eb",
+        "motion-care-sample.db": "2fa3b0cdf6e848ad040ff25c57f9a2f543d58ba05b12be88a84e45eeec8516f6"
+      },
+      "normalDatabaseUnchanged": true
+    },
+    {
+      "size": "1682x1210",
+      "tests": 6,
+      "passed": true,
+      "normalDatabaseBefore": {
+        "motion-care-profile.db": "cf37b163dc784e2b90308fe9aabbabe82336cfa480c0b63d9f10d0ec948551eb",
+        "motion-care-sample.db": "2fa3b0cdf6e848ad040ff25c57f9a2f543d58ba05b12be88a84e45eeec8516f6"
+      },
+      "normalDatabaseAfter": {
+        "motion-care-profile.db": "cf37b163dc784e2b90308fe9aabbabe82336cfa480c0b63d9f10d0ec948551eb",
+        "motion-care-sample.db": "2fa3b0cdf6e848ad040ff25c57f9a2f543d58ba05b12be88a84e45eeec8516f6"
+      },
+      "normalDatabaseUnchanged": true
+    }
+  ],
+  "vehicleUnchanged": true,
+  "vehicleSha256": "97d9317bd85bfcd3d5736f0b6b196c4799d52875e3658179c3f0984f93a30307",
+  "releaseDebugFixturesExcluded": true,
+  "releaseApkSha256": "dc498a5fe14cb37000d72b23d239d96013c1a1234e0d925884032bc738957a98",
+  "captureEnvironment": {
+    "api": 35,
+    "density": 160,
+    "timezone": "GMT",
+    "vehicleData": "isolated synthetic debug fixture"
+  },
+  "pngSha256": {
+    "1024x768\\advice.png": "9d3649a48c1c8b6b96610e074fbc23684b58505616236075c4fd4d1b0afeefb3",
+    "1024x768\\departure.png": "b9d08cd3123872c10fd5f515dd98192cdcbfded3567584d10bc072d477795890",
+    "1024x768\\driver.png": "4987ce89102f735123660d29cc6e78fffe2ce8a4433ed1a182e2c55576f6eab4",
+    "1024x768\\feedback.png": "6114f725acd857f15919b5f9a83e907e644b72faffe8103eb730712f2f6f3028",
+    "1024x768\\finished.png": "803f698c9d36810d5d211d2cfdbd530722cd82a89dd17879dd5a911e0e86c0a2",
+    "1024x768\\passenger.png": "be3a369883da6beebb9d479ce82979ad5306802a9b2b938f77905c076c97afff",
+    "1024x768\\records.png": "49709a581cda5cb1884df4107f7d623b5d072cfb417007a00ed490d77613fb76",
+    "1024x768\\seat-drawer.png": "8cf9b17c6646b42031ad2db28d7315800cc486c9274ab89f799ebf29715d4570",
+    "1024x768\\trip.png": "10aa66aae2c786dbe37fab0b7f991575a5dce74594e9e79675a39c2667dd6363",
+    "1682x1210\\advice.png": "4eb3caf4758499456a44ba2aecc3d2316bd557fa1dd705a01cf233742119069e",
+    "1682x1210\\departure.png": "98af32ee4daa23fe08caa3b8315a7a795ecc68f63fc9f60386751f1c00774114",
+    "1682x1210\\driver.png": "1e9d3d05ea98d98951a1d17399f09b587585605bb563255c80417bdcdd9fadbe",
+    "1682x1210\\feedback.png": "758febca9d669347e141a5242c2dfaaccbb1c031750887fa234cc5aa129cab64",
+    "1682x1210\\finished.png": "dd3ffc11afa62933e7f6d25fa044f315a57b61d77a577e5e17c53b925d6dbe85",
+    "1682x1210\\passenger.png": "6a8ff356a2cc0f00c497e9d83fbcb4ffec89c949d308366521e4fec0a908be8b",
+    "1682x1210\\records.png": "5efaeb9c176aab7d3e3b5ce5b5d5e2450dc82e0484c23d0f75cf8b4eeeec8abd",
+    "1682x1210\\seat-drawer.png": "90172ec294c7e31c38e31957be8671b98bb70c1ebc73a55d64bb845f4c19a999",
+    "1682x1210\\trip.png": "3540597aa3bfea5b7d6efb1f708c4c70f90dc64b95070eeabe0645d6cc9f95a3"
+  }
+}

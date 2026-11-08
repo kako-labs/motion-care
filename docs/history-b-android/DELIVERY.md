@@ -1,5 +1,7 @@
 # 로컬 전달 상태 · 2026-11-08
 
+최신 표현 변경과 CI 복구, 두 크기 UI/SQLite 재검증은 [REFINEMENT.md](REFINEMENT.md)를 기준으로 읽는다. 공통 앱 테마는 미적용 리뷰 패치이며 원격 최종 체크는 PR #19에서 확인한다.
+
 **최신 공유 상태:** 사용자가 저장소·브랜치·전송 자료를 명시적으로 승인한 후 `feat/history-b-android` push 및 [Draft PR #19](https://github.com/kako-labs/motion-care/pull/19) 생성을 완료했다. [팀 Notion 인계](TEAM-NOTION.md)에도 코드·PR·화면 링크를 반영했다. main은 병합하지 않았다. HTML의 운전자별 기록 일관성 수정은 `0298fcf`이며 아래 승인 대기 설명은 이전 경과로 보존한다.
 
 ## 구현·검증 완료

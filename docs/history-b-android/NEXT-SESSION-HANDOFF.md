@@ -1,5 +1,7 @@
 # B Android 연결 이후의 인수인계
 
+> 최신 후속 요청: CI 실패를 복구하고 차량·B 컨셉을 유지한 채 전체 담당 화면을 정교화했다. [REFINEMENT.md](REFINEMENT.md)의 소스 범위·검증·새 화면 모음·미적용 app 테마 패치를 먼저 읽는다. 기존 그림/큰 링 버전은 비교용으로 보존한다.
+
 기록 담당 화면 연결·기기 검증·인계 준비를 마무리했다. Android 소스는 `0d8f057`, HTML 기록 일관성 수정은 `0298fcf`다. 사용자 명시 승인 후 원격 브랜치 push와 [Draft PR #19](https://github.com/kako-labs/motion-care/pull/19) 생성을 완료했다. [전달 상태](DELIVERY.md)와 [팀 Notion 인계](TEAM-NOTION.md)를 먼저 읽는다. 다음 작업은 팀원의 리뷰·최종 조립이다.
 
 ## 현재 작업 위치

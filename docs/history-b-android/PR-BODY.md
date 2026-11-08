@@ -1,10 +1,21 @@
+## 최신 변경 · B 화면 정교화 / CI 복구
+
+차량·얼굴 원본과 네이비·하늘색, 유리 질감, 사선 제안, 상세 감속 그래프를 유지했습니다. 큰 좌석 링·과한 광택·반복 숫자 카드·장식 라벨을 줄이고 출발·기록·프로필·조언·평가·종료의 여백과 글자 위계를 맞췄습니다. HTML 지영 프로필도 본인의 3건을 사용하도록 회귀 검사 후 수정했습니다.
+
+- CI의 Gradle 다운로드 타임아웃과 옛 화면 문구를 기다리는 실패를 분리했습니다. `ScaffoldFlowTest`는 현재 화면 왕복과 공개 Repository의 샘플 보존을 검증합니다. 복구 커밋 `1a20003`의 [verify/UI 성공 기록](https://github.com/kako-labs/motion-care/actions/runs/42480565484); 최신 커밋은 이 PR의 Checks 참조.
+- 최종 로컬 verifyAll 274개/32 suite 통과. 1024×768·1682×1210 격리 UI/실제 SQLite 저장 검사 각 6개 통과, 정상 DB 전후 해시 동일. release에 debug fixture 없음. HTML Node 3개와 4개 너비의 화면 확인.
+- [최신 구현·검증·18장 Android 캡처](https://github.com/kako-labs/motion-care/blob/feat/history-b-android/docs/history-b-android/REFINEMENT.md), [HTML 화면 모음](https://github.com/kako-labs/motion-care/blob/feat/history-b-android/docs/design-archive/history-b-2026-11-07/ui-review/selected-b/review.html).
+- app **제품 코드**·공통 계약·DB·SDK·서비스·탐지·내비는 변경하지 않았습니다. 명시적 CI 수정 요청에 따라 app instrumentation 검사만 변경했습니다. 루트 테마는 미적용 `app-b-theme.patch`로 제공합니다. 아래 이전 검증 기록은 이전 전달 시점의 결과입니다.
+
+---
+
 기존 기록 담당 화면의 ViewModel·저장 흐름에 확정 B 디자인을 연결했습니다. 출발의 큰 차량/좌석·최근 기록·사선 제안, 프로필, 조언과 선택 감속 상세, 운행 리포트, 평가가 같은 Repository 값을 사용합니다. 1024×768에서도 좌석·기록·제안을 함께 보고, 동승자 얼굴·편집 버튼은 한 번만 표시합니다.
 
 ## 선행 작업과 리뷰 범위
 
 - **Depends on #10, #17.** 두 기존 PR을 로컬에서 결합한 기준입니다. main에 바로 병합하지 않는 Draft입니다.
 - `315bee2`는 기존 기록 담당 미커밋 화면/자산 사본을 보존한 기준입니다. **이번 신규 연결만 보려면 `315bee2..HEAD`를 비교**해 주세요.
-- main 기준 전체 diff에 포함된 좌석/평가 공통 모델·DB 변경은 선행 #10의 기존 내용입니다. 이번 신규 범위에서 app/core/data/Gradle/SDK/서비스/탐지/내비를 바꾸지 않았습니다.
+- main 기준 전체 diff에 포함된 좌석/평가 공통 모델·DB 변경은 선행 #10의 기존 내용입니다. 이번 신규 범위에서 app 제품 코드/core/data/Gradle/SDK/서비스/탐지/내비를 바꾸지 않았습니다. CI 복구를 위한 app 검사 파일 변경은 위 최신 변경을 참고하세요.
 - 원본 작업 트리의 기존 미커밋 변경 15개 파일과 준비/저장 트리를 보존했습니다.
 
 ## 데이터와 상태

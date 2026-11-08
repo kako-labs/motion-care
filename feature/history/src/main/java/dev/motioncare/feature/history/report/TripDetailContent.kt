@@ -117,8 +117,8 @@ internal fun TripDetailContent(
         .border(if (seen) 2.dp else 1.dp, if (seen) MotionCyan else MotionLine, RoundedCornerShape(20.dp)).padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(patternIcon(pattern), fontSize = 34.sp, color = if (seen) MotionCyan else MotionMuted)
-        Text("$count", fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.ExtraBold, color = if (seen) MotionText else MotionMuted)
-        Text(patternLabel(pattern), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MotionSubtle, textAlign = TextAlign.Center)
+        Text("$count", fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.Medium, color = if (seen) MotionText else MotionMuted)
+        Text(patternLabel(pattern), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MotionSubtle, textAlign = TextAlign.Center)
         val trend = if (rate != null && recentAverage != null) when {
             rate < recentAverage -> "↓ 평소보다 적음"
             rate > recentAverage -> "↑ 평소보다 많음"
@@ -131,14 +131,14 @@ internal fun TripDetailContent(
 @Composable private fun ParticipantsPanel(state: TripExperienceUiState, modifier: Modifier = Modifier) {
     val people = state.people.associateBy { it.id }
     GlassPanel(modifier) {
-        Text("이 운행의 탑승자", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text("이 운행의 탑승자", fontSize = 22.sp, fontWeight = FontWeight.Medium)
         val seats = state.participants?.seatAssignments.orEmpty()
         if (seats.isEmpty()) Text("연결된 탑승 정보가 없어요.", color = MotionSubtle)
         SeatPosition.entries.forEach { seat ->
             val person = seats[seat]?.let(people::get) ?: return@forEach
             Row(Modifier.fillMaxWidth().heightIn(min = 62.dp), verticalAlignment = Alignment.CenterVertically) {
                 PersonAvatar(person, Modifier.size(50.dp)); Spacer(Modifier.width(12.dp))
-                Text(person.displayName, Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                Text(person.displayName, Modifier.weight(1f), fontWeight = FontWeight.Medium)
                 Text(seat.label(), color = MotionSubtle)
             }
         }
@@ -149,7 +149,7 @@ internal fun TripDetailContent(
     val passengerIds = state.participants?.passengerIds.orEmpty()
     val ratings = state.feedback.mapNotNull { feedback -> (feedback.answer as? FeedbackAnswer.Rating)?.value }
     GlassPanel(modifier) {
-        Text("동승자 편안함 평가", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text("동승자 편안함 평가", fontSize = 22.sp, fontWeight = FontWeight.Medium)
         when {
             passengerIds.isEmpty() -> Text("이 운행에는 등록된 동승자가 없어요.", color = MotionSubtle)
             ratings.isEmpty() -> Text("${passengerIds.size}명의 평가가 아직 없어요.", color = MotionSubtle)
@@ -162,7 +162,7 @@ internal fun TripDetailContent(
                     Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         PersonAvatar(person, Modifier.size(44.dp))
-                        Text(person.displayName, Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                        Text(person.displayName, Modifier.weight(1f), fontWeight = FontWeight.Medium)
                         Text(score?.let { "★".repeat(it) + "☆".repeat(5 - it) } ?: "— 응답 없음", fontSize = if (score != null) 30.sp else 18.sp,
                             color = if (score != null) MotionCyan else MotionMuted, letterSpacing = 2.sp)
                     }
@@ -174,7 +174,7 @@ internal fun TripDetailContent(
 }
 
 @Composable private fun ErrorPanel(message: String) = GlassPanel(Modifier.fillMaxWidth()) {
-    Text(message, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+    Text(message, fontSize = 22.sp, fontWeight = FontWeight.Medium)
 }
 
 private fun formatDuration(milliseconds: Long): String {

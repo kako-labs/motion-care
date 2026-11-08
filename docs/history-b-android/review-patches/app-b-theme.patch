@@ -1,0 +1,26 @@
+--- a/app/src/main/java/dev/motioncare/app/MainActivity.kt
++++ b/app/src/main/java/dev/motioncare/app/MainActivity.kt
+@@ -5,16 +5,21 @@
+ import androidx.activity.ComponentActivity
+ import androidx.activity.compose.setContent
+ import androidx.activity.enableEdgeToEdge
+-import androidx.compose.material3.MaterialTheme
++import dev.motioncare.feature.history.ui.MotionCareTheme
++import androidx.core.view.WindowCompat
+ import androidx.core.content.ContextCompat
+ 
+ class MainActivity : ComponentActivity() {
+     override fun onCreate(savedInstanceState: Bundle?) {
+         super.onCreate(savedInstanceState)
+         enableEdgeToEdge()
++        WindowCompat.getInsetsController(window, window.decorView).apply {
++            isAppearanceLightStatusBars = false
++            isAppearanceLightNavigationBars = false
++        }
+         val graph = (application as MotionCareApplication).graph
+         setContent {
+-            MaterialTheme {
++            MotionCareTheme {
+                 MainHost(
+                     trips = graph.trips,
+                     profiles = graph.profiles,

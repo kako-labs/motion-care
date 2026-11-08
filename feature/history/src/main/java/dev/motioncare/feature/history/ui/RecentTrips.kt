@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,8 +64,8 @@ import dev.motioncare.feature.history.HistoryViewModel
 }
 
 @Composable private fun FilterTile(selected: Boolean, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
-    Surface(onClick = onClick, shape = RoundedCornerShape(22.dp), color = if (selected) MotionBlue.copy(.35f) else MotionPanel,
-        border = BorderStroke(if (selected) 3.dp else 1.dp, if (selected) MotionCyan else MotionLine), modifier = Modifier.heightIn(min = 68.dp)) {
+    Surface(onClick = onClick, shape = RoundedCornerShape(12.dp), color = if (selected) MotionCyan.copy(.1f) else Color.Transparent,
+        border = BorderStroke(1.dp, if (selected) MotionCyan.copy(.5f) else MotionLine), modifier = Modifier.heightIn(min = 60.dp)) {
         Row(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, content = content)
     }
 }
@@ -75,10 +76,10 @@ import dev.motioncare.feature.history.HistoryViewModel
         records.forEach { trip ->
             TextButton(onClick = { onSelect(trip.id) }, modifier = Modifier.fillMaxWidth().heightIn(min = 68.dp)) {
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                    Text(tripTime(trip.startedAtEpochMs), fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                    Text(tripTime(trip.startedAtEpochMs), fontSize = 19.sp, fontWeight = FontWeight.Medium)
                     val minutes = trip.endedAtEpochMs?.let { ((it - trip.startedAtEpochMs) / 60_000).coerceAtLeast(0) }
                     Text(when (trip.status) {
-                        TripStatus.COMPLETED -> minutes?.let { "◷ ${it}분" } ?: "완료"
+                        TripStatus.COMPLETED -> minutes?.let { "${it}분" } ?: "완료"
                         TripStatus.RECORDING -> "● 기록 중"
                         TripStatus.INTERRUPTED -> "중단됨"
                     }, color = MotionSubtle, fontSize = 17.sp)

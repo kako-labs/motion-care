@@ -83,7 +83,7 @@ fun FinishedRoute(
 @Composable private fun SummaryTrend(pattern: DrivingPattern, trips: List<TripInsight>, modifier: Modifier = Modifier) {
     val values = trips.sortedBy { it.trip.startedAtEpochMs }.takeLast(6).mapNotNull { it.rate(pattern) }
     GlassPanel(modifier) {
-        Text("최근 ${values.size}회 · ${patternLabel(pattern)} · 10분당", color = MotionSubtle, fontWeight = FontWeight.Bold)
+        Text("최근 ${values.size}회 · ${patternLabel(pattern)} · 10분당", color = MotionSubtle, fontWeight = FontWeight.Medium)
         if (values.isEmpty()) Text("비교할 기록이 더 필요해요.", fontSize = 24.sp) else TrendBars(values)
     }
 }
@@ -95,8 +95,8 @@ fun FinishedRoute(
     modifier: Modifier = Modifier,
 ) {
     GlassPanel(modifier) {
-        Text("다음 출발", color = MotionSubtle, fontWeight = FontWeight.Bold)
-        Text(advice.headline, fontSize = 29.sp, lineHeight = 36.sp, fontWeight = FontWeight.ExtraBold)
+        Text("다음 출발", color = MotionSubtle, fontWeight = FontWeight.Medium)
+        Text(advice.headline, fontSize = 29.sp, lineHeight = 36.sp, fontWeight = FontWeight.Medium)
         val passengerIds = state.participants?.passengerIds.orEmpty()
         passengerIds.forEach { id ->
             val person = state.people.firstOrNull { it.id == id } ?: return@forEach

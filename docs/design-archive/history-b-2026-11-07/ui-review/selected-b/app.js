@@ -50,7 +50,7 @@ function syncSelectedTrip(){
 }
 
 function tripButton(t) {
-  return `<button class="trip" data-trip="${t.id}"><div class="trip-top"><b>${t.date}</b><span class="rating">${t.feedback === null ? '미응답' : '평가 '+t.feedback+'/5'}</span></div><p>${t.duration}분 · ${t.distance.toFixed(1)}km<br>${t.driver} 운전 · ${t.passenger} 동승</p></button>`;
+  return `<button class="trip" data-trip="${t.id}"><div class="trip-top"><b>${t.date}</b><span class="rating">${t.feedback === null ? '미응답' : '평가 '+t.feedback+'/5'}</span></div><p>${t.duration}분 · ${t.distance.toFixed(1)}km</p></button>`;
 }
 
 const seatLabels = { 'rear-left': '뒤 왼쪽', 'rear-center': '뒤 가운데', 'rear-right': '뒤 오른쪽', 'front-passenger': '조수석', driver: '운전석' };
@@ -58,6 +58,8 @@ let openSeat = null;
 
 function renderSeats() {
   const trips=syncSelectedTrip();
+  const driver=demo.people[seatAssignments.driver];
+  document.querySelector('.recent-title').textContent=driver?`${driver.name}의 최근 운행`:'최근 운행';
   document.querySelector('#passengerCount').textContent = Object.values(seatAssignments).filter(Boolean).length + '명';
   if(typeof syncHomeAdvice === 'function')syncHomeAdvice();
   document.querySelector('#homeTrips').innerHTML=trips.slice(0,3).map(tripButton).join('');
@@ -125,17 +127,19 @@ function renderSelector() {
   document.querySelector('#profileSelect').innerHTML = Object.values(demo.people).map(p => `
     <button class="profile-card" data-open-person="${p.id}">
       <div class="avatar"><img src="${p.avatar}" alt=""></div><div class="kicker">${p.role}</div><h2>${p.name}</h2>
-      <div class="profile-one-line"><small>최근 한줄 평</small><strong>${p.summary}</strong></div><span class="enter">→</span>
+      <div class="profile-one-line"><small>이동 메모</small><strong>${p.summary}</strong></div><span class="enter">→</span>
     </button>`).join('');
 }
 
 function renderProfile() {
-  const p = demo.people[selectedPerson], driver=p.kind==='성인'&&p.id==='driver';
+  const p = demo.people[selectedPerson], personTrips=demo.trips.filter(t=>t.driver===p.name), driver=p.kind==='성인'&&personTrips.length>0;
+  const profilePrevious=Object.fromEntries(Object.keys(labels).map(k=>[k,personTrips.slice(1).reduce((sum,t)=>sum+t.rates[k],0)/Math.max(1,personTrips.length-1)]));
+  document.querySelector('#profileSummary').classList.toggle('driver-summary',driver);
   document.querySelector('#profileTitle').textContent = `${p.name}의 프로필`;
-  document.querySelector('#profileSummary').innerHTML = `<div class="portrait-halo"><img src="${p.avatar}" alt="${p.name}의 프로필 이미지"></div><span class="tag">${p.kind} · ${p.role}</span><h2>${p.name}</h2><p>함께 타는 사람</p><div class="profile-highlight"><small>최근 이동에서</small><strong>${p.summary}</strong></div>`;
-  const t=demo.trips[0];
+  document.querySelector('#profileSummary').innerHTML = `<div class="portrait-halo"><img src="${p.avatar}" alt="${p.name}의 프로필 이미지"></div><span class="tag">${p.kind} · ${driver?'운전자':p.role}</span><h2>${p.name}</h2><div class="profile-highlight"><small>최근 이동에서</small><strong>${driver?'최근 운행 '+personTrips.length+'건':p.summary}</strong></div>`;
+  const t=personTrips[0]||demo.trips[0];
   if (driver) {
-    document.querySelector('#profileMain').innerHTML = `<div class="profile-section-heading"><span class="kicker">DRIVING JOURNAL</span><h2>조금씩, 더 편안한 운전으로.</h2><p class="desc">점수보다 지난 이동에서 달라진 순간을 살펴봐요.</p></div><div class="preference-grid"><div class="preference"><span>저장된 운행</span><strong>${p.trips}<small>회</small></strong></div><div class="preference"><span>정차 직전 변화</span><strong>${t.rates.stop}<small>회 / 10분</small></strong></div><div class="preference"><span>최근 동승자 평가</span><strong>${t.feedback===null?'미응답':t.feedback+'<small>/ 5</small>'}</strong></div></div><div class="panel driver-patterns"><div class="section-label"><span>최근 운전 경향</span><small>이번 운행 · 10분당 관찰 빈도</small></div>${Object.keys(labels).map(k=>`<div class="driver-pattern-row"><span>${labels[k]}</span><div class="pattern-track"><i style="width:${Math.min(t.rates[k]/3*100,100)}%"></i></div><b>${t.rates[k].toFixed(1)}</b><small>이전 ${previous[k].toFixed(1)}</small></div>`).join('')}</div>`;
+    document.querySelector('#profileMain').innerHTML = `<div class="profile-section-heading"><span class="kicker">DRIVING JOURNAL</span><h2>운전 기록</h2><p class="desc">같은 운전자의 운행 기록을 시간순으로 비교해요.</p></div><div class="preference-grid"><div class="preference"><span>저장된 운행</span><strong>${personTrips.length}<small>회</small></strong></div><div class="preference"><span>정차 직전 변화</span><strong>${t.rates.stop}<small>회 / 10분</small></strong></div><div class="preference"><span>최근 동승자 평가</span><strong>${t.feedback===null?'미응답':t.feedback+'<small>/ 5</small>'}</strong></div></div><div class="panel driver-patterns"><div class="section-label"><span>최근 운전 경향</span><small>이번 운행 · 10분당 관찰 빈도</small></div>${Object.keys(labels).map(k=>`<div class="driver-pattern-row"><span>${labels[k]}</span><div class="pattern-track"><i style="width:${Math.min(t.rates[k]/3*100,100)}%"></i></div><b>${t.rates[k].toFixed(1)}</b><small>이전 ${profilePrevious[k].toFixed(1)}</small></div>`).join('')}</div>`;
   } else {
     document.querySelector('#profileMain').innerHTML = `<div class="profile-section-heading"><span class="kicker">COMFORT PREFERENCES</span><h2>${p.name}에게 편안한 이동을.</h2><p class="desc">직접 등록한 선호와 지난 이동의 응답을 함께 살펴봐요.</p></div><div class="preference-grid"><div class="preference"><span>등록한 민감도</span><strong>${p.sensitivity}</strong><small>자기보고 정보</small></div><div class="preference"><span>선호 실내 온도</span><strong>${p.temp}</strong><small>직접 등록한 선호</small></div><div class="preference"><span>선호 휴식 간격</span><strong>${p.rest}</strong><small>개인 선호</small></div></div><div class="panel sensitivity-panel"><div class="section-label"><span>조금 더 신경 쓸 순간</span><small>등록 특성 / 최근 응답</small></div><div class="sensitivity-list">${p.triggers.map((x,i)=>`<div class="sensitivity-item"><span class="sensitivity-number">0${i+1}</span><div><h3>${x}</h3><p>${i===0?'최근 평가에서 불편을 남겼어요.':'프로필에 등록한 관심 상황이에요.'}</p></div><span class="tag">${i===0?'최근 응답':'등록 정보'}</span></div>`).join('')}</div></div>`;
   }

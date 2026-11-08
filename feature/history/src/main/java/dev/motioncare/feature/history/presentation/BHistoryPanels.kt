@@ -40,11 +40,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.motioncare.feature.history.ui.MotionText
+import dev.motioncare.feature.history.ui.MotionSubtle
+import dev.motioncare.feature.history.ui.MotionCyan
+import dev.motioncare.feature.history.ui.MotionLine
 
-private val BText = Color(0xFFE3F3FF)
-private val BSubtle = Color(0xFFA0BDD6)
-private val BCyan = Color(0xFFB0E6FF)
-private val BLine = Color(0x38AACFEE)
+private val BText = MotionText
+private val BSubtle = MotionSubtle
+private val BCyan = MotionCyan
+private val BLine = MotionLine
 
 /** Presentation values only. The existing history ViewModel remains the source of truth. */
 internal data class BMetric(val label: String, val value: String?)
@@ -65,8 +69,8 @@ internal data class BReportUi(
 @Composable
 internal fun BGlass(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Column(
-        modifier.background(Brush.linearGradient(listOf(Color(0x352B547F), Color(0x20172D4B))), RoundedCornerShape(26.dp))
-            .border(1.dp, BLine, RoundedCornerShape(26.dp)).padding(26.dp),
+        modifier.background(Brush.linearGradient(listOf(Color(0xFF17263C), Color(0xFF142237))), RoundedCornerShape(20.dp))
+            .border(1.dp, BLine, RoundedCornerShape(20.dp)).padding(26.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp), content = content,
     )
 }
@@ -88,12 +92,12 @@ internal fun BActionRibbon(label: String, title: String, enabled: Boolean = true
         close()
     }
     Surface(onClick = onClick, enabled = enabled, shape = shape, color = Color.Transparent,
-        border = BorderStroke(1.dp, if (enabled) Color(0xAAB1E6FF) else BLine), modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp)) {
-        Row(Modifier.background(Brush.linearGradient(listOf(Color(0x554F80AB), Color(0x55395688), Color(0x44233A61)))).padding(if (compact) 18.dp else 30.dp, if (compact) 18.dp else 22.dp),
+        border = BorderStroke(1.dp, if (enabled) Color(0x55B0DDF5) else BLine), modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp)) {
+        Row(Modifier.background(Brush.linearGradient(listOf(Color(0xFF23364C), Color(0xFF1B2B42), Color(0xFF17283D)))).padding(if (compact) 20.dp else 28.dp, if (compact) 20.dp else 24.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(label, color = BSubtle, fontSize = 13.sp)
-                Text(title, color = if (enabled) BText else BSubtle, fontSize = if (compact) 20.sp else 24.sp, fontWeight = FontWeight.Medium)
+                Text(label, color = BSubtle, fontSize = 14.sp)
+                Text(title, color = if (enabled) BText else BSubtle, fontSize = if (compact) 19.sp else 22.sp, lineHeight = if (compact) 28.sp else 32.sp, fontWeight = FontWeight.Medium)
             }
             Text("↗", color = BCyan, fontSize = 25.sp)
         }
@@ -213,17 +217,16 @@ internal fun BFeedbackPanel(
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(22.dp)) {
         Text("${name}의 한마디", color = BText, fontSize = 25.sp)
-        Text("01 / FEELING", color = BSubtle, fontSize = 12.sp)
         Text(when (rating) { 1 -> "많이 불편했어요"; 2 -> "조금 불편했어요"; 3 -> "보통이었어요"; 4 -> "편안했어요"; 5 -> "아주 편안했어요"; else -> "이동은 어땠나요?" }, color = BCyan, fontSize = 29.sp)
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val starWidth = if (maxWidth < 320.dp) 56.dp else (maxWidth - 40.dp) / 5
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 (1..5).forEach { score ->
                     val selected = rating != null && score <= rating
-                    Surface(onClick = { onRating(score) }, enabled = !saving, shape = RoundedCornerShape(20.dp),
-                        color = if (selected) Color(0x407BBCE8) else Color(0x184D7FAC), border = BorderStroke(1.dp, if (selected) BCyan else BLine),
+                    Surface(onClick = { onRating(score) }, enabled = !saving, shape = RoundedCornerShape(14.dp),
+                        color = if (selected) Color(0x1AB0DDF5) else Color(0x06FFFFFF), border = BorderStroke(1.dp, if (selected) BCyan.copy(.45f) else BLine),
                         modifier = Modifier.width(starWidth).heightIn(min = 72.dp).semantics { contentDescription = "${score}점" }) {
-                        Box(Modifier.padding(10.dp), contentAlignment = Alignment.Center) { Text(if (selected) "★" else "☆", color = if (selected) BCyan else BSubtle, fontSize = 38.sp) }
+                        Box(Modifier.padding(10.dp), contentAlignment = Alignment.Center) { Text(if (selected) "★" else "☆", color = if (selected) BCyan else BSubtle, fontSize = 34.sp) }
                     }
                 }
             }
@@ -233,13 +236,12 @@ internal fun BFeedbackPanel(
             Text("아주 편안했어요", color = BSubtle, fontSize = 12.sp)
         }
         HorizontalDivider(color = BLine)
-        Text("02 / MOMENTS", color = BSubtle, fontSize = 12.sp)
         Text("불편했던 순간이 있었나요?", color = BText, fontSize = 22.sp)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 reasons.forEach { reason -> FilterChip(selected = reason.id in selectedReasons, onClick = { onReason(reason.id) }, enabled = !saving,
-                    colors = FilterChipDefaults.filterChipColors(containerColor = Color(0x184D7FAC), labelColor = BSubtle,
-                        selectedContainerColor = Color(0x407BBCE8), selectedLabelColor = BText),
-                    border = BorderStroke(1.dp, if (reason.id in selectedReasons) BCyan else BLine),
+                    colors = FilterChipDefaults.filterChipColors(containerColor = Color(0x06FFFFFF), labelColor = BSubtle,
+                        selectedContainerColor = Color(0x1AB0DDF5), selectedLabelColor = BText),
+                    border = BorderStroke(1.dp, if (reason.id in selectedReasons) BCyan.copy(.45f) else BLine),
                     label = { Text(reason.label) }, modifier = Modifier.heightIn(min = 56.dp)) }
         }
         BActionRibbon("이번 이동의 기록에", if (saving) "저장 중이에요" else "나의 응답 남기기", enabled = rating in 1..5 && !saving, onClick = onSave)
