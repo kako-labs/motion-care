@@ -1,5 +1,5 @@
 """Check only IDs/counts, without copying user databases into the repository."""
-import hashlib,json,sqlite3,subprocess
+import hashlib,json,sqlite3,subprocess,sys
 from pathlib import Path
 from history_b_device_check import adb
 
@@ -21,5 +21,5 @@ for name in ['motion-care-profile.db','motion-care-sample.db']:
         assert fixture_matches==0, 'Debug fixture leaked into '+table
         info[table]={'rows':count,'fixture_matches':fixture_matches}
     result[name]={'sha256':hashlib.sha256(data).hexdigest(),'tables':info}
-path=Path('docs/history-b-android/device-checks/database-isolation.json')
+path=Path(sys.argv[1]) if len(sys.argv)>1 else Path('docs/history-b-android/device-checks/database-isolation.json')
 path.write_text(json.dumps(result,indent=2),encoding='utf8'); print(json.dumps(result))

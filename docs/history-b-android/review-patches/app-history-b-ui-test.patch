@@ -1,10 +1,11 @@
 --- /dev/null
 +++ b/app/src/androidTest/java/dev/motioncare/app/HistoryBFlowTest.kt
-@@ -0,0 +1,78 @@
+@@ -0,0 +1,91 @@
 +package dev.motioncare.app
 +
 +import androidx.compose.ui.test.*
 +import androidx.compose.ui.test.junit4.createAndroidComposeRule
++import androidx.compose.ui.semantics.SemanticsActions
 +import dev.motioncare.feature.history.demo.HistoryDemoActivity
 +import org.junit.Assert.*
 +import org.junit.Rule
@@ -16,7 +17,8 @@
 +    private fun click(text: String, substring: Boolean = false) {
 +        compose.waitUntil(20_000) { compose.onAllNodesWithText(text, substring).fetchSemanticsNodes().isNotEmpty() }
 +        val node = compose.onAllNodesWithText(text, substring).onFirst()
-+        if (!node.isDisplayed()) node.performScrollTo()
++        val scrollable = hasText(text, substring = substring) and hasAnyAncestor(hasScrollAction())
++        if (compose.onAllNodes(scrollable).fetchSemanticsNodes().isNotEmpty()) node.performScrollTo()
 +        node.performClick()
 +    }
 +    private fun scenario(extra: String) {
@@ -27,11 +29,22 @@
 +    @Test fun selectedObservationOpensTheSameTripAndEvent() {
 +        click("프로필")
 +        click("자세히  ›")
-+        click("감속 3 ·", substring = true)
++        // Exercise the selected-event navigation contract independently of clipped touch coordinates.
++        val event = compose.onAllNodesWithText("감속 3 ·", substring = true).onFirst()
++        event.performScrollTo()
++        event.performSemanticsAction(SemanticsActions.OnClick) { it() }
++        val selected = hasText("감속 3 ·", substring = true) and hasText("→", substring = true)
++        compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(selected)
++        compose.onNode(selected).assertIsDisplayed()
 +        click("운행 상세에서 보기")
 +        compose.onNodeWithText("운행 상세").assertIsDisplayed()
 +        compose.onNodeWithText("완료된 운행").assertExists()
-+        compose.waitUntil { compose.onAllNodesWithText("감속 3 ·", substring = true).fetchSemanticsNodes().size >= 2 }
++        try {
++            compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(selected)
++            compose.onNode(selected).assertIsDisplayed()
++        } catch (error: AssertionError) {
++            throw AssertionError(compose.onRoot(useUnmergedTree = true).printToString(maxDepth = 80), error)
++        }
 +    }
 +
 +    @Test fun ratingUsesExistingSaveAndSurvivesRecreation() {

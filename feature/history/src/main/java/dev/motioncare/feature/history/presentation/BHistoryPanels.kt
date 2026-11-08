@@ -73,7 +73,7 @@ internal fun BGlass(modifier: Modifier = Modifier, content: @Composable ColumnSc
 
 /** The tilted pane carries the surface, while text and touch bounds stay upright. */
 @Composable
-internal fun BActionRibbon(label: String, title: String, enabled: Boolean = true, onClick: () -> Unit) {
+internal fun BActionRibbon(label: String, title: String, enabled: Boolean = true, compact: Boolean = false, onClick: () -> Unit) {
     val shape = GenericShape { size, _ ->
         val cut = minOf(size.width * .04f, size.height * .2f)
         moveTo(cut * 2, 0f)
@@ -89,11 +89,11 @@ internal fun BActionRibbon(label: String, title: String, enabled: Boolean = true
     }
     Surface(onClick = onClick, enabled = enabled, shape = shape, color = Color.Transparent,
         border = BorderStroke(1.dp, if (enabled) Color(0xAAB1E6FF) else BLine), modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp)) {
-        Row(Modifier.background(Brush.linearGradient(listOf(Color(0x554F80AB), Color(0x55395688), Color(0x44233A61)))).padding(30.dp, 22.dp),
+        Row(Modifier.background(Brush.linearGradient(listOf(Color(0x554F80AB), Color(0x55395688), Color(0x44233A61)))).padding(if (compact) 18.dp else 30.dp, if (compact) 18.dp else 22.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(label, color = BSubtle, fontSize = 13.sp)
-                Text(title, color = if (enabled) BText else BSubtle, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                Text(title, color = if (enabled) BText else BSubtle, fontSize = if (compact) 20.sp else 24.sp, fontWeight = FontWeight.Medium)
             }
             Text("↗", color = BCyan, fontSize = 25.sp)
         }
@@ -173,9 +173,10 @@ private fun BReportGuidance(guidance: String?, modifier: Modifier) {
 internal fun BPassengerProfilePanel(
     name: String, role: String, preferences: List<BMetric>, moments: List<BMoment>,
     portrait: @Composable () -> Unit, onEdit: () -> Unit, modifier: Modifier = Modifier,
+    showIdentity: Boolean = true,
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(25.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
+        if (showIdentity) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
             Box(Modifier.size(100.dp), contentAlignment = Alignment.Center) { portrait() }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 Text(role, color = BSubtle, fontSize = 14.sp)

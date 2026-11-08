@@ -31,7 +31,7 @@ adb shell am start -S -n dev.motioncare.scaffold/dev.motioncare.feature.history.
 adb shell am start -S -n dev.motioncare.scaffold/dev.motioncare.feature.history.demo.HistoryDemoActivity --ez interrupted true
 ```
 
-에뮬레이터는 일반 Android API 35 x86_64의 `mc_car`, 1682×1210·160dpi를 사용했다. Pleos 실기기·실차 SDK·실시간 안내 검증으로 소개하지 않는다. 검사 결과와 실제 캡처는 [검증 기록](VERIFICATION.md)에 모은다.
+에뮬레이터는 일반 Android API 35 x86_64의 `mc_car`, 1682×1210 및 1024×768·160dpi를 사용했다. 1024 가로 창에서도 차량·좌석·최근 기록·사선 제안을 함께 볼 수 있게 배치를 보정했다. 동승자 프로필은 얼굴·편집 버튼을 한 번만 표시한다. Pleos 실기기·실차 SDK·실시간 안내 검증으로 소개하지 않는다. 검사 결과와 실제 캡처는 [검증 기록](VERIFICATION.md)에 모은다.
 
 ## 팀원에게 남긴 연결
 
@@ -39,11 +39,12 @@ adb shell am start -S -n dev.motioncare.scaffold/dev.motioncare.feature.history.
 2. 일반 앱의 `ReadyContent → HistoryRoutes.PROFILES` 연결은 그대로여서 기존 버튼으로 큰 B 출발 화면을 열 수 있다. 앱 첫 화면의 흰색 개발용 바깥 틀과 주행 시작·권한·서비스 조립은 앱 담당 소유로 유지했다. 큰 B 화면을 홈 자체로 올리는 최종 배치는 앱 담당이 기존 주행 상태 전환과 함께 결정한다.
 3. [app-finished-summary.patch](review-patches/app-finished-summary.patch)는 홈의 종료 분기를 기존 데이터가 연결된 `FinishedRoute`로 바꾸는 최소 패치다. 콜백과 주행 종료 정책은 그대로다. **적용하지 않았다.**
 4. [app-history-b-ui-test.patch](review-patches/app-history-b-ui-test.patch)는 기존 오래된 placeholder 문자열에 의존하지 않는 B 화면 UI 검사다. 임시 검증에만 적용한 뒤 앱 트리에서 제거한다. 테스트 소유자가 기존 `ScaffoldFlowTest`와 함께 정리해야 한다.
+   [실제 저장소 UI 검사 패치](review-patches/app-history-b-storage-ui-test.patch)는 기존 공개 SQLite Repository를 UUID 이름 공간에서 실행한다. UI로 선호와 평가를 저장하고 Repository를 다시 생성해 보존을 확인한다. 정상 사용자 DB의 SHA-256도 대조한다.
 5. 운행 시작 시 `profiles.assignCurrentSeating(tripId)` 호출은 기존 PR #10의 미완료 연결이다. 이번에는 기존 상세 진입 시 연결하는 임시 방식을 바꾸지 않았다. 현재 좌석을 과거 기록에 잘못 붙일 수 있는 기존 한계가 있으므로 주행 담당이 실제 시작 시점과 묶어 통합해야 한다.
 6. 환경은 기존 `EnvironmentPanel` 준비 상태다. `EnvironmentRepository.current/history` 주입과 모듈 간 허용 변경은 적용하지 않았다. 경로·내비·서비스·탐지·SDK에는 손대지 않았다.
 
 ## 저장·이식
 
-별도 `feat/history-b-android` 브랜치다. 선행 PR #10/#17을 함께 검토해야 하므로 main에 바로 병합하지 않는다. 기존 PR 두 개의 변경이 이 브랜치의 이력에도 포함된다. 이번 신규 표시 변경만 보려면 `315bee2..HEAD`를 비교한다. 기존 미커밋 화면의 보존 커밋은 `315bee2`, 최초 B 연결은 `f8ab752`다. 최종 검증 후 리뷰 보정·인계 커밋과 Draft PR을 추가한다.
+별도 `feat/history-b-android` 브랜치다. 선행 PR #10/#17을 함께 검토해야 하므로 main에 바로 병합하지 않는다. 기존 PR 두 개의 변경이 이 브랜치의 이력에도 포함된다. 이번 신규 표시 변경만 보려면 `315bee2..HEAD`를 비교한다. 기존 미커밋 화면의 보존 커밋은 `315bee2`, 최초 B 연결은 `f8ab752`, 중단 시점 저장은 `698d3a2`다. 최신 연결 지점·적용 준비·팀원 확인 순서는 [통합 검토](INTEGRATION-REVIEW.md)를 기준으로 한다.
 
 공유 시 사용할 파일은 APK·기기 캡처·이 문서이며, 로컬 SDK·AVD·키·DB 파일은 Git에 넣지 않는다.

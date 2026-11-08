@@ -114,7 +114,9 @@ private fun DepartureContent(
     var openSeat by remember { mutableStateOf<SeatPosition?>(null) }
     MotionCareBackground {
         BoxWithConstraints(Modifier.fillMaxSize().padding(22.dp)) {
-            val wide = maxWidth >= 1050.dp
+            val wide = maxWidth >= 900.dp
+            val panelHeight = (maxHeight - 90.dp).coerceAtLeast(520.dp)
+            val compact = panelHeight < 850.dp
             val scroll = rememberScrollState()
             Column(Modifier.fillMaxSize().verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 ScreenTitle("출발 전 안내", onBack = onBack, action = {
@@ -125,11 +127,11 @@ private fun DepartureContent(
                 })
                 state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                if (wide) Row(Modifier.fillMaxWidth().height(950.dp), horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-                    SeatingPanel(state, openSeat, { openSeat = it }, Modifier.weight(1.5f))
+                if (wide) Row(Modifier.fillMaxWidth().height(panelHeight), horizontalArrangement = Arrangement.spacedBy(28.dp)) {
+                    SeatingPanel(state, openSeat, { openSeat = it }, Modifier.weight(1.5f), panelHeight - 94.dp)
                     Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(22.dp)) {
-                        DepartureRecent(state, onTrip, Modifier.weight(1f))
-                        BActionRibbon("오늘의 제안", if (state.guidanceEnabled) state.advice.headline else "출발 안내 꺼짐") { onAdvice(state.seating.driverId) }
+                        DepartureRecent(state, onTrip, Modifier.weight(1f), compact)
+                        BActionRibbon("오늘의 제안", if (state.guidanceEnabled) state.advice.headline else "출발 안내 꺼짐", compact = compact) { onAdvice(state.seating.driverId) }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("출발 안내", Modifier.weight(1f), color = MotionSubtle)
                             Switch(state.guidanceEnabled, { onToggleGuidance() })
@@ -303,6 +305,7 @@ private val adviceSteps = listOf("◉" to "자리", "▶" to "운행", "★" to 
     openSeat: SeatPosition?,
     onSeat: (SeatPosition) -> Unit,
     modifier: Modifier = Modifier,
+    maxCarHeight: Dp = 860.dp,
 ) {
     GlassPanel(modifier.heightIn(min = 560.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -310,14 +313,14 @@ private val adviceSteps = listOf("◉" to "자리", "▶" to "운행", "★" to 
             Spacer(Modifier.weight(1f))
             Text("운전자 ${if (state.seating.driverId == null) 0 else 1} · 동승자 ${state.seating.passengerIds.size}", color = MotionCyan)
         }
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CarInterior(state, openSeat, onSeat) }
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CarInterior(state, openSeat, onSeat, maxCarHeight) }
     }
 }
 
 // Top-down view with the front of the car at the top; the driver sits front-left.
-@Composable private fun CarInterior(state: DepartureUiState, openSeat: SeatPosition?, onSeat: (SeatPosition) -> Unit) {
+@Composable private fun CarInterior(state: DepartureUiState, openSeat: SeatPosition?, onSeat: (SeatPosition) -> Unit, maxCarHeight: Dp) {
     BoxWithConstraints(Modifier.fillMaxWidth().heightIn(max = 860.dp), contentAlignment = Alignment.Center) {
-        val width = minOf(maxWidth, 570.dp)
+        val width = minOf(maxWidth, 570.dp, maxCarHeight / 1.5f)
         val height = width * 1.5f
         Box(Modifier.size(width, height)) {
             Image(painterResource(R.drawable.mc_cabin_b), "차량 좌석", Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
@@ -335,20 +338,20 @@ private val adviceSteps = listOf("◉" to "자리", "▶" to "운행", "★" to 
     }
 }
 
-@Composable private fun DepartureRecent(state: DepartureUiState, onTrip: (TripId) -> Unit, modifier: Modifier = Modifier) {
-    GlassPanel(modifier.fillMaxWidth()) {
-        Text("최근 운행", fontSize = 26.sp, fontWeight = FontWeight.Medium)
+@Composable private fun DepartureRecent(state: DepartureUiState, onTrip: (TripId) -> Unit, modifier: Modifier = Modifier, compact: Boolean = false) {
+    GlassPanel(modifier.fillMaxWidth(), compact = compact) {
+        Text("최근 운행", fontSize = if (compact) 22.sp else 26.sp, fontWeight = FontWeight.Medium)
         if (state.recentTrips.isEmpty()) Text("아직 운전 기록이 없어요.", color = MotionSubtle)
         state.recentTrips.forEach { trip ->
-            Surface(onClick = { onTrip(trip.trip.id) }, color = MotionPanelLight.copy(.4f), shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth().heightIn(min = 94.dp)) {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(tripTime(trip.trip.startedAtEpochMs), fontSize = 21.sp)
-                    Text("${trip.durationMs / 60_000}분 · ${"%.1f".format(trip.distanceMeters / 1000)}km", color = MotionSubtle)
+            Surface(onClick = { onTrip(trip.trip.id) }, color = MotionPanelLight.copy(.4f), shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth().heightIn(min = if (compact) 64.dp else 94.dp)) {
+                Column(Modifier.padding(if (compact) 8.dp else 18.dp), verticalArrangement = Arrangement.spacedBy(if (compact) 2.dp else 6.dp)) {
+                    Text(tripTime(trip.trip.startedAtEpochMs), fontSize = if (compact) 18.sp else 21.sp)
+                    Text("${trip.durationMs / 60_000}분 · ${"%.1f".format(trip.distanceMeters / 1000)}km", color = MotionSubtle, fontSize = if (compact) 13.sp else 16.sp)
                 }
             }
         }
         Spacer(Modifier.weight(1f))
-        state.advice.recentAverage?.let { Text("최근 분석 가능한 운행 평균 · ${"%.1f".format(it)}회/10분", color = MotionCyan, fontSize = 21.sp) }
+        state.advice.recentAverage?.let { Text("최근 분석 가능한 운행 평균 · ${"%.1f".format(it)}회/10분", color = MotionCyan, fontSize = if (compact) 16.sp else 21.sp) }
     }
 }
 

@@ -1,0 +1,7 @@
+{
+  "apk": "app-release-unsigned.apk",
+  "sha256": "b198ba8780e3ddc5b1228a98b9a81a98da0b3db18d75cc9428581c482696d3e3",
+  "debug_fixture_assets": [],
+  "debug_class_strings": {},
+  "passed": true
+}

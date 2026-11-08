@@ -64,11 +64,11 @@ private val motionColors = darkColorScheme(
     }
 }
 
-@Composable fun GlassPanel(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+@Composable fun GlassPanel(modifier: Modifier = Modifier, compact: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     MotionCareTheme {
         Column(modifier.background(Brush.linearGradient(listOf(Color(0x352B547F), Color(0x40172D4B))), RoundedCornerShape(22.dp))
-            .border(1.dp, MotionLine, RoundedCornerShape(22.dp)).padding(22.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp), content = content)
+            .border(1.dp, MotionLine, RoundedCornerShape(22.dp)).padding(if (compact) 16.dp else 22.dp),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 14.dp), content = content)
     }
 }
 

@@ -64,7 +64,8 @@ private fun PersonDetailContent(
             }
             val driven = state.driverTrips.size
             val ridden = state.passengerFeedback.size
-            ScreenTitle(person.displayName, "${if (person.kind == PersonKind.CHILD) "어린이" else "성인"} · 운전 $driven · 평가 $ridden", onBack,
+            val summary = if (person.kind == PersonKind.CHILD) "동승자 · 어린이 · 평가 $ridden" else "성인 · 운전 $driven · 평가 $ridden"
+            ScreenTitle(person.displayName, summary, onBack,
                 leading = { PersonAvatar(person, Modifier.size(84.dp)) }) {
                 SecondaryAction("수정", { editing = true })
             }
@@ -78,7 +79,7 @@ private fun PersonDetailContent(
                 name = person.displayName, role = if (person.kind == PersonKind.CHILD) "동승자 · 어린이" else "동승자",
                 preferences = listOf(BMetric("민감도", person.motionSensitivity.label()), BMetric("휴식 간격", person.preferredRestMinutes?.let { "${it}분" }), BMetric("선호 온도", person.preferredTemperatureCelsius?.let { "${it}℃" })),
                 moments = person.motionTriggers.map { BMoment(it.label(), "등록한 이동 선호") } + state.passengerFeedback.sortedByDescending { it.createdAtEpochMs }.take(5).map { BMoment(tripDate(it.createdAtEpochMs), (it.answer as? FeedbackAnswer.Rating)?.let { rating -> "편안함 ${rating.value}/5" } ?: "미응답") },
-                portrait = { PersonAvatar(person, Modifier.size(100.dp)) }, onEdit = { editing = true })
+                portrait = { PersonAvatar(person, Modifier.size(100.dp)) }, onEdit = { editing = true }, showIdentity = false)
         }
     }
     if (editing && person != null) PreferenceDialog(person, { editing = false }, { onUpdate(it); editing = false })

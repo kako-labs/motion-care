@@ -26,8 +26,11 @@ def click(label):
     x=(bounds[0]+bounds[2])//2; y=(bounds[1]+bounds[3])//2
     adb('shell','input','tap',str(x),str(y)); time.sleep(.8)
 def swipe(direction):
-    if direction=='down': adb('shell','input','swipe','1500','950','1500','350','450')
-    else: adb('shell','input','swipe','1500','350','1500','950','450')
+    dimensions=re.findall(r'(\d+)x(\d+)',adb('shell','wm','size').decode())[-1]
+    width,height=map(int,dimensions)
+    x=str(int(width*.82)); top=str(int(height*.32)); bottom=str(int(height*.78))
+    if direction=='down': adb('shell','input','swipe',x,bottom,x,top,'450')
+    else: adb('shell','input','swipe',x,top,x,bottom,'450')
     time.sleep(.5)
 if __name__=='__main__':
     command=sys.argv[1]

@@ -14,3 +14,7 @@ test=out/'HistoryBFlowTest.kt'
 relative='app/src/androidTest/java/dev/motioncare/app/HistoryBFlowTest.kt'
 (out/'app-history-b-ui-test.patch').write_text(''.join(difflib.unified_diff([],test.read_text(encoding='utf8').splitlines(True),fromfile='/dev/null',tofile='b/'+relative)),encoding='utf8')
 print('Prepared app-owned patches for review; app source is unchanged')
+
+test=out/'HistoryBStorageFlowTest.kt'
+relative='app/src/androidTest/java/dev/motioncare/app/HistoryBStorageFlowTest.kt'
+(out/'app-history-b-storage-ui-test.patch').write_text(''.join(difflib.unified_diff([],test.read_text(encoding='utf8').splitlines(True),fromfile='/dev/null',tofile='b/'+relative)),encoding='utf8')

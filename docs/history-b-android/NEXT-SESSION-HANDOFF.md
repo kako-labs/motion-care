@@ -1,41 +1,41 @@
-# 다음 세션: B Android 연결 마무리
+# B Android 연결 이후의 인수인계
 
-사용자는 2026-11-08 PC 종료 때문에 작업을 여기서 멈추고 기록하라고 요청했다. 추가 구현·배포·병합을 자동으로 이어가지 않는다. 다음 사용자 요청 때 아래에서 재개한다.
+사용자의 재개 요청에 따라 기록 담당 화면 연결·기기 검증·인계 준비를 마무리했다. 다음 작업은 앱 전체를 재설계하는 것이 아니라 팀원의 검토·최종 조립이다.
 
-## 작업 위치와 보호
+## 현재 작업 위치
 
-- 현재 저장소는 개인 작업 폴더 안의 `.android-b-integration`이다. 별도 로컬 clone, 브랜치 `feat/history-b-android`, origin `kako-labs/motion-care`.
-- 원래 개인 저장소·`motion-care-mine`·`motion-care-polish`·`hyundai-demo-save`는 수정하지 않았다. 각 트리 status를 다시 확인하고 기존 미커밋 변경을 보존한다.
-- 공유 main은 병합하지 않았다. PR #10/#17은 선행 의존성으로 로컬에서 결합했을 뿐이다.
-- 기준 `315bee2`는 기존 기록 담당 미커밋 화면 사본 보존, `f8ab752`는 최초 B 연결. 그 이후 커밋이 리뷰 보정·검증·인계다.
-- 원격 push와 새 Draft PR은 아직 하지 않았다. 로컬 코드가 사라진 것으로 오해하고 원본 트리를 reset/pull하지 않는다.
+- 개인 작업 폴더 안의 `.android-b-integration`, 별도 clone의 `feat/history-b-android` 브랜치, origin `kako-labs/motion-care`.
+- 원본 개인 저장소·`motion-care-mine`·`motion-care-polish`·`hyundai-demo-save`는 기존 변경을 보존했다. 어느 트리든 수정 전 status부터 확인한다.
+- 선행 PR #10/#17을 로컬 결합한 뒤 원래 미커밋 화면을 `315bee2`로 보존했다. 신규 표시 연결의 리뷰 범위는 `315bee2..HEAD`다. 이전 중단 시점은 `698d3a2`이며, 최신 저장은 이후 커밋이다.
+- 공유 main 직접 병합·강제 push 없음. 저장/검토 링크는 이 브랜치의 Draft PR과 최신 커밋을 확인한다.
 
 ## 먼저 읽기
 
-1. 이 파일, [README](README.md), [VERIFICATION](VERIFICATION.md), [LEDGER](LEDGER.md).
-2. 원래 확정 기준: `docs/design-archive/history-b-2026-11-07/demo-kit/APPROVED-BASELINE-2026-11-08.md` 및 `NEXT-SESSION-HANDOFF.md`.
-3. 루트 `AGENTS.md`, `docs/architecture.md`, `docs/ownership.md`.
+1. [README](README.md), [최종 검증](VERIFICATION.md), [통합 검토](INTEGRATION-REVIEW.md).
+2. `AGENTS.md`, `docs/architecture.md`, `docs/ownership.md`.
+3. `docs/design-archive/history-b-2026-11-07/demo-kit/APPROVED-BASELINE-2026-11-08.md`: 확정 B 기준.
 
-## 이미 한 것
+## 실제 연결한 부분
 
-기존 feature/history 화면에 B 차량·얼굴·유리·사선 패널, 동승자 프로필, 평가, 조언, 원본 표본을 쓰는 감속 상세 그래프를 연결했다. 기존 ViewModel·Repository·저장·보호자·다중 동승자 흐름을 유지한다. 실제 앱 홈의 기존 버튼으로 큰 출발 화면에 들어가는 계약도 유지한다.
+출발 차량·좌석 서랍·최근 기록·사선 제안, 운전자 기록과 동승자 선호/프로필 수정, 조언, 감속 상세 그래프, 평가를 기존 history ViewModel·Repository·저장 흐름에 연결했다. 기본 앱 진입 계약도 유지한다. 1024 가로 창과 동승자 헤더 중복을 보정했다.
 
-지영·서아/j1~j3는 `src/debug`의 시연 Repository·JSON에만 존재한다. 사용자 DB에 주입하지 않는다. 실제 자료는 원본 표본 해상도, 시연 상세만 기존 합성 0.2초 자료다. `DemoSession` ViewModel이 시연 Repository를 화면 재생성 동안 유지한다.
+시연 Activity만 지영·서아와 j1~j3를 기본 제공한다. 정상 사용자 DB에 가짜 운행을 주입하지 않는다. 실제 표본은 원본 해상도를 유지하며, 0.2초 상세 합성 자료는 debug fixture에만 있다.
 
-표준 verify, 단위 검사 28개, 실제 기기 UI 5개, 360dp 터치 검사 1개 통과. 독립 리뷰의 중단 상태·평균 설명·좌석 겹침과 칩/별점 줄바꿈을 수정했다. 앱 소유 테스트는 패치로 보존하고 임시 적용을 제거했다.
+표준 verify, 전체 단위 검사 274개, 실제 Android UI/저장 검사 6개, release 시연 제외 검사를 확인했다. 실제 SQLite 테스트도 정상 사용자 DB와 파일 이름 공간을 분리한다. 최종 화면은 `device-checks/final/` 기준이다.
 
-## 다음 순서
+## 남은 팀원 통합
 
-1. `git status`, `git log`와 원격 main/#10/#17 상태를 확인한다. 이 브랜치의 신규 범위는 `315bee2..HEAD`다. 이후 feature 코드 수정 없이 검증부터 마무리한다.
-2. `release-build.log`와 release APK 생성 여부를 확인한다. PC 종료 시 빌드가 중단될 수 있다. 필요하면 `:app:assembleRelease` 재실행. release ZIP/dex에서 `history-b-synthetic.json`, `HistoryDemoActivity`, `DemoRepositories`가 없는지 검사하고 결과 기록.
-3. 에뮬레이터 크기가 360×800으로 바뀌어 있다. `adb shell wm size reset`으로 기본 1682×1210 복구. 앱과 테스트 APK는 connected UI 검사에서 정리될 수 있으므로 설치 상태 확인. 최종 디버그 APK 사본은 `artifacts/motion-care-b-debug.apk`.
-4. 일반 `MainActivity`를 열어 실제 Repository 진입과 B 화면을 순회한다. 실제 DB에 가짜 기록을 넣지 않는다. 지영 시연은 별도 `HistoryDemoActivity`로 연다.
-5. 최신 출발·프로필·조언·상세·평가·종료 화면 캡처를 갱신하고 1024×768도 확인. 이전 device-checks PNG는 리뷰 전 것도 있어 최종 이미지로 혼용하지 않는다.
-6. 검증 결과·인계 문서 갱신 후 `feat/history-b-android`만 push하고 Draft PR 생성. PR 본문에서 선행 #10/#17, 이번 신규 변경, 확인하지 않은 Pleos/실차 범위를 구분한다. main 병합·강제 push 없음.
-7. 팀원에게 홈 외곽 프레임·종료 분기 패치·운행 시작 좌석 연결·환경 주입을 인계한다. app/core/data/Gradle/DB/SDK/서비스/탐지/내비를 임의로 바꾸지 않는다.
+1. 선행 PR #10/#17과 최신 main을 확인하고 충돌을 검토한다. 기존 미커밋 작업을 덮어쓰지 않는다.
+2. 앱 홈의 바깥 틀과 B 출발 화면의 최종 배치는 주행 담당이 결정한다. 현재 일반 앱의 기존 버튼으로 큰 B 화면에 진입할 수 있다.
+3. `review-patches/app-finished-summary.patch`를 검토해 기존 FinishedRoute를 홈의 종료 분기에 연결한다. 기존 콜백과 종료 정책을 유지하는 준비 패치다.
+4. 실제 운행 시작 시 `profiles.assignCurrentSeating(tripId)`를 연결한다. 선행 PR #10의 `linkSeatingIfMissing()` 임시 방식은 현재 좌석을 과거 운행에 붙일 수 있는 기존 한계가 있으므로 이 통합과 함께 정리한다.
+5. 환경 current/history 주입·허용 의존성과 내비·실제 안내는 해당 담당이 연결한다. 이 브랜치가 SDK·서비스·DB·탐지·내비 정책을 변경한 것은 아니다.
+6. 합친 고정 APK에서 실제 탑승→주행→종료→기록→평가 저장→재진입을 확인하고 촬영한다. 일반 Android 검증을 Pleos/실차 결과로 소개하지 않는다.
 
-## 주의할 남은 경계
+## 재현 도구
 
-`TripExperienceViewModel.linkSeatingIfMissing()`의 과거 운행에 현재 좌석을 붙이는 임시 동작은 선행 PR #10에서 온 기존 한계다. 이번 표시 변경에서 바꾸지 않았다. 실제 운행 시작 시점 연결은 팀원 통합 과제로 남긴다.
-
-API 35 일반 에뮬레이터 확인을 Pleos SDK·내비·실차 검증으로 소개하지 않는다. 경로와 환경은 기존 준비 범위를 유지한다.
+- debug 시연: `adb shell am start -n dev.motioncare.scaffold/dev.motioncare.feature.history.demo.HistoryDemoActivity`
+- 정상 앱: `adb shell am start -n dev.motioncare.scaffold/dev.motioncare.app.MainActivity`
+- 실제 UI 검사 패치: `app-history-b-ui-test.patch`, 실제 SQLite 저장 검사: `app-history-b-storage-ui-test.patch`. 적용 전 검사 후 프로젝트 에뮬레이터에서만 실행하고 앱 담당이 기존 테스트와 통합한다.
+- `tools/capture_history_b_final.py`는 지정한 크기로 캡처한 뒤 기기 크기를 복구한다. 기본 검토 크기는 1682×1210, 가로 분할 검토는 1024×768이다.
+- 로컬 검증용 APK: `artifacts/motion-care-b-debug.apk`. SDK·AVD·키·DB 파일은 Git에 저장하지 않는다.
