@@ -1,0 +1,11 @@
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
+const fakeNode=()=>({querySelector:fakeNode,classList:{contains:()=>false}});
+const trips=[{stop:5,start:3,repeat:2,curve:1,sway:0},{stop:8,start:4,repeat:3,curve:2,sway:1},{stop:9,start:5,repeat:4,curve:2,sway:1}].map((patterns,i)=>({id:'t'+i,driver:'민준',patterns,replay:{validSeconds:[2220,1980,1800][i]},feedback:3}));
+const context={demo:{people:{driver:{name:'민준'},other:{name:'다른 운전자'}},trips},seatAssignments:{driver:'driver'},labels:{stop:'정차 전 큰 감속',start:'출발',repeat:'가감속',curve:'회전',sway:'좌우'},document:{querySelector:fakeNode,addEventListener(){}}};
+vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(__dirname,'../../ui-review/selected-b/advice-detail.js'),'utf8'),context);
+let c=context.adviceContext();assert.equal(c.rate(c.latest).toFixed(1),'1.4');assert.equal(c.priorRate.toFixed(1),'2.7');assert.equal(c.recentRate.toFixed(1),'2.3');assert.equal(c.prior.length,2);assert.equal(c.ranking[0].key,'stop');
+context.demo.trips[0].feedback=1;assert.equal(context.adviceContext().ranking[0].key,'stop','subjective feedback does not silently change the existing selection policy');
+context.seatAssignments.driver='other';assert.equal(context.adviceContext().latest,undefined);
+context.seatAssignments.driver='driver';context.demo.trips[0].status='INTERRUPTED';context.demo.trips[1].replay.validSeconds=30;
+c=context.adviceContext();assert.equal(c.recent.length,1);assert.equal(c.latest.id,'t2');
+console.log('PASS: consistent rates, available comparison count, ranking and insufficient/other-driver states');

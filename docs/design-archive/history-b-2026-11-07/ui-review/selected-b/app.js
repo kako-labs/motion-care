@@ -17,6 +17,7 @@ for(const [i,t] of demo.trips.entries()) { t.replay=buildJourneyReplay(t.duratio
 
 const labels = { stop: '정차 직전 속도 변화', start: '출발 직후 속도 증가', repeat: '반복 가감속', curve: '빠른 회전', sway: '반복 좌우 움직임' };
 const previous = { stop: 2.4, start: 1.4, repeat: .9, curve: .6, sway: .3 };
+for(const key of Object.keys(previous))previous[key]=Number((demo.trips.slice(1).reduce((sum,t)=>sum+t.patterns[key]*600/t.replay.validSeconds,0)/(demo.trips.length-1)).toFixed(1));
 let selectedTrip = 't1';
 let selectedPerson = 'driver';
 const defaultSeats = { 'rear-left': null, 'rear-center': null, 'rear-right': 'passenger', 'front-passenger': null, driver: 'driver' };
@@ -35,6 +36,7 @@ let openSeat = null;
 
 function renderSeats() {
   document.querySelector('#passengerCount').textContent = Object.values(seatAssignments).filter(Boolean).length + '명';
+  if(typeof syncHomeAdvice === 'function')syncHomeAdvice();
   document.querySelectorAll('[data-seat]').forEach(seat => {
     const seatId = seat.dataset.seat;
     const person = seatAssignments[seatId] ? demo.people[seatAssignments[seatId]] : null;
@@ -130,6 +132,7 @@ function go(name) {
   if (name === 'profile-detail') renderProfile();
   if (name === 'records') renderRecords();
   if (name === 'feedback') renderFeedback();
+  if (name === 'why' && typeof renderAdviceDetail === 'function') renderAdviceDetail();
   document.querySelector('main').scrollTop = 0;
   history.replaceState(null,'','#'+name);
   if (typeof renderExtras === 'function') renderExtras(name);
