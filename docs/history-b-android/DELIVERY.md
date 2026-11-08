@@ -1,6 +1,6 @@
 # 로컬 전달 상태 · 2026-11-08
 
-추가 기록: HTML의 운전자별 기록 일관성 수정은 `0298fcf`에 저장했다. [팀 Notion 인계 게시](TEAM-NOTION.md)도 완료했다. 코드 push는 이번 공유 요청에서도 자동 승인 검토가 해당 원격지·전송 자료의 명시적 승인을 요구하여 차단했으며 아직 미실행이다.
+**최신 공유 상태:** 사용자가 저장소·브랜치·전송 자료를 명시적으로 승인한 후 `feat/history-b-android` push 및 [Draft PR #19](https://github.com/kako-labs/motion-care/pull/19) 생성을 완료했다. [팀 Notion 인계](TEAM-NOTION.md)에도 코드·PR·화면 링크를 반영했다. main은 병합하지 않았다. HTML의 운전자별 기록 일관성 수정은 `0298fcf`이며 아래 승인 대기 설명은 이전 경과로 보존한다.
 
 ## 구현·검증 완료
 
@@ -12,7 +12,7 @@
 
 자료: [화면 모음](SCREENS.md), [검증](VERIFICATION.md), [팀원 통합 검토](INTEGRATION-REVIEW.md), [PR 본문 준비](PR-BODY.md).
 
-## 원격 저장은 승인 대기
+## 이전 원격 승인 대기 경과 · 승인 후 해결
 
 `git push -u origin feat/history-b-android`를 요청했으나 자동 승인 검토가 **사용자가 해당 원격지로의 push를 명시적으로 승인한 근거가 없다는 이유**로 거절했다. 실제 push 및 Draft PR 생성은 실행되지 않았다. 다른 도구로 우회하지 않았다.
 

@@ -1,13 +1,13 @@
 # B Android 연결 이후의 인수인계
 
-사용자의 재개 요청에 따라 기록 담당 화면 연결·기기 검증·인계 준비를 마무리했다. 로컬 소스 저장은 `0d8f057`이다. 원격 push는 자동 승인 검토에서 명시적 전송 승인 부족으로 거절돼 실행되지 않았다. [로컬 전달/승인 대기 상태](DELIVERY.md)를 먼저 읽는다. 다음 작업은 승인 후 원격 저장/Draft PR 생성과 팀원의 검토·최종 조립이다.
+기록 담당 화면 연결·기기 검증·인계 준비를 마무리했다. Android 소스는 `0d8f057`, HTML 기록 일관성 수정은 `0298fcf`다. 사용자 명시 승인 후 원격 브랜치 push와 [Draft PR #19](https://github.com/kako-labs/motion-care/pull/19) 생성을 완료했다. [전달 상태](DELIVERY.md)와 [팀 Notion 인계](TEAM-NOTION.md)를 먼저 읽는다. 다음 작업은 팀원의 리뷰·최종 조립이다.
 
 ## 현재 작업 위치
 
 - 개인 작업 폴더 안의 `.android-b-integration`, 별도 clone의 `feat/history-b-android` 브랜치, origin `kako-labs/motion-care`.
 - 원본 개인 저장소·`motion-care-mine`·`motion-care-polish`·`hyundai-demo-save`는 기존 변경을 보존했다. 어느 트리든 수정 전 status부터 확인한다.
 - 선행 PR #10/#17을 로컬 결합한 뒤 원래 미커밋 화면을 `315bee2`로 보존했다. 신규 표시 연결의 리뷰 범위는 `315bee2..HEAD`다. 이전 중단 시점은 `698d3a2`이며, 최신 저장은 이후 커밋이다.
-- 공유 main 직접 병합·강제 push 없음. 현재는 로컬 저장 상태이며 원격 브랜치 push/새 Draft PR은 아직 없다. 사용자 승인 후 해당 단계만 진행한다.
+- 공유 main 직접 병합·강제 push 없음. 원격 `feat/history-b-android`와 Draft PR #19로 코드·검증 캡처·인계 문서를 공유했다.
 
 ## 먼저 읽기
 
