@@ -18,10 +18,11 @@ internal fun TripDetailRoute(
     onBack: () -> Unit,
     onBackToHome: () -> Unit,
     onFeedback: () -> Unit,
+    initialEvent: Int = 0,
 ) {
     val detail: TripExperienceViewModel = viewModel(factory = viewModelFactory {
         initializer { TripExperienceViewModel(id, trips, profiles) }
     })
     val state by detail.uiState.collectAsStateWithLifecycle()
-    TripDetailContent(state, onBack, onBackToHome, onFeedback)
+    TripDetailContent(state, onBack, onBackToHome, onFeedback, initialEvent)
 }

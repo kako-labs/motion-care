@@ -1,5 +1,6 @@
 package dev.motioncare.feature.history.report
 
+import dev.motioncare.feature.history.presentation.BActionRibbon
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -26,7 +27,7 @@ import dev.motioncare.feature.history.ui.*
 @Composable
 fun FinishedContent(onDetail: () -> Unit, onFeedback: () -> Unit, onDone: () -> Unit) {
     GlassPanel(Modifier.fillMaxWidth()) {
-        Text("운행을 마쳤어요", fontSize = 34.sp, fontWeight = FontWeight.ExtraBold)
+        BActionRibbon("이번 이동", "운행을 마쳤어요", onClick = onDetail)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             PrimaryAction("이동 평가", onFeedback, Modifier.weight(1.4f))
             SecondaryAction("주행 상세", onDetail, Modifier.weight(1f))

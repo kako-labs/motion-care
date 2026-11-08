@@ -110,14 +110,15 @@ private fun BMetrics(metrics: List<BMetric>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-internal fun BReportPanel(state: BReportUi, onFeedback: () -> Unit, modifier: Modifier = Modifier) {
+internal fun BReportPanel(state: BReportUi, onFeedback: () -> Unit, modifier: Modifier = Modifier, speedChart: (@Composable () -> Unit)? = null) {
     BGlass(modifier.fillMaxWidth()) {
         Text(state.title, color = BText, fontSize = 29.sp, fontWeight = FontWeight.Medium)
         Text(state.participants, color = BSubtle, fontSize = 15.sp)
         BMetrics(state.metrics)
         HorizontalDivider(color = BLine)
-        Text("주행 속도 · km/h", color = BText, fontSize = 19.sp)
-        if (state.speedSegments.isEmpty()) Text("표시할 유효 속도 구간이 없어요.", color = BSubtle, fontSize = 16.sp)
+        if (speedChart == null) Text("주행 속도 · km/h", color = BText, fontSize = 19.sp)
+        if (speedChart != null) speedChart()
+        else if (state.speedSegments.isEmpty()) Text("표시할 유효 속도 구간이 없어요.", color = BSubtle, fontSize = 16.sp)
         else Canvas(Modifier.fillMaxWidth().height(180.dp).semantics { contentDescription = "유효한 속도 구간의 흐름. 신호 공백은 이어 그리지 않음" }) {
             (0..2).forEach { line ->
                 val y = size.height * line / 2
@@ -236,6 +237,6 @@ internal fun BFeedbackPanel(
             }
         }
         BActionRibbon("이번 이동의 기록에", if (saving) "저장 중이에요" else "나의 응답 남기기", enabled = rating in 1..5 && !saving, onClick = onSave)
-        OutlinedButton(onClick = onSkip, enabled = !saving, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("건너뛰기 · 미응답으로 남기기") }
+        OutlinedButton(onClick = onSkip, enabled = !saving, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("건너뛰기") }
     }
 }

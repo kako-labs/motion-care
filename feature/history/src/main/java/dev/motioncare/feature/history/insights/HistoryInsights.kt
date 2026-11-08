@@ -51,10 +51,11 @@ suspend fun loadInsights(trips: TripRepository, profiles: ProfileRepository): Li
 }
 
 fun insight(snapshot: TripSnapshot, participants: TripParticipants? = null): TripInsight {
-    val valid = snapshot.samples.filter { it.quality == Quality.VALID && it.metersPerSecond != null }
-    val validSegments = valid.zipWithNext().filter { (left, right) ->
+    val validSegments = snapshot.samples.zipWithNext().filter { (left, right) ->
         val gap = right.elapsedMs - left.elapsedMs
-        gap > 0 && gap <= MAX_CONTIGUOUS_GAP_MS
+        left.quality == Quality.VALID && right.quality == Quality.VALID &&
+            left.metersPerSecond != null && right.metersPerSecond != null &&
+            gap > 0 && gap <= MAX_CONTIGUOUS_GAP_MS
     }
     val analyzed = validSegments.sumOf { (left, right) -> right.elapsedMs - left.elapsedMs }
     val duration = snapshot.trip.endedAtEpochMs?.minus(snapshot.trip.startedAtEpochMs)

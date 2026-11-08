@@ -1,5 +1,7 @@
 package dev.motioncare.feature.history.feedback
 
+import dev.motioncare.feature.history.presentation.BFeedbackPanel
+import dev.motioncare.feature.history.presentation.BReason
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -79,33 +81,6 @@ internal fun FeedbackRoute(
                 }
                 val person = passengers.firstOrNull { it.id == target }
                 if (person != null) GlassPanel(Modifier.fillMaxWidth()) {
-                    Text("${person.displayName}님의 이동", color = MotionSubtle, fontWeight = FontWeight.Bold)
-                    Text("오늘 이동은 편안했나요?", fontSize = 34.sp, fontWeight = FontWeight.ExtraBold)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
-                        (1..5).forEach { score ->
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Surface(onClick = { drafts[person.id] = current.copy(rating = score, handled = false) }, shape = RoundedCornerShape(24.dp),
-                                    color = if (current.rating >= score) MotionCyan.copy(.16f) else androidx.compose.ui.graphics.Color.Transparent,
-                                    modifier = Modifier.size(width = 120.dp, height = 112.dp)) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Text(if (current.rating >= score) "★" else "☆", fontSize = 76.sp, lineHeight = 80.sp,
-                                            color = if (current.rating >= score) MotionCyan else MotionMuted)
-                                    }
-                                }
-                                Text(when (score) { 1 -> "많이 불편"; 5 -> "아주 편안"; else -> " " }, color = MotionSubtle, fontSize = 17.sp)
-                            }
-                        }
-                    }
-                    Text(ratingLabel(current.rating), Modifier.fillMaxWidth(), fontSize = 26.sp, fontWeight = FontWeight.Bold, color = MotionCyan,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                    Text("불편했던 점  ·  선택", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        FeedbackReason.entries.forEach { reason ->
-                            ChoiceTile(reason.icon(), reason.label(), reason in current.reasons, Modifier.weight(1f)) {
-                                drafts[person.id] = current.copy(reasons = toggleReason(current.reasons, reason), handled = false)
-                            }
-                        }
-                    }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         FeedbackRespondent.entries.forEach { respondent ->
                             ChoiceTile("", if (respondent == FeedbackRespondent.SELF) "${person.displayName} 직접" else "보호자가 대신",
@@ -117,15 +92,20 @@ internal fun FeedbackRoute(
                             }
                         }
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SecondaryAction("건너뛰기", { drafts[person.id] = current.copy(handled = true); moveNext(passengerIds, person.id, drafts, { target = it }, onDone) }, Modifier.weight(1f))
-                        PrimaryAction(if (state.savingFeedback) "저장 중" else "저장", {
+                    BFeedbackPanel(
+                        name = person.displayName, rating = current.rating.takeIf { it in 1..5 },
+                        reasons = FeedbackReason.entries.map { BReason(it.name, it.label()) },
+                        selectedReasons = current.reasons.map { it.name }.toSet(), saving = state.savingFeedback,
+                        onRating = { drafts[person.id] = current.copy(rating = it, handled = false) },
+                        onReason = { drafts[person.id] = current.copy(reasons = toggleReason(current.reasons, FeedbackReason.valueOf(it)), handled = false) },
+                        onSave = {
                             model.saveRating(person.id, current.rating, current.reasons, current.respondent) {
                                 drafts[person.id] = current.copy(handled = true)
                                 moveNext(passengerIds, person.id, drafts, { target = it }, onDone)
                             }
-                        }, Modifier.weight(2f), enabled = current.rating in 1..5 && !state.savingFeedback)
-                    }
+                        },
+                        onSkip = { drafts[person.id] = current.copy(handled = true); moveNext(passengerIds, person.id, drafts, { target = it }, onDone) },
+                    )
                 }
             }
         }

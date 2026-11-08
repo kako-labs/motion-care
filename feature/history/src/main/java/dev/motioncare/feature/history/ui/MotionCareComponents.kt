@@ -35,7 +35,7 @@ fun tripDate(epochMs: Long): String = SimpleDateFormat("M월 d일 (E)", Locale.K
 val MotionBackground = Color(0xFF050F20)
 val MotionPanel = Color(0xCC102844)
 val MotionPanelLight = Color(0xAA1B426A)
-val MotionCyan = Color(0xFF7CDEF6)
+val MotionCyan = Color(0xFFB0E6FF)
 val MotionBlue = Color(0xFF278DDB)
 val MotionText = Color(0xFFEAF4FF)
 val MotionSubtle = Color(0xFFAEC3DA)
@@ -66,7 +66,7 @@ private val motionColors = darkColorScheme(
 
 @Composable fun GlassPanel(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     MotionCareTheme {
-        Column(modifier.background(Brush.linearGradient(listOf(MotionPanelLight, MotionPanel)), RoundedCornerShape(22.dp))
+        Column(modifier.background(Brush.linearGradient(listOf(Color(0x352B547F), Color(0x40172D4B))), RoundedCornerShape(22.dp))
             .border(1.dp, MotionLine, RoundedCornerShape(22.dp)).padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp), content = content)
     }
@@ -79,7 +79,7 @@ private val motionColors = darkColorScheme(
         if (onBack != null) RoundIconButton("‹", onBack)
         leading?.invoke()
         Column(Modifier.weight(1f)) {
-            Text(title, fontSize = 34.sp, lineHeight = 40.sp, fontWeight = FontWeight.ExtraBold)
+            Text(title, fontSize = 34.sp, lineHeight = 40.sp, fontWeight = FontWeight.Medium)
             subtitle?.let { Text(it, color = MotionSubtle, fontSize = 17.sp) }
         }
         action?.invoke()
@@ -99,7 +99,7 @@ private val childFaces = listOf(R.drawable.mc_avatar_child, R.drawable.mc_avatar
 /** Same face for the same person every time; children always get a child face. */
 fun avatarFor(person: PersonProfile): Int {
     val faces = if (person.kind == PersonKind.CHILD) childFaces else adultFaces
-    return faces[Math.floorMod(person.id.hashCode(), faces.size)]
+    return when (person.id.value) { "driver" -> R.drawable.mc_face_man; "doyun" -> R.drawable.mc_face_boy; "jiyoung" -> R.drawable.mc_face_woman; "seoa" -> R.drawable.mc_face_girl; else -> faces[Math.floorMod(person.id.hashCode(), faces.size)] }
 }
 
 @Composable fun KindFace(kind: PersonKind, modifier: Modifier = Modifier) {
@@ -165,7 +165,7 @@ fun avatarFor(person: PersonProfile): Int {
     Column(modifier.background(if (highlighted) MotionBlue.copy(.34f) else MotionPanel, RoundedCornerShape(18.dp))
         .border(1.dp, if (highlighted) MotionCyan.copy(.8f) else MotionLine, RoundedCornerShape(18.dp)).padding(18.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
-        Text(value, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold)
+        Text(value, fontSize = 30.sp, fontWeight = FontWeight.Medium)
         Text(label, color = MotionSubtle, fontSize = 15.sp)
     }
 }

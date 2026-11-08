@@ -20,6 +20,7 @@ data class DepartureUiState(
     val guidanceEnabled: Boolean = true,
     /** The most recent finished trip in this car, whoever drove. */
     val lastTrip: TripInsight? = null,
+    val recentTrips: List<TripInsight> = emptyList(),
 )
 
 class DepartureViewModel(
@@ -37,7 +38,8 @@ class DepartureViewModel(
                 val seating = profiles.seating.value
                 mutable.value = DepartureUiState(false, null, profiles.people.value, seating,
                     adviceFor(seating.driverId, insights), enabled,
-                    insights.filter { it.trip.status == TripStatus.COMPLETED }.maxByOrNull { it.trip.startedAtEpochMs })
+                    insights.filter { it.trip.status == TripStatus.COMPLETED }.maxByOrNull { it.trip.startedAtEpochMs },
+                    insights.filter { it.participants?.driverId == seating.driverId && seating.driverId != null && it.trip.status == TripStatus.COMPLETED }.take(3))
             }
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { mutable.update { it.copy(loading = false, error = "정보를 불러오지 못했습니다.") } }
@@ -107,6 +109,7 @@ data class AdviceUiState(
     val passengers: List<PersonProfile> = emptyList(),
     /** Each passenger's comfort ratings on this driver's recent trips, oldest first. */
     val passengerRatings: Map<PersonId, List<Int>> = emptyMap(),
+    val driverTrips: List<TripInsight> = emptyList(),
 )
 class AdviceViewModel(
     private val driverId: PersonId?,
@@ -132,7 +135,8 @@ class AdviceViewModel(
                     }.takeLast(5)
                 }
                 mutable.value = AdviceUiState(false, null, adviceFor(driverId, all),
-                    profiles.people.value.filter { it.id in passengerIds }, ratings)
+                    profiles.people.value.filter { it.id in passengerIds }, ratings,
+                    all.filter { driverId != null && it.participants?.driverId == driverId && it.trip.status == TripStatus.COMPLETED && it.analyzedDurationMs >= 60_000 })
             }
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { mutable.update { it.copy(loading = false, error = "조언 근거를 불러오지 못했습니다.") } }

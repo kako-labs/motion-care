@@ -1,5 +1,6 @@
 package dev.motioncare.feature.history.report
 
+import dev.motioncare.feature.history.presentation.*
 import dev.motioncare.feature.history.insights.adviceFor
 import dev.motioncare.feature.history.insights.patternIcon
 import androidx.compose.ui.text.style.TextAlign
@@ -62,6 +63,7 @@ internal fun TripDetailContent(
     onBack: () -> Unit,
     onHome: () -> Unit,
     onFeedback: () -> Unit,
+    initialEvent: Int = 0,
 ) {
     MotionCareBackground {
         Column(
@@ -75,7 +77,7 @@ internal fun TripDetailContent(
                 }
                 state.error != null -> ErrorPanel(state.error)
                 state.insight == null -> ErrorPanel("운행 기록을 찾을 수 없어요.")
-                else -> DetailBody(state, onFeedback)
+                else -> DetailBody(state, onFeedback, initialEvent)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 SecondaryAction("홈으로", onHome, Modifier.weight(1f))
@@ -85,74 +87,26 @@ internal fun TripDetailContent(
     }
 }
 
-@Composable private fun DetailBody(state: TripExperienceUiState, onFeedback: () -> Unit) {
+@Composable private fun DetailBody(state: TripExperienceUiState, onFeedback: () -> Unit, initialEvent: Int) {
     val insight = requireNotNull(state.insight)
-    val trip = insight.trip
-    val date = tripTime(trip.startedAtEpochMs)
-    GlassPanel(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(date, color = MotionSubtle, fontSize = 18.sp)
-                Text(if (trip.status == TripStatus.COMPLETED) "완료된 운행" else "중단된 운행", fontSize = 31.sp, fontWeight = FontWeight.ExtraBold)
-            }
-            AssistChip(onClick = {}, label = { Text(if (trip.origin == DataOrigin.VEHICLE) "차량 데이터" else "합성 데이터") })
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MetricTile(formatDuration(insight.durationMs), "운행 시간", Modifier.weight(1f), true)
-            MetricTile("%.1f km".format(insight.distanceMeters / 1_000.0), "거리 근사", Modifier.weight(1f))
-            MetricTile("${insight.analyzedDurationMs / 60_000}분", "유효 분석", Modifier.weight(1f))
-            MetricTile("${insight.snapshot.samples.size}", "속도 샘플", Modifier.weight(1f))
-        }
-    }
-
-    GlassPanel(Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("관찰된 운전 패턴", Modifier.weight(1f), fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text("속도 변화로 본 근사치 · 멀미 여부 아님", color = MotionMuted, fontSize = 16.sp)
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            DrivingPattern.entries.forEach { pattern ->
-                val recentAverage = state.recentDriverTrips
-                    .filter { it.trip.id != trip.id }
-                    .take(3)
-                    .mapNotNull { it.rate(pattern) }
-                    .takeIf { it.isNotEmpty() }
-                    ?.average()
-                PatternTile(pattern, insight.count(pattern), insight.rate(pattern), recentAverage, Modifier.weight(1f))
-            }
-        }
-    }
-
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        if (maxWidth >= 850.dp) Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            ParticipantsPanel(state, Modifier.weight(1f))
-            FeedbackPanel(state, onFeedback, Modifier.weight(1f))
-        } else Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            ParticipantsPanel(state)
-            FeedbackPanel(state, onFeedback)
-        }
-    }
-
-    // Same calculation as the departure screen, so the report and the next start never disagree.
+    val names = state.people.associateBy { it.id }
+    val riders = listOfNotNull(state.participants?.driverId).plus(state.participants?.passengerIds.orEmpty())
+        .mapNotNull { names[it]?.displayName }.joinToString(" · ").ifBlank { "탑승 정보 없음" }
+    val response = state.participants?.passengerIds.orEmpty().joinToString(" · ") { id ->
+        val value = state.feedback.firstOrNull { it.targetPersonId == id }?.answer as? FeedbackAnswer.Rating
+        "${names[id]?.displayName ?: "동승자"} ${value?.let { "${it.value}/5" } ?: "미응답"}"
+    }.ifBlank { null }
+    BReportPanel(BReportUi(
+        title = tripTime(insight.trip.startedAtEpochMs), participants = riders,
+        sourceLabel = insight.trip.origin.name,
+        metrics = listOf(BMetric("운행 시간", formatDuration(insight.durationMs)), BMetric("거리", "%.1f km".format(insight.distanceMeters / 1000)), BMetric("유효 분석", "${insight.analyzedDurationMs / 60_000}분")),
+        movements = DrivingPattern.entries.map { BMetric(patternLabel(it), "${insight.count(it)}회") },
+        feedback = response, guidance = guidanceSummary(insight.snapshot),
+    ), onFeedback, speedChart = { BSpeedTrace(insight.snapshot, initialEvent) })
+    ParticipantsPanel(state)
+    steeringNote(insight.snapshot)?.let { Text(it, color = MotionSubtle) }
     val next = adviceFor(state.participants?.driverId, state.recentDriverTrips)
-    if (next.pattern != null) GlassPanel(Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            Text(patternIcon(next.pattern), fontSize = 44.sp, color = MotionCyan)
-            Column(Modifier.weight(1f)) {
-                Text("다음 출발", color = MotionSubtle, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                Text(next.headline, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.ExtraBold)
-            }
-            next.recentAverage?.let {
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("%.1f회".format(it), fontSize = 30.sp, color = MotionCyan, fontWeight = FontWeight.ExtraBold)
-                    Text("최근 10분당", fontSize = 15.sp, color = MotionMuted)
-                }
-            }
-        }
-    }
-
-    Text("ⓘ  유효한 속도 구간만 계산 · 5초 넘는 공백은 거리에서 제외 · 1분 미만 기록은 10분당 빈도 없음",
-        color = MotionMuted, fontSize = 15.sp)
+    BActionRibbon("다음 출발", next.headline, enabled = false, onClick = {})
 }
 
 @Composable private fun PatternTile(pattern: DrivingPattern, count: Int, rate: Double?, recentAverage: Double?, modifier: Modifier) {

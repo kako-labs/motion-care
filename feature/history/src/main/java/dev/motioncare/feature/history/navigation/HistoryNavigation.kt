@@ -1,5 +1,7 @@
 package dev.motioncare.feature.history.navigation
 
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -49,12 +51,12 @@ fun NavGraphBuilder.historyGraph(
     }
     composable("advice/{$PERSON_ID}") { entry ->
         val raw = entry.arguments?.getString(PERSON_ID)
-        AdviceRoute(raw?.takeUnless { it == "none" }?.let(::PersonId), trips, profiles) { navigation.popBackStack() }
+        AdviceRoute(raw?.takeUnless { it == "none" }?.let(::PersonId), trips, profiles, onBack = { navigation.popBackStack() }, onTrip = { id, event -> navigation.navigate(HistoryRoutes.trip(id) + "?event=$event") })
     }
-    composable("trip/{$TRIP_ID}") { entry ->
+    composable("trip/{$TRIP_ID}?event={event}", arguments = listOf(navArgument("event") { type = NavType.IntType; defaultValue = 0 })) { entry ->
         val id = TripId(requireNotNull(entry.arguments?.getString(TRIP_ID)))
         TripDetailRoute(id, trips, profiles, onBack = { navigation.popBackStack() }, onBackToHome = onBackToHome,
-            onFeedback = { navigation.navigate(HistoryRoutes.feedback(id)) })
+            onFeedback = { navigation.navigate(HistoryRoutes.feedback(id)) }, initialEvent = entry.arguments?.getInt("event") ?: 0)
     }
     composable("feedback/{$TRIP_ID}") { entry ->
         val id = TripId(requireNotNull(entry.arguments?.getString(TRIP_ID)))

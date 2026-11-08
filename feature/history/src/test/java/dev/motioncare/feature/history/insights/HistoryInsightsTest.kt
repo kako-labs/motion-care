@@ -5,6 +5,17 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class HistoryInsightsTest {
+    @Test fun `an unavailable sample must not be bridged by the distance calculation`() {
+        val result = insight(snapshot("missing", 3000, listOf(
+            SpeedSample(0, 10.0, Quality.VALID),
+            SpeedSample(1000, null, Quality.UNAVAILABLE),
+            SpeedSample(2000, 10.0, Quality.VALID),
+            SpeedSample(3000, 10.0, Quality.VALID),
+        )))
+        assertEquals(10.0, result.distanceMeters, 0.001)
+        assertEquals(1000L, result.analyzedDurationMs)
+    }
+
     @Test fun `distance uses trapezoids and excludes gaps over five seconds`() {
         val snapshot = snapshot(
             id = "distance",

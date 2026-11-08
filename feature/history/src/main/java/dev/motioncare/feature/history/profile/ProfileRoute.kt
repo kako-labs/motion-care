@@ -1,5 +1,6 @@
 package dev.motioncare.feature.history.profile
 
+import dev.motioncare.feature.history.presentation.*
 import kotlin.math.roundToInt
 import dev.motioncare.feature.history.insights.AdviceState
 import dev.motioncare.feature.history.insights.patternIcon
@@ -72,7 +73,11 @@ private fun PersonDetailContent(
                 TabTile("♙", "동승할 때", tab == ProfileTab.PASSENGER) { tab = ProfileTab.PASSENGER }
             }
             if (tab == ProfileTab.DRIVER) DriverProfile(person, state.driverTrips, state.advice, onAdvice)
-            else PassengerProfile(person, state.passengerFeedback)
+            else BPassengerProfilePanel(
+                name = person.displayName, role = if (person.kind == PersonKind.CHILD) "동승자 · 어린이" else "동승자",
+                preferences = listOf(BMetric("민감도", person.motionSensitivity.label()), BMetric("휴식 간격", person.preferredRestMinutes?.let { "${it}분" }), BMetric("선호 온도", person.preferredTemperatureCelsius?.let { "${it}℃" })),
+                moments = person.motionTriggers.map { BMoment(it.label(), "등록한 이동 선호") } + state.passengerFeedback.sortedByDescending { it.createdAtEpochMs }.take(5).map { BMoment(tripDate(it.createdAtEpochMs), (it.answer as? FeedbackAnswer.Rating)?.let { rating -> "편안함 ${rating.value}/5" } ?: "미응답") },
+                portrait = { PersonAvatar(person, Modifier.size(100.dp)) }, onEdit = { editing = true })
         }
     }
     if (editing && person != null) PreferenceDialog(person, { editing = false }, { onUpdate(it); editing = false })
