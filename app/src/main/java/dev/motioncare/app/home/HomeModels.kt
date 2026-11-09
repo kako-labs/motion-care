@@ -6,7 +6,14 @@ import dev.motioncare.core.model.DataOrigin
 import dev.motioncare.core.model.EnvironmentReading
 import dev.motioncare.core.model.EnvironmentSnapshot
 import dev.motioncare.core.model.MissingReason
+import dev.motioncare.core.model.PersonId
+import dev.motioncare.core.model.PersonKind
+import dev.motioncare.core.model.SeatPosition
 import dev.motioncare.core.model.PersonProfile
+import dev.motioncare.core.model.SeatingPlan
+import dev.motioncare.core.model.TripParticipants
+import dev.motioncare.feature.history.insights.AdviceInsight
+import dev.motioncare.feature.history.insights.patternLabel
 import dev.motioncare.core.model.TripId
 import dev.motioncare.core.model.TripRecord
 import dev.motioncare.core.model.TripStatus
@@ -16,14 +23,29 @@ import java.util.Locale
 import java.util.TimeZone
 import kotlin.math.roundToInt
 
-data class RecentTripItem(val id: TripId, val startedAt: String, val detail: String, val synthetic: Boolean)
+/** [people] names who rode, or null when no one has been registered yet. */
+data class RecentTripItem(
+    val id: TripId,
+    val startedAt: String,
+    val detail: String,
+    val synthetic: Boolean,
+    val people: String? = null,
+)
 
 /**
  * Finished and interrupted trips, newest first. The trip being recorded is left out. An interrupted trip gets its
  * end time when the next process notices it, so it shows no length.
  */
-fun recentTripItems(records: List<TripRecord>, zone: TimeZone, limit: Int = 3): List<RecentTripItem> {
+fun recentTripItems(
+    records: List<TripRecord>,
+    zone: TimeZone,
+    limit: Int = 3,
+    participants: List<TripParticipants> = emptyList(),
+    people: List<PersonProfile> = emptyList(),
+): List<RecentTripItem> {
     val format = SimpleDateFormat("M월 d일 HH:mm", Locale.KOREAN).apply { timeZone = zone }
+    val names = people.associate { it.id to it.displayName }
+    val riders = participants.associateBy { it.tripId }
     return records.filter { it.status != TripStatus.RECORDING }
         .sortedByDescending { it.startedAtEpochMs }
         .take(limit)
@@ -32,7 +54,15 @@ fun recentTripItems(records: List<TripRecord>, zone: TimeZone, limit: Int = 3): 
                 TripStatus.INTERRUPTED -> "기록 중단"
                 else -> trip.endedAtEpochMs?.let { lengthText(it - trip.startedAtEpochMs) }.orEmpty()
             }
-            RecentTripItem(trip.id, format.format(Date(trip.startedAtEpochMs)), detail, trip.origin == DataOrigin.SYNTHETIC)
+            val rode = riders[trip.id]?.let { listOfNotNull(it.driverId) + it.passengerIds }.orEmpty().mapNotNull(names::get)
+            RecentTripItem(
+                trip.id, format.format(Date(trip.startedAtEpochMs)), detail, trip.origin == DataOrigin.SYNTHETIC,
+                people = when {
+                    people.isEmpty() -> null
+                    rode.isEmpty() -> "인물 미지정"
+                    else -> rode.joinToString(" · ")
+                },
+            )
         }
 }
 
@@ -116,7 +146,48 @@ private fun celsius(value: Double): String {
     return "$text°C"
 }
 
-data class PeopleSummary(val shown: List<PersonProfile>, val more: Int)
+data class SeatedPerson(val person: PersonProfile, val role: String)
 
-fun peopleSummary(people: List<PersonProfile>, max: Int = 2): PeopleSummary =
-    PeopleSummary(people.take(max), (people.size - max).coerceAtLeast(0))
+/** Who sits in the car now, driver first. [registered] counts everyone in the profile store. */
+data class PeopleSummary(val shown: List<SeatedPerson>, val more: Int, val registered: Int)
+
+fun peopleSummary(people: List<PersonProfile>, seating: SeatingPlan, max: Int = 2): PeopleSummary {
+    val byId = people.associateBy { it.id }
+    val seated = SeatPosition.entries.mapNotNull { seat ->
+        seating.assignments[seat]?.let(byId::get)?.let { person -> SeatedPerson(person, roleOf(seat, person)) }
+    }
+    return PeopleSummary(seated.take(max), (seated.size - max).coerceAtLeast(0), people.size)
+}
+
+private fun roleOf(seat: SeatPosition, person: PersonProfile) = when {
+    seat == SeatPosition.DRIVER -> "운전자"
+    person.kind == PersonKind.CHILD -> "어린이 동승자"
+    else -> "동승자"
+}
+
+enum class HeroAction { EXPLAIN, CHOOSE_SEATS }
+
+/** The departure advice in the home hero. The comparison reads like Home2: "2.4회에서 1.4회로". */
+data class HomeAdvice(
+    val headline: String,
+    val context: String?,
+    val comparisonLabel: String?,
+    val comparison: String?,
+    val action: HeroAction,
+)
+
+fun homeAdvice(advice: AdviceInsight, driverId: PersonId?): HomeAdvice {
+    val previous = advice.previousAverage
+    val recent = advice.recentAverage
+    val pattern = advice.pattern
+    val compares = previous != null && recent != null && pattern != null
+    return HomeAdvice(
+        headline = advice.headline,
+        context = advice.context,
+        comparisonLabel = if (compares) "10분당 ${patternLabel(pattern!!)}" else null,
+        comparison = if (compares) "${rate(previous!!)}회에서 ${rate(recent!!)}회로" else null,
+        action = if (driverId == null) HeroAction.CHOOSE_SEATS else HeroAction.EXPLAIN,
+    )
+}
+
+private fun rate(value: Double) = "%.1f".format(Locale.KOREAN, value)

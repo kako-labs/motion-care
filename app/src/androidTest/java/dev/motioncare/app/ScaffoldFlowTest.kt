@@ -26,7 +26,7 @@ class ScaffoldFlowTest {
     }
 
     @Test fun profileScreenReadsTheProfileStoreAndReturnsHome() {
-        click("관리")
+        click("변경")
         awaitText("출발 전 안내")
         awaitText("탑승 인원 0명")
         awaitText("차량 좌석을 눌러 운전자와 동승자를 선택해 주세요.")

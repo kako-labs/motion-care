@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -24,6 +25,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.motioncare.core.model.PersonKind
 import dev.motioncare.core.model.PersonProfile
+import dev.motioncare.core.ui.MotionBrushes
+import dev.motioncare.core.ui.MotionPalette
+import dev.motioncare.core.ui.MotionTheme
+import dev.motioncare.core.ui.glass
+import dev.motioncare.core.ui.motionBackground
 import dev.motioncare.feature.history.R
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,42 +40,30 @@ import kotlin.math.max
 fun tripTime(epochMs: Long): String = SimpleDateFormat("M월 d일 (E) a h:mm", Locale.KOREAN).format(Date(epochMs))
 fun tripDate(epochMs: Long): String = SimpleDateFormat("M월 d일 (E)", Locale.KOREAN).format(Date(epochMs))
 
-val MotionBackground = Color(0xFF0C1729)
-val MotionPanel = Color(0xFF142237)
-val MotionPanelLight = Color(0xFF1B2B42)
-val MotionCyan = Color(0xFFB0DDF5)
+// Shared tokens follow the app-wide Home2 style in core:ui so the home and history screens match. MotionBlue stays
+// the history screens' own chart color.
+val MotionBackground = MotionPalette.Base
+val MotionPanel = Color(0xFF0D1F38)
+val MotionPanelLight = Color(0xFF13294A)
+val MotionCyan = MotionPalette.Link
 val MotionBlue = Color(0xFF578CB4)
-val MotionText = Color(0xFFEDF3FA)
-val MotionSubtle = Color(0xFFB6C5D7)
-val MotionMuted = Color(0xFF879BB4)
-val MotionLine = Color(0x24B9D5F0)
+val MotionText = MotionPalette.Text
+val MotionSubtle = MotionPalette.TextSecondary
+val MotionMuted = MotionPalette.TextTertiary
+val MotionLine = MotionPalette.CardBorder
 
-private val motionColors = darkColorScheme(
-    primary = MotionCyan, onPrimary = Color(0xFF03111F), secondary = MotionBlue,
-    background = MotionBackground, onBackground = MotionText, surface = MotionPanel,
-    onSurface = MotionText, outline = MotionLine, error = Color(0xFFFFA8A8),
-    secondaryContainer = Color(0xFF1B426A), onSecondaryContainer = MotionText,
-    surfaceVariant = Color(0xFF16365A), onSurfaceVariant = MotionSubtle,
-    surfaceContainerHigh = Color(0xFF0E2A48), outlineVariant = MotionLine,
-)
-
-/** The host app keeps a light theme, so every history surface brings its own dark scheme and text color. */
-@Composable fun MotionCareTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = motionColors) {
-        CompositionLocalProvider(LocalContentColor provides MotionText, content = content)
-    }
-}
+/** The history screens use the app-wide theme; kept so callers inside this feature need not change. */
+@Composable fun MotionCareTheme(content: @Composable () -> Unit) = MotionTheme(content)
 
 @Composable fun MotionCareBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     MotionCareTheme {
-        Box(modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF14243A), MotionBackground, Color(0xFF0A1424)))), content = content)
+        Box(modifier.fillMaxSize().motionBackground(), content = content)
     }
 }
 
 @Composable fun GlassPanel(modifier: Modifier = Modifier, compact: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     MotionCareTheme {
-        Column(modifier.background(Brush.linearGradient(listOf(Color(0xFF17263C), MotionPanel)), RoundedCornerShape(20.dp))
-            .border(1.dp, MotionLine, RoundedCornerShape(20.dp)).padding(if (compact) 18.dp else 24.dp),
+        Column(modifier.glass(RoundedCornerShape(if (compact) 20.dp else 28.dp)).padding(if (compact) 18.dp else 24.dp),
             verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 14.dp), content = content)
     }
 }
@@ -78,14 +72,17 @@ private val motionColors = darkColorScheme(
     leading: (@Composable () -> Unit)? = null, action: (@Composable () -> Unit)? = null) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val compact = maxWidth < 600.dp
+        // Home2's screen title is bold; the size steps down on narrow windows.
+        val big = maxWidth >= 900.dp
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(Modifier.fillMaxWidth().heightIn(min = 72.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 if (onBack != null) RoundIconButton("‹", onBack)
                 leading?.invoke()
                 Column(Modifier.weight(1f)) {
-                    Text(title, fontSize = 30.sp, lineHeight = 38.sp, fontWeight = FontWeight.Medium)
-                    subtitle?.let { Text(it, color = MotionMuted, fontSize = 16.sp, lineHeight = 24.sp) }
+                    Text(title, fontSize = if (big) 36.sp else 28.sp, lineHeight = if (big) 44.sp else 36.sp,
+                        fontWeight = FontWeight.ExtraBold)
+                    subtitle?.let { Text(it, color = MotionMuted, fontSize = if (big) 20.sp else 16.sp, lineHeight = if (big) 28.sp else 24.sp) }
                 }
                 if (!compact) action?.invoke()
             }
@@ -95,8 +92,10 @@ private val motionColors = darkColorScheme(
 }
 
 @Composable fun RoundIconButton(symbol: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(onClick = onClick, shape = RoundedCornerShape(14.dp), color = Color.Transparent,
-        modifier = modifier.size(52.dp).semantics { contentDescription = when (symbol) { "‹" -> "뒤로"; "✕" -> "닫기"; else -> symbol } }) {
+    Surface(onClick = onClick, shape = CircleShape, color = Color.Transparent,
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, MotionLine),
+        modifier = modifier.size(52.dp).glass(CircleShape)
+            .semantics { contentDescription = when (symbol) { "‹" -> "뒤로"; "✕" -> "닫기"; else -> symbol } }) {
         Box(contentAlignment = Alignment.Center) { Text(symbol, fontSize = 27.sp, lineHeight = 30.sp, color = MotionSubtle) }
     }
 }
@@ -123,18 +122,26 @@ fun avatarFor(person: PersonProfile): Int {
         contentScale = ContentScale.Crop)
 }
 
+private val ActionShape = RoundedCornerShape(18.dp)
+
+/** Home2's primary button: a blue gradient with a light edge and white bold text. */
 @Composable fun PrimaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
-    Button(onClick = onClick, enabled = enabled, modifier = modifier.heightIn(min = 64.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = MotionCyan, contentColor = Color(0xFF112337)), shape = RoundedCornerShape(14.dp)) {
-        Text(text, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+    Button(onClick = onClick, enabled = enabled,
+        modifier = modifier.heightIn(min = 64.dp).alpha(if (enabled) 1f else 0.5f)
+            .background(MotionBrushes.Primary, ActionShape).border(1.5.dp, MotionPalette.ButtonBorder, ActionShape),
+        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = Color.White,
+            disabledContainerColor = Color.Transparent, disabledContentColor = Color.White),
+        shape = ActionShape) {
+        Text(text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
     }
 }
 
+/** The secondary button sits on glass with the card edge. */
 @Composable fun SecondaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
-    OutlinedButton(onClick = onClick, enabled = enabled, modifier = modifier.heightIn(min = 64.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MotionLine), shape = RoundedCornerShape(14.dp),
+    OutlinedButton(onClick = onClick, enabled = enabled, modifier = modifier.heightIn(min = 64.dp).glass(ActionShape),
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, MotionLine), shape = ActionShape,
         colors = ButtonDefaults.outlinedButtonColors(contentColor = MotionText)) {
-        Text(text, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+        Text(text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
     }
 }
 

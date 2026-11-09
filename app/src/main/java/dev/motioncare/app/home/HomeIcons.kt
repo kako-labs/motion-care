@@ -13,6 +13,7 @@ internal object HomeIcons {
     val Home = filled("M12 3l9 8h-3v9h-4v-6h-4v6H6v-9H3z")
     val Play = filled("M8 5v14l11-7z")
     val Sparkle = filled("M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z")
+    val Clock = outlined("M21 12a9 9 0 1 1-18 0a9 9 0 1 1 18 0", "M12 7v5l3.5 2")
     val Person = outlined("M16 8a4 4 0 1 1-8 0a4 4 0 1 1 8 0", "M4 21a8 8 0 0 1 16 0")
     val Air = outlined("M3 9h11a3 3 0 1 0-3-3M3 14h16a3 3 0 1 1-3 3M3 19h7")
     val Cloud = outlined("M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9.5 4.3 4.3 0 0 1 17.5 18z")

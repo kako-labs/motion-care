@@ -114,7 +114,7 @@ class MeetingReadinessFlowTest {
         compose.setContent {
             MaterialTheme { MainHost(trips, profiles, environment, false, null, {}) }
         }
-        click("관리")
+        click("변경")
         awaitText("탑승 인원 0명")
         addPerson("운전석", "테스트 운전자")
         addPerson("뒤 오른쪽", "테스트 동승자", child = true)
@@ -159,7 +159,7 @@ class MeetingReadinessFlowTest {
         back()
         awaitText("운행을 마쳤어요")
         compose.onNodeWithText("완료").performScrollTo().performClick()
-        click("관리")
+        click("변경")
         awaitText("최근 운행")
         click("이번 이동의 제안")
         awaitText("분석할 기록이 부족해요.")
@@ -192,7 +192,7 @@ class MeetingReadinessFlowTest {
         compose.setContent {
             MaterialTheme { MainHost(trips, profiles, environment, false, null, {}) }
         }
-        click("관리")
+        click("변경")
         click("전체 기록")
         awaitText("아직 기록이 없습니다.")
         capture("05-empty-history")

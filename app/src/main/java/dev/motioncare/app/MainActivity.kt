@@ -6,7 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.content.ContextCompat
-import dev.motioncare.app.home.MotionCareTheme
+import dev.motioncare.core.ui.MotionTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val graph = (application as MotionCareApplication).graph
         setContent {
-            MotionCareTheme {
+            MotionTheme {
                 MainHost(
                     trips = graph.trips,
                     profiles = graph.profiles,

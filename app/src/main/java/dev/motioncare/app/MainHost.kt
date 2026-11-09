@@ -20,12 +20,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.*
-import dev.motioncare.app.home.HomeColors
 import dev.motioncare.app.home.HomeScreen
-import dev.motioncare.app.home.ReadyHero
+import dev.motioncare.app.home.AdviceHero
+import dev.motioncare.app.home.DepartureGuidanceSwitch
+import dev.motioncare.app.home.HomeLinks
+import dev.motioncare.app.home.homeAdvice
 import dev.motioncare.app.home.StartButton
+import dev.motioncare.core.ui.MotionPalette
+import dev.motioncare.core.ui.motionBackground
 import dev.motioncare.app.home.environmentCard
-import dev.motioncare.app.home.homeBackground
 import dev.motioncare.app.home.peopleSummary
 import dev.motioncare.app.home.recentTripItems
 import dev.motioncare.data.environment.EnvironmentRepository
@@ -36,6 +39,7 @@ import dev.motioncare.feature.driving.DrivingViewModel
 import dev.motioncare.feature.driving.ui.ActiveContent
 import dev.motioncare.feature.driving.ui.GuidanceSwitch
 import dev.motioncare.feature.driving.ui.rememberGuidanceCardsAllowed
+import dev.motioncare.feature.history.DepartureViewModel
 import dev.motioncare.feature.history.navigation.HistoryRoutes
 import dev.motioncare.feature.history.navigation.historyGraph
 import dev.motioncare.feature.history.report.FinishedContent
@@ -90,15 +94,11 @@ fun MainHost(
     }
     // Read once on opening and again after the permission answer, which may allow outdoor air.
     LaunchedEffect(permissionsAnswered) { environment.refresh() }
-    // The home card lists people; a profile store that fails to open leaves the card empty.
-    LaunchedEffect(profiles) {
-        try {
-            profiles.initialize()
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Exception) {
-        }
-    }
+    // Seats, people and departure advice come from the history feature, as on its own departure screen.
+    val departure: DepartureViewModel = viewModel(factory = viewModelFactory {
+        initializer { DepartureViewModel(trips, profiles, environment.current) }
+    })
+    val departureState by departure.uiState.collectAsStateWithLifecycle()
     val activeId = drivingState.active?.id
     // A new trip keeps who sat where at its start and the environment at that moment, then starts recording.
     LaunchedEffect(activeId) {
@@ -127,7 +127,7 @@ fun MainHost(
         }
     }
     val records by trips.records.collectAsStateWithLifecycle()
-    val people by profiles.people.collectAsStateWithLifecycle()
+    val participants by profiles.participants.collectAsStateWithLifecycle()
     val snapshot by environment.current.collectAsStateWithLifecycle()
     val zone = remember { TimeZone.getDefault() }
     val startTrip = {
@@ -136,7 +136,7 @@ fun MainHost(
             permissions.launch(recordingPermissions())
         } else driving.start()
     }
-    Surface(Modifier.fillMaxSize().homeBackground(), color = Color.Transparent, contentColor = HomeColors.Text) {
+    Surface(Modifier.fillMaxSize().motionBackground(), color = Color.Transparent, contentColor = MotionPalette.Text) {
         Box(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 20.dp, vertical = 16.dp)) {
             if (!drivingState.ready) {
                 Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally,
@@ -151,9 +151,11 @@ fun MainHost(
                     val error = drivingState.error
                     HomeScreen(
                         vehicleConnected = vehicleConnected,
-                        people = peopleSummary(people),
+                        people = peopleSummary(departureState.people, departureState.seating),
                         environment = environmentCard(snapshot, zone),
-                        recent = remember(records) { recentTripItems(records, zone) },
+                        recent = remember(records, participants, departureState.people) {
+                            recentTripItems(records, zone, participants = participants, people = departureState.people)
+                        },
                         start = StartButton(
                             label = when {
                                 active != null -> "기록 중"
@@ -163,16 +165,25 @@ fun MainHost(
                             enabled = active == null && finished == null && !drivingState.busy,
                             onClick = startTrip,
                         ),
-                        onPeople = { navigation.navigate(HistoryRoutes.PROFILES) },
-                        onTrip = { navigation.navigate(HistoryRoutes.trip(it)) },
+                        links = HomeLinks(
+                            onSeats = { navigation.navigate(HistoryRoutes.PROFILES) },
+                            onRecords = { navigation.navigate(HistoryRoutes.RECORDS) },
+                            onProfile = {
+                                val driver = departureState.seating.driverId
+                                navigation.navigate(if (driver != null) HistoryRoutes.profile(driver) else HistoryRoutes.PROFILES)
+                            },
+                            onTrip = { navigation.navigate(HistoryRoutes.trip(it)) },
+                        ),
                         notice = if (error != null || speedNotice != SpeedPermissionNotice.NONE) {
                             @Composable {
                                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                                 SpeedPermissionMessage(speedNotice, onOpenSettings = { openPermissionSettings(context) })
                             }
                         } else null,
-                        guidance = guidance?.let { settings ->
-                            @Composable {
+                        guidance = {
+                            DepartureGuidanceSwitch(departureState.guidanceEnabled, onChange = { departure.toggleGuidance() })
+                            // In-drive cards need the car; devices without one show the departure switch only.
+                            guidance?.let { settings ->
                                 val enabled by settings.enabled.collectAsStateWithLifecycle()
                                 val sound by settings.sound.collectAsStateWithLifecycle()
                                 GuidanceSwitch(
@@ -194,7 +205,11 @@ fun MainHost(
                                     onFeedback = { navigation.navigate(HistoryRoutes.feedback(finished)) },
                                     onDone = driving::dismissFinished,
                                 )
-                                else -> ReadyHero(vehicleConnected, sizes)
+                                else -> AdviceHero(
+                                    homeAdvice(departureState.advice, departureState.seating.driverId), sizes,
+                                    onExplain = { navigation.navigate(HistoryRoutes.advice(departureState.seating.driverId)) },
+                                    onChooseSeats = { navigation.navigate(HistoryRoutes.PROFILES) },
+                                )
                             }
                         },
                     )
