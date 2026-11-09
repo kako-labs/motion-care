@@ -52,3 +52,5 @@ UI/수명 흐름은 바꾸지 않았으므로 기존 앱 instrumentation 소스�
 실패는 `ScaffoldFlowTest.profileScreenReadsTheProfileStoreAndReturnsHome`의31행이다. `출발 전 안내` 도착 후 기존 `운전자 0 · 동승자 0` 문구를15초 기다리다가 만료했다. 인수 기준 `4b37cc0`의 `ReadyContent.kt`도 이미 `탑승 인원 0명`과 좌석 선택 안내를 표시하며 이전 문구는 없다. 이번 후속은 해당 화면·테스트를 변경하지 않았다. 타임아웃을 늘려도 없는 문구는 나타나지 않는다.
 
 초기에는 [검토용 패치](scaffold-empty-seating-test.patch)로 준비했으며, 후속 사용자 지시에 따라 `app`의 해당 테스트에 적용했다. 빈 좌석 상태의 현재 인원수와 안내를 확인하도록 기대값만 맞췄다. 기존 탐색·뒤로 이동 검사와15초 제한은 유지한다. 앱 동작·DB·내비 계약 변경은 없다. 실패 근거는 위 원격 실행에 있으며, 수정 후 UI 재검증 결과는 PR Checks에서 해당 커밋을 확인한다. 패치는 적용 내역 참고용으로 보존한다.
+
+수정 커밋 `682e8bc`의 [원격 실행 42613567634](https://github.com/kako-labs/motion-care/actions/runs/42613567634)는 **verify·UI 모두 성공**했다. 로컬 필수 `python scripts/dev.py verify`와 읽기 전용 API35 테스트 에뮬레이터의 `python scripts/dev.py ui-connected`도 성공했고 UI5개 모두 실패·오류·생략0이다. 최초 로컬 UI 시도는 검사 시작 전 ADB 연결 초기화로 중단되었으며, 기기 재연결 확인 후 동일 코드로 재실행해5개 통과했다. 테스트 기기는 종료했다. 팀원이 별도로 패치를 적용할 필요는 없으며 PR 리뷰·통합 판단만 남는다.
