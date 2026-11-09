@@ -12,6 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -52,6 +54,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 private const val HOME_ROUTE = "home"
+private const val HISTORY_TEXT_SCALE = 1.3f
 // Outdoor air needs the car's position. Recording goes on without it.
 private const val LOCATION_PERMISSION = "pleos.car.permission.FUSED_LOCATION"
 
@@ -137,7 +140,14 @@ fun MainHost(
         } else driving.start()
     }
     Surface(Modifier.fillMaxSize().motionBackground(), color = Color.Transparent, contentColor = MotionPalette.Text) {
-        Box(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 20.dp, vertical = 16.dp)) {
+        BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 20.dp, vertical = 16.dp)) {
+            // History screens set small text sizes for phones and 1024-wide windows. On the car's wide window they get
+            // a larger font scale, toward the Pleos guide's 18 px minimum. Android 14 scales sp non-linearly, so on
+            // the emulator 14 sp labels grew about 1.25 times while 30 sp titles stayed put. The home sets its own sizes.
+            val route = navigation.currentBackStackEntryAsState().value?.destination?.route
+            val density = LocalDensity.current
+            val textScale = if (route != null && route != HOME_ROUTE && maxWidth >= 1100.dp) HISTORY_TEXT_SCALE else 1f
+            CompositionLocalProvider(LocalDensity provides Density(density.density, density.fontScale * textScale)) {
             if (!drivingState.ready) {
                 Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -221,6 +231,7 @@ fun MainHost(
                     environment = environment.current,
                     onBackToHome = { navigation.popBackStack(HOME_ROUTE, inclusive = false) },
                 )
+            }
             }
         }
     }

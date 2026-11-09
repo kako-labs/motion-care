@@ -1,6 +1,7 @@
 package dev.motioncare.feature.history.feedback
 
 import dev.motioncare.feature.history.presentation.BFeedbackPanel
+import dev.motioncare.feature.history.ui.MotionSelected
 import dev.motioncare.feature.history.presentation.BReason
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -70,7 +71,7 @@ internal fun FeedbackRoute(
                     passengers.forEach { person ->
                         val chosen = target == person.id
                         Surface(onClick = { target = person.id }, shape = RoundedCornerShape(22.dp),
-                            color = if (chosen) MotionCyan.copy(.1f) else MotionPanel, border = BorderStroke(1.dp, if (chosen) MotionCyan.copy(.5f) else MotionLine)) {
+                            color = if (chosen) MotionSelected else MotionPanel, border = BorderStroke(1.dp, if (chosen) MotionCyan.copy(.5f) else MotionLine)) {
                             Row(Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 PersonAvatar(person, Modifier.size(64.dp))
                                 Text(person.displayName, fontSize = 22.sp, fontWeight = FontWeight.Medium)
@@ -122,7 +123,7 @@ private fun toggleReason(current: Set<FeedbackReason>, reason: FeedbackReason): 
 private fun ratingLabel(value: Int) = when (value) { 1 -> "많이 불편했어요"; 2 -> "불편했어요"; 3 -> "보통이었어요"; 4 -> "편안했어요"; 5 -> "아주 편안했어요"; else -> " " }
 @Composable private fun ChoiceTile(icon: String, label: String, selected: Boolean, modifier: Modifier, compact: Boolean = false,
     face: (@Composable () -> Unit)? = null, onClick: () -> Unit) {
-    Surface(onClick = onClick, shape = RoundedCornerShape(14.dp), color = if (selected) MotionCyan.copy(.1f) else MotionPanel,
+    Surface(onClick = onClick, shape = RoundedCornerShape(14.dp), color = if (selected) MotionSelected else MotionPanel,
         border = BorderStroke(1.dp, if (selected) MotionCyan.copy(.5f) else MotionLine), modifier = modifier.height(if (compact) 72.dp else 104.dp)) {
         if (compact) Row(horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
             face?.invoke()

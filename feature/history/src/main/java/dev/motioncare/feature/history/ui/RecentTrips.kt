@@ -64,7 +64,7 @@ import dev.motioncare.feature.history.HistoryViewModel
 }
 
 @Composable private fun FilterTile(selected: Boolean, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
-    Surface(onClick = onClick, shape = RoundedCornerShape(12.dp), color = if (selected) MotionCyan.copy(.1f) else Color.Transparent,
+    Surface(onClick = onClick, shape = RoundedCornerShape(12.dp), color = if (selected) MotionSelected else Color.Transparent,
         border = BorderStroke(1.dp, if (selected) MotionCyan.copy(.5f) else MotionLine), modifier = Modifier.heightIn(min = 60.dp)) {
         Row(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, content = content)
     }

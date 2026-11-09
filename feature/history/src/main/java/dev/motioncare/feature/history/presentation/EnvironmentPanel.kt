@@ -1,7 +1,5 @@
 package dev.motioncare.feature.history.presentation
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -12,7 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -22,6 +19,7 @@ import dev.motioncare.core.model.EnvironmentReading
 import dev.motioncare.core.model.EnvironmentSnapshot
 import dev.motioncare.core.model.EnvironmentSource
 import dev.motioncare.core.model.MissingReason
+import dev.motioncare.core.ui.glass
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -99,9 +97,7 @@ private fun EnvironmentFields(fields: List<EnvironmentFieldUi>, modifier: Modifi
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         fields.forEach { field ->
             Column(
-                Modifier.fillMaxWidth()
-                    .background(Brush.linearGradient(listOf(Color(0xFF17263C), Color(0xFF142237))), RoundedCornerShape(20.dp))
-                    .border(1.dp, Color(0x24B9D5F0), RoundedCornerShape(20.dp)).padding(22.dp),
+                Modifier.fillMaxWidth().glass(RoundedCornerShape(20.dp)).padding(22.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(field.label, color = Color(0xFFA6C2D9), fontSize = 15.sp)

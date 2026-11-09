@@ -43,8 +43,11 @@ fun tripDate(epochMs: Long): String = SimpleDateFormat("M월 d일 (E)", Locale.K
 // Shared tokens follow the app-wide Home2 style in core:ui so the home and history screens match. MotionBlue stays
 // the history screens' own chart color.
 val MotionBackground = MotionPalette.Base
-val MotionPanel = Color(0xFF0D1F38)
-val MotionPanelLight = Color(0xFF13294A)
+// Small cards and chips sit on glass, so they take the glass tint instead of a solid fill.
+val MotionPanel = Color(0x297AB0F0)
+val MotionPanelLight = Color(0x3D7AB0F0)
+/** A chosen option. Stronger than the glass tint of unchosen ones so the choice reads at a glance. */
+val MotionSelected = Color(0x592F9BEA)
 val MotionCyan = MotionPalette.Link
 val MotionBlue = Color(0xFF578CB4)
 val MotionText = MotionPalette.Text

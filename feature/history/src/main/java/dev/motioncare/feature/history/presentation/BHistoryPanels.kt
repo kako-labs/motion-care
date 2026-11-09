@@ -1,6 +1,7 @@
 package dev.motioncare.feature.history.presentation
 
 import androidx.compose.foundation.BorderStroke
+import dev.motioncare.feature.history.ui.MotionSelected
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,7 +19,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -32,7 +32,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+import dev.motioncare.core.ui.MotionBrushes
+import dev.motioncare.core.ui.MotionPalette
+import dev.motioncare.core.ui.glass
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.contentDescription
@@ -69,31 +78,34 @@ internal data class BReportUi(
 @Composable
 internal fun BGlass(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Column(
-        modifier.background(Brush.linearGradient(listOf(Color(0xFF17263C), Color(0xFF142237))), RoundedCornerShape(20.dp))
-            .border(1.dp, BLine, RoundedCornerShape(20.dp)).padding(26.dp),
+        modifier.glass(RoundedCornerShape(24.dp)).padding(26.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp), content = content,
     )
 }
 
+/**
+ * The tilted pane's outline. The cut stays within [maxCut] so a tall ribbon does not lean further into its text,
+ * and the text starts past the top-left corner.
+ */
+private class RibbonShape(private val maxCut: Dp) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val cut = minOf(size.width * .04f, size.height * .2f, with(density) { maxCut.toPx() })
+        return Outline.Generic(Path().apply { ribbon(size, cut) })
+    }
+}
+
+private val RibbonCut = 18.dp
+
 /** The tilted pane carries the surface, while text and touch bounds stay upright. */
 @Composable
 internal fun BActionRibbon(label: String, title: String, enabled: Boolean = true, compact: Boolean = false, onClick: () -> Unit) {
-    val shape = GenericShape { size, _ ->
-        val cut = minOf(size.width * .04f, size.height * .2f)
-        moveTo(cut * 2, 0f)
-        lineTo(size.width - cut, 0f)
-        quadraticTo(size.width, 0f, size.width - cut / 2, cut)
-        lineTo(size.width - cut * 2, size.height - cut)
-        quadraticTo(size.width - cut * 2.5f, size.height, size.width - cut * 3, size.height)
-        lineTo(cut, size.height)
-        quadraticTo(0f, size.height, cut / 2, size.height - cut)
-        lineTo(cut * 1.5f, cut)
-        quadraticTo(cut * 1.7f, 0f, cut * 2, 0f)
-        close()
-    }
+    val shape = RibbonShape(RibbonCut)
     Surface(onClick = onClick, enabled = enabled, shape = shape, color = Color.Transparent,
-        border = BorderStroke(1.dp, if (enabled) Color(0x55B0DDF5) else BLine), modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp)) {
-        Row(Modifier.background(Brush.linearGradient(listOf(Color(0xFF23364C), Color(0xFF1B2B42), Color(0xFF17283D)))).padding(if (compact) 20.dp else 28.dp, if (compact) 20.dp else 24.dp),
+        border = BorderStroke(1.5.dp, if (enabled) MotionPalette.ActionBorder else BLine), modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp)) {
+        // The left padding clears the top-left corner, which sits two cuts in from the edge.
+        Row(Modifier.background(MotionBrushes.Action)
+            .padding(start = RibbonCut * 2 + if (compact) 4.dp else 8.dp, end = if (compact) 20.dp else 28.dp,
+                top = if (compact) 20.dp else 24.dp, bottom = if (compact) 20.dp else 24.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(label, color = BSubtle, fontSize = 14.sp)
@@ -102,6 +114,19 @@ internal fun BActionRibbon(label: String, title: String, enabled: Boolean = true
             Text("↗", color = BCyan, fontSize = 25.sp)
         }
     }
+}
+
+private fun Path.ribbon(size: Size, cut: Float) {
+    moveTo(cut * 2, 0f)
+    lineTo(size.width - cut, 0f)
+    quadraticTo(size.width, 0f, size.width - cut / 2, cut)
+    lineTo(size.width - cut * 2, size.height - cut)
+    quadraticTo(size.width - cut * 2.5f, size.height, size.width - cut * 3, size.height)
+    lineTo(cut, size.height)
+    quadraticTo(0f, size.height, cut / 2, size.height - cut)
+    lineTo(cut * 1.5f, cut)
+    quadraticTo(cut * 1.7f, 0f, cut * 2, 0f)
+    close()
 }
 
 @Composable
@@ -224,7 +249,7 @@ internal fun BFeedbackPanel(
                 (1..5).forEach { score ->
                     val selected = rating != null && score <= rating
                     Surface(onClick = { onRating(score) }, enabled = !saving, shape = RoundedCornerShape(14.dp),
-                        color = if (selected) Color(0x1AB0DDF5) else Color(0x06FFFFFF), border = BorderStroke(1.dp, if (selected) BCyan.copy(.45f) else BLine),
+                        color = if (selected) MotionSelected else Color(0x06FFFFFF), border = BorderStroke(1.dp, if (selected) BCyan.copy(.45f) else BLine),
                         modifier = Modifier.width(starWidth).heightIn(min = 72.dp).semantics { contentDescription = "${score}점" }) {
                         Box(Modifier.padding(10.dp), contentAlignment = Alignment.Center) { Text(if (selected) "★" else "☆", color = if (selected) BCyan else BSubtle, fontSize = 34.sp) }
                     }
@@ -240,7 +265,7 @@ internal fun BFeedbackPanel(
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 reasons.forEach { reason -> FilterChip(selected = reason.id in selectedReasons, onClick = { onReason(reason.id) }, enabled = !saving,
                     colors = FilterChipDefaults.filterChipColors(containerColor = Color(0x06FFFFFF), labelColor = BSubtle,
-                        selectedContainerColor = Color(0x1AB0DDF5), selectedLabelColor = BText),
+                        selectedContainerColor = MotionSelected, selectedLabelColor = BText),
                     border = BorderStroke(1.dp, if (reason.id in selectedReasons) BCyan.copy(.45f) else BLine),
                     label = { Text(reason.label) }, modifier = Modifier.heightIn(min = 56.dp)) }
         }

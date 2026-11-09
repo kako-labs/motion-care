@@ -35,6 +35,7 @@ object MotionPalette {
     val ButtonTop = Color(0xFF2F9BEA)
     val ButtonBottom = Color(0xFF0B5FC4)
     val ButtonBorder = Color(0xA6AAE1FF)
+    val ActionBorder = Color(0x73A0D8FF)
 }
 
 private val motionColors = darkColorScheme(
@@ -91,6 +92,14 @@ object MotionBrushes {
         1f to Color(0xFF03122B),
         start = Offset(0f, 0f),
         end = Offset(1600f, 900f),
+    )
+    /** A slightly stronger glass for panels that open something, such as the history screens' tilted ribbons. */
+    val Action = Brush.linearGradient(
+        0f to Color(0x3D7AB0F0),
+        0.55f to Color(0x2B28548C),
+        1f to Color(0x590C2242),
+        start = Offset(0f, 0f),
+        end = Offset(900f, 400f),
     )
     val Primary = Brush.verticalGradient(listOf(MotionPalette.ButtonTop, MotionPalette.ButtonBottom))
     val Start = Brush.radialGradient(0f to Color(0xFF6FD9F8), 0.48f to Color(0xFF1191E2), 1f to Color(0xFF0A4CB0))

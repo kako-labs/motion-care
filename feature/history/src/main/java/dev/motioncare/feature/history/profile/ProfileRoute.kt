@@ -1,6 +1,7 @@
 package dev.motioncare.feature.history.profile
 
 import dev.motioncare.feature.history.presentation.*
+import dev.motioncare.feature.history.ui.MotionSelected
 import kotlin.math.roundToInt
 import dev.motioncare.feature.history.insights.AdviceState
 import dev.motioncare.feature.history.insights.patternIcon
@@ -144,7 +145,7 @@ private fun PersonDetailContent(
 }
 
 @Composable private fun TabTile(label: String, selected: Boolean, onClick: () -> Unit) {
-    Surface(onClick = onClick, shape = RoundedCornerShape(12.dp), color = if (selected) MotionCyan.copy(.1f) else Color.Transparent,
+    Surface(onClick = onClick, shape = RoundedCornerShape(12.dp), color = if (selected) MotionSelected else Color.Transparent,
         border = BorderStroke(1.dp, if (selected) MotionCyan.copy(.5f) else MotionLine), modifier = Modifier.heightIn(min = 56.dp).widthIn(min = 160.dp)) {
         Row(Modifier.padding(horizontal = 22.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
             Text(label, fontSize = 18.sp, fontWeight = FontWeight.Medium, color = if (selected) MotionText else MotionSubtle)

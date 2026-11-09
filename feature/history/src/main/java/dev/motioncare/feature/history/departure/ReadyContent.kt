@@ -1,6 +1,7 @@
 package dev.motioncare.feature.history.departure
 
 import androidx.compose.foundation.Image
+import dev.motioncare.feature.history.ui.MotionSelected
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
@@ -339,7 +340,7 @@ private fun DepartureOverview(
                 Text("출발 준비", fontSize = if (compact) 25.sp else 30.sp, fontWeight = FontWeight.Medium)
                 Text("탑승 인원 " + occupied.size + "명", color = MotionMuted, fontSize = 14.sp)
             }
-            Text("안내", color = MotionSubtle, fontSize = 14.sp)
+            Text("출발 안내", color = MotionSubtle, fontSize = 14.sp)
             Switch(state.guidanceEnabled, { onToggleGuidance() })
         }
         if (occupied.isEmpty()) {
@@ -510,9 +511,11 @@ private fun SeatPicker(
     ) {
         MotionCareTheme {
             Column(
-                Modifier.fillMaxWidth(.9f).widthIn(max = 420.dp).heightIn(max = 620.dp)
-                    .background(Brush.verticalGradient(listOf(Color(0xF2172D45), Color(0xFA08182B))), RoundedCornerShape(24.dp))
-                    .border(1.dp, MotionCyan.copy(.32f), RoundedCornerShape(24.dp))
+                // The width cap comes first: after fillMaxWidth the cap could not narrow the popup any more.
+                // The surface is opaque so the screen behind does not show through the list.
+                Modifier.widthIn(max = 420.dp).fillMaxWidth().heightIn(max = 620.dp)
+                    .background(Brush.verticalGradient(listOf(Color(0xFF0E2A4F), Color(0xFF071A33))), RoundedCornerShape(24.dp))
+                    .border(1.5.dp, MotionLine, RoundedCornerShape(24.dp))
                     .padding(20.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
@@ -612,7 +615,7 @@ private fun SeatPicker(
 
 @Composable private fun KindTile(label: String, selected: Boolean, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Surface(onClick = onClick, enabled = enabled, shape = RoundedCornerShape(22.dp),
-        color = if (selected) MotionCyan.copy(.1f) else MotionPanel, border = BorderStroke(1.dp, if (selected) MotionCyan.copy(.5f) else MotionLine),
+        color = if (selected) MotionSelected else MotionPanel, border = BorderStroke(1.dp, if (selected) MotionCyan.copy(.5f) else MotionLine),
         modifier = modifier.height(88.dp).alpha(if (enabled) 1f else .35f)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically)) {
             Text(label, fontSize = 20.sp, fontWeight = FontWeight.Medium, color = if (selected) MotionText else MotionSubtle)
