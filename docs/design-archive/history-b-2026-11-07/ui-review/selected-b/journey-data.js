@@ -1,4 +1,8 @@
-/* Deterministic, synthetic 1 Hz replay fixture. This is not a vehicle acquisition or detector implementation. */
+/*
+ * Deterministic mock replay. Stop shapes are calibrated from complete-stop
+ * trajectories in the FHWA NGSIM Peachtree Street data (vehicles 37, 55, 56,
+ * 61 and 68; 0.1 s source samples). This is not raw vehicle acquisition data.
+ */
 function buildJourneyReplay(durationMinutes, hardStopCount, rapidStartCount, variant) {
   const duration=durationMinutes*60, count=hardStopCount+4;
   const weights=[.75,1.32,.67,1.18,1.45,.92,1.28,.85,.78,1.16,.95,1.38,1.08];
@@ -8,20 +12,39 @@ function buildJourneyReplay(durationMinutes, hardStopCount, rapidStartCount, var
   const gapIndex=Math.floor(stops.length/2)-1;
   const gapStart=Math.round((stops[gapIndex]+stops[gapIndex+1])/2)-30, gapEnd=gapStart+60;
   const cruise=[[0,37],[.12,48],[.27,55],[.36,32],[.43,22],[.48,43],[.63,58],[.77,51],[.86,39],[1,34]];
+  const ngsimStopProfiles=[
+    [[0,1],[.27,.97],[.41,.71],[.48,.48],[.62,.36],[.68,.13],[.89,.13],[.96,.01],[1,0]],
+    [[0,1],[.26,.94],[.43,.78],[.52,.58],[.61,.39],[.70,.38],[.78,.24],[.87,.09],[.96,.08],[1,0]],
+    [[0,1],[.20,.92],[.40,.82],[.53,.81],[.67,.69],[.80,.44],[.84,.24],[.90,.13],[.97,.04],[1,0]]
+  ];
+  const profileRatio=(profile,u)=>{let j=1;while(j<profile.length-1&&profile[j][0]<u)j++;const a=profile[j-1],b=profile[j],blend=(u-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*blend;};
   const base=t=>{const fraction=t/duration;let j=1;while(j<cruise.length-1&&cruise[j][0]<fraction)j++;const a=cruise[j-1],b=cruise[j],blend=(fraction-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*blend+2*Math.sin(t/37)+1.3*Math.sin(t/13)+variant*.6;};
-  const brakeDuration=index=>hardIndices.has(index)?Math.max(2,Math.min(5,Math.floor(base(stops[index]-5)/8.2))):25;
+  const observedHardStopSeconds=[8,12,15,13,12];
+  const brakeDuration=index=>{
+    if(!hardIndices.has(index))return [22,27,31][(variant+index)%3];
+    const observed=observedHardStopSeconds[(variant+index)%observedHardStopSeconds.length];
+    const approach=base(stops[index]-observed);
+    if(approach<38)return 8;
+    if(approach<45)return Math.min(observed,12);
+    return observed;
+  };
   function speedAt(t){
     const nextIndex=stops.findIndex(s=>s>=t), next=stops[nextIndex]??duration;
     const last=nextIndex>0?stops[nextIndex-1]:0, since=t-last;
-    const dwell=nextIndex===0?3:[18,34,21,45,14,28,22,31][(nextIndex-1)%8];
+    const dwell=nextIndex===0?3:[3,6,2,13,3,8,32,16][(nextIndex-1)%8];
     const brakeSeconds=brakeDuration(nextIndex);
     if(t===0||t===duration||since<=dwell)return 0;
     if(next-t<=brakeSeconds){
       const u=1-(next-t)/brakeSeconds;
+      const approachSpeed=base(next-brakeSeconds);
+      if(hardIndices.has(nextIndex)){
+        const profile=ngsimStopProfiles[(variant+nextIndex)%ngsimStopProfiles.length];
+        return Math.max(0,approachSpeed*profileRatio(profile,u));
+      }
       const pressure=.08*u+.92*(3*u*u-2*u*u*u);
-      return Math.max(0,base(next-brakeSeconds)*(1-pressure));
+      return Math.max(0,approachSpeed*(1-pressure));
     }
-    const accelerationSeconds=nextIndex>0&&nextIndex<=rapidStartCount?4:25;
+    const accelerationSeconds=nextIndex>0&&nextIndex<=rapidStartCount?[7,8,9][(variant+nextIndex)%3]:20;
     if(since<dwell+accelerationSeconds){const u=(since-dwell)/accelerationSeconds;return base(t)*(.1*u+.9*(3*u*u-2*u*u*u));}
     return base(t);
   }
@@ -34,9 +57,15 @@ function buildJourneyReplay(durationMinutes, hardStopCount, rapidStartCount, var
       const second=detailStart+j/5;
       return {second,kmh:second>gapStart&&second<gapEnd?null:Math.round(speedAt(second)*10)/10};
     });
-    return {id:'stop-'+i,type:'stop',start,end:p.t,before:samples[start].kmh,after:0,detailSamples};
+    const finalWindow=detailSamples.filter(point=>point.second>=p.t-5&&point.second<=p.t&&point.kmh!==null);
+    let peakDecelerationMps2=0;
+    for(let j=1;j<finalWindow.length;j++){
+      const deltaSeconds=finalWindow[j].second-finalWindow[j-1].second;
+      peakDecelerationMps2=Math.max(peakDecelerationMps2,(finalWindow[j-1].kmh-finalWindow[j].kmh)/3.6/deltaSeconds);
+    }
+    return {id:'stop-'+i,type:'stop',start,end:p.t,before:samples[start].kmh,after:0,peakDecelerationMps2:Math.round(peakDecelerationMps2*100)/100,detailSamples};
   });
-  return {origin:'SYNTHETIC',sampleIntervalSeconds:1,detailSampleIntervalSeconds:.2,samples,events,gap:{start:gapStart,end:gapEnd},distanceKm,validSeconds,maxKmh:Math.max(...samples.map(p=>p.kmh??0))};
+  return {origin:'SYNTHETIC',calibration:{dataset:'FHWA NGSIM Peachtree Street',sampleRateHz:10,vehicleIds:[37,55,56,61,68]},sampleIntervalSeconds:1,detailSampleIntervalSeconds:.2,samples,events,gap:{start:gapStart,end:gapEnd},distanceKm,validSeconds,maxKmh:Math.max(...samples.map(p=>p.kmh??0))};
 }
 function elapsedTime(seconds){return Math.floor(seconds/60)+':'+String(Math.floor(seconds%60)).padStart(2,'0');}
 function clockTime(trip,second){const match=trip.date.match(/(\d{2}):(\d{2})/);const minutes=Number(match[1])*60+Number(match[2])+Math.floor(second/60);return String(Math.floor(minutes/60)%24).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0');}
@@ -46,7 +75,7 @@ function journeyChart(trip){
   const axis=[0,20,40,60,80].map(v=>`<line x1="54" x2="970" y1="${y(v)}" y2="${y(v)}" class="speed-grid"/><text x="12" y="${y(v)+4}">${v}</text>`).join('');
   const tickSeconds=Array.from({length:Math.floor(total/600)+1},(_,i)=>i*600);if(total-tickSeconds.at(-1)<180)tickSeconds.pop();tickSeconds.push(total);
   const ticks=tickSeconds.map(second=>`<text x="${x(second)}" y="252" text-anchor="${second===0?'start':second===total?'end':'middle'}">${clockTime(trip,second)}</text>`).join('');
-  return `<div class="speed-heading"><h3>주행 속도와 감속 구간</h3><span>km/h</span></div><div class="trace-legend"><span><i></i>주행 속도</span><span><i class="braking"></i>정차 전 큰 감속 ${r.events.length}회</span><span><i class="missing"></i>기록 없음 1분</span></div><div class="trace-wrap"><svg class="speed-chart" id="journeyChart" viewBox="0 0 1000 275" preserveAspectRatio="none" role="img" aria-label="${trip.date}부터 ${trip.duration}분 동안의 주행 속도. 세로축 km/h, 가로축 시각. 큰 감속 ${r.events.length}회"><rect x="${x(r.gap.start)}" y="28" width="${x(r.gap.end)-x(r.gap.start)}" height="193" fill="#95afca12"/>${axis}<path class="journey-trace" d="${path}"/>${r.events.map((e,i)=>`<g class="trace-event" data-chart-event="${i}" role="button" tabindex="0" aria-label="${clockTime(trip,e.start)} 감속 ${e.before}에서 0km/h"><line x1="${x(e.start)}" x2="${x(e.start)}" y1="24" y2="221"/><circle cx="${x(e.start)}" cy="${y(e.before)}" r="5"/><rect x="${x(e.start)-11}" y="6" width="22" height="19" rx="6"/><text x="${x(e.start)}" y="20" text-anchor="middle">${i+1}</text></g>`).join('')}${ticks}<line id="traceCrosshair" x1="54" x2="54" y1="28" y2="221" style="display:none"/><circle id="traceCursor" r="5" style="display:none"/></svg><div class="trace-readout" id="traceReadout">${clockTime(trip,0)} · 0km/h</div></div><div class="trace-summary"><span>주행 <b>${trip.duration}분</b></span><span>분석 <b>${Math.round(r.validSeconds/60)}분</b></span><span>최고 속도 <b>${Math.round(r.maxKmh)}km/h</b></span></div><div class="braking-heading">감속 구간 </div><div class="braking-events">${r.events.map((e,i)=>`<button data-chart-event="${i}" aria-pressed="false"><span>${i+1}</span>${clockTime(trip,e.start)}<small>${Math.round(e.before)} → 0</small></button>`).join('')}</div><div class="braking-detail" id="brakingDetail"><span>감속 구간을 선택하세요</span></div>`;
+  return `<div class="speed-heading"><h3>주행 속도와 감속 구간</h3><span>km/h</span></div><div class="trace-legend"><span><i></i>주행 속도</span><span><i class="braking"></i>정차 전 큰 감속 ${r.events.length}회</span><span><i class="missing"></i>기록 없음 1분</span></div><div class="trace-wrap"><svg class="speed-chart" id="journeyChart" viewBox="0 0 1000 275" preserveAspectRatio="none" role="img" aria-label="${trip.date}부터 ${trip.duration}분 동안의 주행 속도. 세로축 km/h, 가로축 시각. 큰 감속 ${r.events.length}회"><rect x="${x(r.gap.start)}" y="28" width="${x(r.gap.end)-x(r.gap.start)}" height="193" fill="#95afca12"/>${axis}<path class="journey-trace" d="${path}"/>${r.events.map((e,i)=>`<g class="trace-event" data-chart-event="${i}" role="button" tabindex="0" aria-label="${clockTime(trip,e.start)} 감속 ${e.before}에서 0km/h"><line x1="${x(e.start)}" x2="${x(e.start)}" y1="24" y2="221"/><circle cx="${x(e.start)}" cy="${y(e.before)}" r="5"/><rect x="${x(e.start)-11}" y="6" width="22" height="19" rx="6"/><text x="${x(e.start)}" y="20" text-anchor="middle">${i+1}</text></g>`).join('')}${ticks}<line id="traceCrosshair" x1="54" x2="54" y1="28" y2="221" style="display:none"/><circle id="traceCursor" r="5" style="display:none"/></svg><div class="trace-readout" id="traceReadout">${clockTime(trip,0)} · 0km/h</div></div><div class="trace-summary"><span>주행 <b>${trip.duration}분</b></span><span>분석 <b>${Math.round(r.validSeconds/60)}분</b></span><span>최고 속도 <b>${Math.round(r.maxKmh)}km/h</b></span><span>가상 운행 <b>NGSIM 실차 감속 형태 보정</b></span></div><div class="braking-heading">감속 구간 </div><div class="braking-events">${r.events.map((e,i)=>`<button data-chart-event="${i}" aria-pressed="false"><span>${i+1}</span>${clockTime(trip,e.start)}<small>${Math.round(e.before)} → 0</small></button>`).join('')}</div><div class="braking-detail" id="brakingDetail"><span>감속 구간을 선택하세요</span></div>`;
 }
 function selectJourneyEvent(index){
   const t=demo.trips.find(t=>t.id===selectedTrip),e=t.replay.events[index];if(!e)return;

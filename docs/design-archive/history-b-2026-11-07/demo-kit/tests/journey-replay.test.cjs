@@ -15,7 +15,8 @@ for(const [minutes,stops,starts,variant] of [[38,5,3,0],[34,8,4,1],[31,9,5,2],[3
   for(const event of replay.events){
     assert.equal(replay.samples[event.start].kmh,event.before);
     assert.equal(replay.samples[event.end].kmh,0);
-    assert.ok(event.before/(event.end-event.start)/3.6>=2);
+    assert.ok(event.end-event.start>=7&&event.end-event.start<=15,'NGSIM-calibrated complete stops take 7–15 seconds');
+    assert.ok(event.peakDecelerationMps2>=2,'the final five seconds contain a large deceleration sample');
     assert.equal(replay.detailSampleIntervalSeconds,.2);
     for(const point of event.detailSamples){
       if(Number.isInteger(point.second))assert.equal(point.kmh,replay.samples[point.second].kmh,'detail and overview must agree at shared timestamps');
