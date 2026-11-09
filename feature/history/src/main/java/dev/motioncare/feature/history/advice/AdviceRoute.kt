@@ -16,7 +16,6 @@ import dev.motioncare.core.model.*
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.trip.TripRepository
 import dev.motioncare.feature.history.AdviceViewModel
-import dev.motioncare.feature.history.insights.patternLabel
 import dev.motioncare.feature.history.presentation.*
 import dev.motioncare.feature.history.ui.*
 
@@ -38,15 +37,20 @@ internal fun AdviceRoute(driverId: PersonId?, trips: TripRepository, profiles: P
             if (latest == null || pattern == null) GlassPanel(Modifier.fillMaxWidth()) {
                 Text("분석할 운전 기록이 더 필요해요.", fontSize = 26.sp)
             } else {
+                val comparison = adviceComparisonCopy(latest, pattern, recent.drop(1).mapNotNull { it.rate(pattern) })
                 GlassPanel(Modifier.fillMaxWidth()) {
-                    Text(patternLabel(pattern), fontSize = 25.sp)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-                        MetricTile("${latest.count(pattern)}회", "최근 운행", Modifier.weight(1f))
-                        MetricTile(latest.rate(pattern)?.let { "%.1f".format(it) } ?: "—", "이번 · 회/10분", Modifier.weight(1f))
-                        val prior = recent.drop(1).mapNotNull { it.rate(pattern) }
-                        MetricTile(if (prior.isEmpty()) "—" else "%.1f".format(prior.average()), "직전 ${prior.size}회 평균", Modifier.weight(1f))
+                    Text(comparison.title, fontSize = 25.sp)
+                    Text(comparison.comparison, fontSize = 26.sp, lineHeight = 38.sp)
+                    Text(comparison.basis, color = MotionSubtle, fontSize = 18.sp, lineHeight = 28.sp)
+                    var showCalculation by remember(latest.trip.id, pattern) { mutableStateOf(false) }
+                    TextButton(onClick = { showCalculation = !showCalculation }, modifier = Modifier.heightIn(min = 56.dp)) {
+                        Text("실제 횟수와 계산 방법 ${if (showCalculation) "⌃" else "⌄"}")
                     }
-                    Text("분석 ${latest.analyzedDurationMs / 60_000}분 · 최근 ${recent.size}회에서 가장 자주 관찰된 항목", color = MotionSubtle)
+                    if (showCalculation) {
+                        Text(comparison.observation, color = MotionSubtle, fontSize = 18.sp, lineHeight = 28.sp)
+                        Text(comparison.calculation, color = MotionSubtle, fontSize = 17.sp, lineHeight = 27.sp)
+                    }
+                    Text("운전 패턴 관찰 빈도의 비교이며, 멀미가 줄었다는 뜻은 아니에요.", color = MotionMuted, fontSize = 16.sp, lineHeight = 25.sp)
                 }
                 if (pattern == DrivingPattern.HARD_STOP) BSpeedTrace(latest.snapshot, onOpenDetail = { onTrip(latest.trip.id, it) })
                 else BActionRibbon("최근 운행", "운행 기록 보기") { onTrip(latest.trip.id, 0) }
