@@ -55,7 +55,7 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 | 항목 | 결과 | 증거 |
 | --- | --- | --- |
 | 권한 요청 | 시작 버튼에서 요청 창이 뜸. `CAR_SPEED`가 위치 권한 그룹이라 "위치 정보" 접근으로 표시됨 | [80_speed_permission](shots/80_speed_permission.png) |
-| 권한 거부 | 기록을 시작하지 않고 안내 문구 표시. 다시 시도하면 요청 창이 뜨고, 두 번째부터 "다시 묻지 않음"이 나타남 | |
+| 권한 거부 | 기록을 시작하지 않고 안내 문구 표시. 다시 시도하면 요청 창이 뜨고, 두 번째부터 "다시 묻지 않음"이 나타남. 그 뒤의 안내와 설정은 [속도 권한 거부](#속도-권한-거부) | |
 | 내비 뒤 기록 | 내비가 앞에 있는 동안 포그라운드 서비스 유지 | [81_recording_behind_nav](shots/81_recording_behind_nav.png) |
 | 저장 | 샘플 726건, 초당 약 6.4건, 간격 중앙값 199ms, p95 201ms, 최대 204ms | [82_recorded_detail](shots/82_recorded_detail.png) |
 | 값 | 0~60km/h, 모두 `VALID`, 시각이 엄격히 증가, 출처 `VEHICLE` | |
@@ -221,6 +221,26 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 - **새 작업으로 엶:** 앱 작업 안에 설정을 열면 설정 화면이 앱 위에 쌓입니다. 하단 바에 뒤로 버튼이 없고 앱 아이콘을 누르면 그 작업이 앞으로 와서 설정 화면이 다시 보였습니다. `FLAG_ACTIVITY_NEW_TASK`를 붙이면 Car Settings의 작업에 열리고, 앱을 다시 띄우면 앱 화면이 보입니다.
 - **앱 정보 설정:** `ACTION_APPLICATION_DETAILS_SETTINGS`는 Car Settings가 아니라 차량 제어 앱(`ai.umos.vehiclecontrol`)으로 연결됩니다. 그래서 알림 설정 이동에는 쓰지 않았습니다.
 
+### 속도 권한 거부
+
+2026-11-07에 실제 앱으로 차량 속도 권한(`CAR_SPEED`)을 거부했을 때의 요청 창과 다시 켜는 경로를 확인했습니다. 수정 전 main APK(`fae2f54`)로 먼저 보고, 수정 후 APK로 `speed_permission_e2e.py`를 두 번 돌려 두 번 모두 11개 항목이 통과했습니다. 위치 SDK와 알림 권한은 adb로 미리 허용해 속도 요청 창만 뜨게 했습니다.
+
+| 항목 | 결과 | 증거 |
+| --- | --- | --- |
+| 요청 창 | 첫 창은 "위치 정보에 액세스" 허용·거부. 두 번째부터 거부 버튼이 "허용하지 않고 다시 묻지 않음"으로 바뀌고, 이를 고르면 `USER_FIXED` | [speed_permission_e2e](logs/speed_permission_e2e.log) |
+| 수정 전 | 세 번째부터 "운행 기록 시작"을 눌러도 요청 창 없이 "차량 속도 권한이 있어야 운행을 기록할 수 있습니다."만 보임. 앱 안에서 기록을 시작할 방법이 없음 | |
+| 수정 후 안내 | 요청 창에서 거부하면 같은 문구만 보임. 요청 창이 뜨지 않은 세 번째에는 그 아래에 "설정 > 권한 > 위치에서 허용하면 기록할 수 있어요"와 "설정 열기"가 보임 | [96_speed_permission_notice](shots/96_speed_permission_notice.png) |
+| "설정 열기" | Car Settings의 앱 정보가 새 작업으로 열림. 권한 > 위치에 "허용되지 않음"으로 있고, 허용하면 `CAR_SPEED`가 허용되고 `USER_FIXED`가 풀림 | [97_speed_settings_permissions](shots/97_speed_settings_permissions.png) |
+| 돌아온 뒤 | 앱으로 돌아오면 안내가 사라지고, "운행 기록 시작"을 누르면 기록이 시작되고 정상 종료됨 | [speed_permission_e2e](logs/speed_permission_e2e.log) |
+| Pleos 차량 설정 | 하단 바 차 아이콘의 설정 앱(`ai.umos.vehiclecontrol`). 앱 > Motion Care > 권한에는 "알림" 스위치만 있고, 속도 권한이 거부된 상태에서도 위치 항목이 없음. 개인정보 보호에는 기기 전체 위치·마이크·카메라 스위치만 있음 | [98_vehicle_settings_app_page](shots/98_vehicle_settings_app_page.png) |
+
+- **여는 화면:** `ACTION_APPLICATION_DETAILS_SETTINGS`는 Pleos 차량 설정(우선순위 200)으로만 연결되어 속도 권한을 켤 수 없습니다. Car Settings의 앱 정보는 `ACTION_AUTO_REVOKE_PERMISSIONS`와 `ACTION_APP_NOTIFICATION_SETTINGS`가 엽니다. 앱은 `ACTION_AUTO_REVOKE_PERMISSIONS`를 씁니다. Android SDK(API 34) 소스의 설명이 "This is equivalent to Intent#ACTION_APPLICATION_DETAILS_SETTINGS"이고, 알림 설정이 아닌 앱 정보를 여는 동작이기 때문입니다. API 30 미만에서는 `ACTION_APPLICATION_DETAILS_SETTINGS`를 씁니다.
+- **Car Settings 찾기:** 에뮬레이터에서는 Car Settings가 앱 목록에도 있습니다. 실차에 있는지는 확인하지 못했습니다.
+- **"위치"로 표시:** `CAR_SPEED`가 위치 권한 그룹이라 요청 창과 설정 모두 "위치"로 표시합니다. 그래서 안내 문구에 "위치"를 적었습니다.
+- **규칙의 근거:** [Android 권한 가이드](https://developer.android.com/training/permissions/requesting)는 두 번 넘게 거부하면 요청 창이 더 이상 뜨지 않고 영구 거부로 본다고 하고, 권한이 없어 안 되는 기능을 구체적으로 알리되 화면을 막지 말라고 합니다. 예제 주석은 "결정을 바꾸게 하려고 설정으로 연결하지 말라"고 합니다. 그래서 [알림 꺼짐 안내](#알림-권한-거부)와 같이, 요청 전후의 `shouldShowRequestPermissionRationale`이 모두 false여서 시스템이 요청 창을 띄우지 않았을 때만 설정을 안내합니다. 운전자가 버튼을 눌러야 설정이 열리는 방식은 2026-11-07 주행 담당 결정이고, 문구는 근거가 없는 제품 판단입니다.
+- **돌아온 뒤 자동 시작 없음:** 권한이 돌아와도 기록은 운전자가 다시 시작합니다. 제품 판단입니다.
+- **위치 SDK 권한:** 대기질에 쓰는 `FUSED_LOCATION`은 거부해도 기록이 계속되어 이번에는 안내하지 않았습니다.
+
 ### 백그라운드 기록
 
 | 조건 | 결과 | 증거 |
@@ -284,6 +304,7 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | [tools/car_service_restart_e2e.py](tools/car_service_restart_e2e.py) | 기록 중 차량 서비스 재시작 자동 시험. 앱 프로세스 유지, 속도 재구독, 주행 종료, 재시작 뒤 바깥 온도 확인. `--apk`로 다른 빌드 지정. 약 3분 |
 | [tools/restart_location_voice_e2e.py](tools/restart_location_voice_e2e.py) | 차량 서비스 재시작 뒤 위치와 음성 자동 시험. 재시작 직후 위치를 옮겨 종료 때 대기질 좌표를 보고, 패턴 카드의 음성 재생을 확인. 에뮬레이터 인터넷 필요, 소리를 켠 에뮬레이터 권장. 약 3분 |
 | [tools/notification_off_e2e.py](tools/notification_off_e2e.py) | 알림 꺼짐 안내 자동 시험. "알림 켜기"로 요청 창 거부, "다시 묻지 않음", 설정 화면 열기와 켜기를 차례로 확인. 약 1분 |
+| [tools/speed_permission_e2e.py](tools/speed_permission_e2e.py) | 속도 권한 거부 안내 자동 시험. 요청 창 거부, "다시 묻지 않음", "설정 열기"로 Car Settings에서 위치 허용, 돌아와 기록 시작까지 확인. 약 1분 30초 |
 
 저장소에 넣지 않은 것:
 
@@ -370,6 +391,7 @@ ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/environment_card_e2e.p
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/long_drive_card_e2e.py          # 약 2시간 10분, 호스트에서 다른 무거운 작업을 하지 않음
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/car_service_restart_e2e.py      # 약 3분, 다른 차량 앱도 다시 시작됨
 ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/notification_off_e2e.py         # 약 1분
+ANDROID_SERIAL=<기기> python3 docs/pleos-emulator/tools/speed_permission_e2e.py         # 약 1분 30초
 ```
 
 공조는 Virtual Console의 `PUT /vehicle/hvac?power=1&recirc=1&driver_temp=24`로 바꿉니다. 페이지 소스에서 확인한 값입니다.
