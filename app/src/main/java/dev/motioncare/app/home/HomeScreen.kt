@@ -86,9 +86,9 @@ internal fun HomeScreen(
                 noticeStrip?.invoke()
                 HeroCard(sizes, Modifier.weight(1f).fillMaxWidth(), showCar = true) { hero(sizes) }
                 Row(Modifier.fillMaxWidth().height(300.dp), horizontalArrangement = Arrangement.spacedBy(sizes.gap)) {
-                    PeopleCard(people, onPeople, sizes, Modifier.width(420.dp).fillMaxHeight())
+                    PeopleCard(people, onPeople, sizes, Modifier.width(480.dp).fillMaxHeight())
                     EnvironmentPanel(environment, sizes, Modifier.weight(1f).fillMaxHeight())
-                    GuidanceCard(sizes, Modifier.width(420.dp).fillMaxHeight(), scrolls = true, guidance)
+                    GuidanceCard(sizes, Modifier.width(400.dp).fillMaxHeight(), scrolls = true, guidance)
                 }
                 RecentTrips(recent, links, sizes, columns = 3)
                 BottomNav(start, links, sizes)
@@ -288,11 +288,11 @@ private fun PeopleCard(people: PeopleSummary, onPeople: () -> Unit, sizes: HomeS
                 people.shown.forEach { seated ->
                     Row(Modifier.weight(1f, fill = false), verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        PersonAvatar(seated.person, Modifier.size(sizes.logo).border(2.dp, Color(0xB378DCFA), CircleShape))
+                        PersonAvatar(seated.person, Modifier.size(sizes.logo * 0.85f).border(2.dp, Color(0xB378DCFA), CircleShape))
                         Column {
                             Text(seated.person.displayName, fontSize = sizes.value, fontWeight = FontWeight.ExtraBold,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(seated.role, fontSize = sizes.small, color = MotionPalette.TextSecondary, maxLines = 1)
+                            Text(seated.role, fontSize = sizes.small, color = MotionPalette.TextSecondary, maxLines = 2)
                         }
                     }
                 }
