@@ -26,6 +26,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.ceil
+import kotlin.math.roundToInt
 
 internal data class TraceGap(val startMs: Long, val endMs: Long)
 internal data class SpeedTrace(
@@ -40,6 +41,21 @@ internal data class SpeedTrace(
         return segment.minByOrNull { abs(it.elapsedMs - elapsedMs) }
     }
 }
+
+internal enum class SpeedMovement(
+    val pattern: DrivingPattern,
+    val tabLabel: String,
+    val sectionLabel: String,
+) {
+    STOP(DrivingPattern.HARD_STOP, "감속", "정차 전 큰 감속"),
+    START(DrivingPattern.RAPID_START, "빠른 가속", "출발 직후 빠른 가속"),
+    REPEAT(DrivingPattern.REPEATED_SPEED_CHANGE, "반복 가감속", "반복 가감속"),
+}
+
+internal fun speedMovementGroups(snapshot: TripSnapshot): Map<SpeedMovement, List<Observation>> =
+    SpeedMovement.entries.associateWith { movement ->
+        snapshot.observations.filter { it.pattern == movement.pattern }.sortedBy { it.startMs }
+    }
 
 /** Presentation only: observations come from storage; this does not run a detector. */
 internal fun speedTrace(snapshot: TripSnapshot, observation: Observation? = null): SpeedTrace {
@@ -67,30 +83,40 @@ internal fun speedTrace(snapshot: TripSnapshot, observation: Observation? = null
 
 @Composable
 internal fun BSpeedTrace(snapshot: TripSnapshot, initialEvent: Int = 0, onOpenDetail: ((Int) -> Unit)? = null) {
-    val events = remember(snapshot) { snapshot.observations.filter { it.pattern == DrivingPattern.HARD_STOP } }
-    var selected by rememberSaveable(snapshot.trip.id.value) { mutableIntStateOf(initialEvent) }
+    val groups = remember(snapshot) { speedMovementGroups(snapshot) }
+    var movement by rememberSaveable(snapshot.trip.id.value) { mutableStateOf(SpeedMovement.STOP) }
+    var selected by rememberSaveable(snapshot.trip.id.value, movement) {
+        mutableIntStateOf(if (movement == SpeedMovement.STOP) initialEvent else 0)
+    }
+    val events = groups.getValue(movement)
     val event = events.getOrNull(selected)
     GlassPanel(Modifier.fillMaxWidth()) {
-        Text("주행 속도와 감속 구간", fontSize = 24.sp)
+        Text("주행 속도와 움직임 구간", fontSize = 24.sp)
         Text("km/h · 시각", color = MotionSubtle)
         TracePlot(snapshot, null, events)
-        if (events.isEmpty()) Text("저장된 감속 구간이 없어요.", color = MotionSubtle)
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            SpeedMovement.entries.forEach { item ->
+                FilterChip(
+                    selected = movement == item,
+                    onClick = { movement = item; selected = 0 },
+                    label = { Text("${item.tabLabel} ${groups.getValue(item).size}") },
+                    modifier = Modifier.heightIn(min = 56.dp),
+                )
+            }
+        }
+        if (events.isEmpty()) Text("저장된 ${movement.sectionLabel} 구간이 없어요.", color = MotionSubtle)
         else {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 events.forEachIndexed { index, item ->
                     FilterChip(selected == index, { selected = index },
-                        label = { Text("감속 ${index + 1} · ${traceClock(snapshot, item.startMs)}") },
+                        label = { Text("${index + 1} · ${traceClock(snapshot, item.startMs)}") },
                         modifier = Modifier.heightIn(min = 56.dp))
                 }
             }
             if (event != null) {
                 HorizontalDivider(color = MotionLine)
-                Text("감속 ${selected + 1} · ${traceClock(snapshot, event.startMs)} → ${traceClock(snapshot, event.endMs)}", fontSize = 22.sp, color = MotionCyan)
-                val before = snapshot.samples.lastOrNull { it.elapsedMs <= event.startMs && it.quality == Quality.VALID }
-                    ?.takeIf { event.startMs - it.elapsedMs <= 5_000 }?.metersPerSecond
-                val after = snapshot.samples.firstOrNull { it.elapsedMs >= event.endMs && it.quality == Quality.VALID }
-                    ?.takeIf { it.elapsedMs - event.endMs <= 5_000 }?.metersPerSecond
-                Text("${before?.let { "%.1f".format(it * 3.6) } ?: "—"} → ${after?.let { "%.1f".format(it * 3.6) } ?: "—"} km/h · ${"%.1f".format((event.endMs - event.startMs) / 1000.0)}초", color = MotionSubtle)
+                Text("${movement.sectionLabel} ${selected + 1} · ${traceClock(snapshot, event.startMs)}", fontSize = 22.sp, color = MotionCyan)
+                Text(eventValue(snapshot, movement, event), color = MotionSubtle)
                 TracePlot(snapshot, event, listOf(event))
                 if (onOpenDetail != null) BActionRibbon("같은 운행 · 같은 구간", "운행 상세에서 보기") { onOpenDetail(selected) }
             }
@@ -109,7 +135,7 @@ private fun TracePlot(snapshot: TripSnapshot, selected: Observation?, markers: L
             listOf(ceiling, ceiling / 2, 0.0).forEach { Text("${it.toInt()}", color = MotionSubtle, fontSize = 12.sp) }
         }
         Canvas(Modifier.weight(1f).height(190.dp)
-            .semantics { contentDescription = if (selected == null) "전체 속도 그래프. 기록 공백은 끊어 표시" else "감속 전 접근과 정차 후 재출발 상세 그래프" }
+            .semantics { contentDescription = if (selected == null) "전체 속도 그래프. 기록 공백은 선을 끊어 표시" else "선택한 움직임 전후의 속도 상세 그래프" }
             .pointerInput(trace) {
                 detectTapGestures { point ->
                     cursorMs = trace.startMs + ((trace.endMs - trace.startMs) * (point.x / size.width).coerceIn(0f, 1f)).toLong()
@@ -118,7 +144,6 @@ private fun TracePlot(snapshot: TripSnapshot, selected: Observation?, markers: L
             fun x(ms: Long) = ((ms - trace.startMs).toFloat() / (trace.endMs - trace.startMs)) * size.width
             fun y(sample: SpeedSample) = size.height * (1 - ((sample.metersPerSecond ?: 0.0) * 3.6 / ceiling).toFloat())
             (0..4).forEach { n -> drawLine(MotionLine, Offset(0f, size.height * n / 4), Offset(size.width, size.height * n / 4), 1f) }
-            trace.gaps.forEach { gap -> drawRect(MotionMuted.copy(.13f), Offset(x(gap.startMs), 0f), androidx.compose.ui.geometry.Size(x(gap.endMs) - x(gap.startMs), size.height)) }
             selected?.let { drawRect(Color(0xFFFFB77E).copy(.14f), Offset(x(it.startMs), 0f), androidx.compose.ui.geometry.Size((x(it.endMs) - x(it.startMs)).coerceAtLeast(2f), size.height)) }
             trace.segments.forEach { line ->
                 val path = Path()
@@ -141,6 +166,29 @@ private fun TracePlot(snapshot: TripSnapshot, selected: Observation?, markers: L
         val sample = trace.sampleAt(cursor)
         "${traceClock(snapshot, sample?.elapsedMs ?: cursor)} · ${sample?.metersPerSecond?.let { "%.1f km/h".format(it * 3.6) } ?: "기록 없음"}"
     }, color = MotionCyan, fontSize = 16.sp)
+}
+
+private fun eventValue(snapshot: TripSnapshot, movement: SpeedMovement, event: Observation): String {
+    val window = snapshot.samples.filter {
+        it.elapsedMs in event.startMs..event.endMs && it.quality == Quality.VALID && it.metersPerSecond != null
+    }
+    val before = snapshot.samples.lastOrNull {
+        it.elapsedMs <= event.startMs && event.startMs - it.elapsedMs <= 5_000 && it.quality == Quality.VALID
+    }?.metersPerSecond?.times(3.6)
+    val after = snapshot.samples.firstOrNull {
+        it.elapsedMs >= event.endMs && it.elapsedMs - event.endMs <= 5_000 && it.quality == Quality.VALID
+    }?.metersPerSecond?.times(3.6)
+    val seconds = (event.endMs - event.startMs) / 1000.0
+    return when (movement) {
+        SpeedMovement.STOP, SpeedMovement.START ->
+            "${before?.roundToInt() ?: "—"} → ${after?.roundToInt() ?: "—"} km/h · ${"%.1f".format(seconds)}초 동안"
+        SpeedMovement.REPEAT -> {
+            val speeds = window.mapNotNull { it.metersPerSecond?.times(3.6) }
+            val low = speeds.minOrNull()?.roundToInt() ?: "—"
+            val high = speeds.maxOrNull()?.roundToInt() ?: "—"
+            "$low ↔ $high km/h · ${"%.1f".format(seconds)}초 구간"
+        }
+    }
 }
 
 private fun traceClock(snapshot: TripSnapshot, elapsedMs: Long) =

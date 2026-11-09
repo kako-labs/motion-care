@@ -36,4 +36,20 @@ class SpeedTraceTest {
         assertEquals(listOf(only), speedTrace(snapshot(listOf(only))).segments.flatten())
         assertNull(speedTrace(snapshot(listOf(only))).sampleAt(40_000))
     }
+
+    @Test fun speedMovementGroupsOnlyUseStoredSpeedDerivedObservations() {
+        val observations = listOf(
+            Observation(DrivingPattern.RAPID_START, 10, 20, 1.0, "stored"),
+            Observation(DrivingPattern.HARD_STOP, 30, 40, 2.0, "stored"),
+            Observation(DrivingPattern.REPEATED_SPEED_CHANGE, 50, 90, 1.0, "stored"),
+            Observation(DrivingPattern.FAST_TURN, 100, 120, 1.0, "stored"),
+        )
+        val source = snapshot(emptyList()).copy(observations = observations)
+        val groups = speedMovementGroups(source)
+
+        assertEquals(listOf(DrivingPattern.HARD_STOP), groups.getValue(SpeedMovement.STOP).map { it.pattern })
+        assertEquals(listOf(DrivingPattern.RAPID_START), groups.getValue(SpeedMovement.START).map { it.pattern })
+        assertEquals(listOf(DrivingPattern.REPEATED_SPEED_CHANGE), groups.getValue(SpeedMovement.REPEAT).map { it.pattern })
+        assertFalse(groups.values.flatten().any { it.pattern == DrivingPattern.FAST_TURN })
+    }
 }

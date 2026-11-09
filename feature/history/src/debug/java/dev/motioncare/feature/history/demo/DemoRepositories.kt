@@ -28,13 +28,27 @@ internal class DemoRepositories(context: Context, empty: Boolean = false, unansw
                 }
             }
             addSamples(replay.getJSONArray("samples"))
-            val events = replay.getJSONArray("events")
-            val observations = (0 until events.length()).map { n ->
-                val event = events.getJSONObject(n)
-                addSamples(event.getJSONArray("detailSamples"))
-                Observation(DrivingPattern.HARD_STOP, event.getLong("start") * 1000, event.getLong("end") * 1000,
-                    0.0, "synthetic-fixture-event-not-detector")
+            fun observations(key: String, fallback: String? = null, pattern: DrivingPattern): List<Observation> {
+                val events = when {
+                    replay.has(key) -> replay.getJSONArray(key)
+                    fallback != null && replay.has(fallback) -> replay.getJSONArray(fallback)
+                    else -> JSONArray()
+                }
+                return (0 until events.length()).map { n ->
+                    val event = events.getJSONObject(n)
+                    if (event.has("detailSamples")) addSamples(event.getJSONArray("detailSamples"))
+                    val peak = when {
+                        event.has("peakDecelerationMps2") -> event.getDouble("peakDecelerationMps2")
+                        event.has("peakAccelerationMps2") -> event.getDouble("peakAccelerationMps2")
+                        else -> 0.0
+                    }
+                    Observation(pattern, event.getDouble("start").times(1000).toLong(), event.getDouble("end").times(1000).toLong(),
+                        peak, "synthetic-fixture-event-not-detector")
+                }
             }
+            val observations = observations("stopEvents", "events", DrivingPattern.HARD_STOP) +
+                observations("startEvents", pattern = DrivingPattern.RAPID_START) +
+                observations("repeatEvents", pattern = DrivingPattern.REPEATED_SPEED_CHANGE)
             val start = item.getLong("started")
             TripSnapshot(TripRecord(TripId(item.getString("id")), start, start + item.getLong("duration") * 60_000,
                 if (interrupted && index == 0) TripStatus.INTERRUPTED else TripStatus.COMPLETED, origin = DataOrigin.SYNTHETIC), samples.values.toList(), observations)
