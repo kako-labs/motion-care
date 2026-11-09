@@ -80,7 +80,7 @@ def scenario(name, position, recirculating, minutes, expect):
     e2e.http("PUT", "/vehicle/gear?gear=Park")
     e2e.http("PUT", "/vehicle/controls?speed=0&accelerator=0&brake=0&steering=0")
     e2e.app_screen()
-    print("tap start:", e2e.tap("운행 기록 시작"))
+    print("tap start:", e2e.tap("운행 시작"))
     time.sleep(3)
     print("service:", e2e.service_state())
     watch = CardTexts()
