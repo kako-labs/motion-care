@@ -2,6 +2,8 @@
 
 실제로 확인한 범위를 작업별로 적습니다.
 
+최신 추가 검증(2026-11-09): [통합 전 전체 흐름·예외·저장 검증](meeting-readiness/README.md#이번-실행-결과). 일반 Android UI12개와 verify·HTML 회귀4개, 격리 SQLite 재조회 및 실제 화면을 기록했습니다. 아래는 각 날짜의 역사 기록입니다.
+
 ## 모듈화 및 GitHub 공유
 
 2026-11-02, macOS ARM64 / JDK 17 / Android SDK 35에서 확인했습니다.

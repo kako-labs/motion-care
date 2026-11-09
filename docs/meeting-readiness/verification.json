@@ -1,0 +1,74 @@
+{
+  "platform": "General Android API35, read-only emulator",
+  "size": "1024x768, 160dpi",
+  "ui": {
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "cases": [
+    {
+      "class": "dev.motioncare.app.GuidanceSwitchTest",
+      "name": "noNoticeWhileGuidanceIsOff"
+    },
+    {
+      "class": "dev.motioncare.app.GuidanceSwitchTest",
+      "name": "blockedNotificationsAreExplainedNextToTheSwitch"
+    },
+    {
+      "class": "dev.motioncare.app.GuidanceSwitchTest",
+      "name": "noNoticeWhileCardsCanShow"
+    },
+    {
+      "class": "dev.motioncare.app.HistoryDemoReadinessTest",
+      "name": "skippingAnUnansweredTripDoesNotCreateARating"
+    },
+    {
+      "class": "dev.motioncare.app.HistoryDemoReadinessTest",
+      "name": "selectedObservationOpensTheSameTripAndEvent"
+    },
+    {
+      "class": "dev.motioncare.app.HistoryDemoReadinessTest",
+      "name": "noHistoryStaysEmptyAndInterruptedStatusRemainsVisible"
+    },
+    {
+      "class": "dev.motioncare.app.HistoryDemoReadinessTest",
+      "name": "ratingUsesExistingSaveAndSurvivesRecreation"
+    },
+    {
+      "class": "dev.motioncare.app.HistoryDemoReadinessTest",
+      "name": "rearSeatsHaveSeparateTouchTargetsAndRatingsStayLarge"
+    },
+    {
+      "class": "dev.motioncare.app.MeetingReadinessFlowTest",
+      "name": "emptyHistoryAndSkippedFeedbackNeverBecomeAZeroOrARating"
+    },
+    {
+      "class": "dev.motioncare.app.MeetingReadinessFlowTest",
+      "name": "peopleToSampleTripToFeedbackToNextDeparturePersists"
+    },
+    {
+      "class": "dev.motioncare.app.ScaffoldFlowTest",
+      "name": "sampleTripSurvivesRecreationAndFeedbackReturnsToItsDetail"
+    },
+    {
+      "class": "dev.motioncare.app.ScaffoldFlowTest",
+      "name": "profileScreenReadsTheProfileStoreAndReturnsHome"
+    }
+  ],
+  "screenshots": [
+    "01-seating-unsupported",
+    "02-no-analysis",
+    "03-saved-feedback",
+    "04-next-departure-insufficient",
+    "05-empty-history",
+    "06-skipped-feedback",
+    "07-demo-home",
+    "08-demo-selected-event",
+    "09-demo-same-event-detail"
+  ],
+  "storage": "UUID namespace; actual public repositories reopened; normal DB SHA256 unchanged",
+  "htmlRegressionFiles": 4,
+  "productionChanges": false
+}
