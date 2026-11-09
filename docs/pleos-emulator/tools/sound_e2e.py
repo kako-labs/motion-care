@@ -102,7 +102,7 @@ def scenario(name, voice, expect_log, expect_speech, expect_owner=None, before=N
         print("tap:", e2e.tap("음성"))
         time.sleep(1)
     e2e.shot(f"sound_{name}_ready")
-    print("tap start:", e2e.tap("운행 기록 시작"))
+    print("tap start:", e2e.tap("운행 시작"))
     time.sleep(3)
     print("service:", e2e.service_state())
     e2e.adb("logcat", "-c")

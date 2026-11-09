@@ -5,7 +5,7 @@ Build the debug APK and start the emulator first, then run:
 
     python3 docs/pleos-emulator/tools/speed_permission_e2e.py     # about 1.5 minutes
 
-Location and notifications are granted by adb so that only the speed prompt appears. The run taps "운행 기록 시작"
+Location and notifications are granted by adb so that only the speed prompt appears. The run taps "운행 시작"
 three times: the first prompt is denied, the second is answered "허용하지 않고 다시 묻지 않음", and the third shows no
 prompt, so the screen must say where to allow it and offer "설정 열기". It then opens settings from the app, allows
 권한 > 위치 there, checks that the notice is gone back in the app, and starts and finishes a recording. It also
@@ -20,7 +20,7 @@ import time
 import recording_e2e as e2e
 
 SPEED = "android.car.permission.CAR_SPEED"
-START = "운행 기록 시작"
+START = "운행 시작"
 FINISH = "운행 기록 종료"
 DENIED = "차량 속도 권한이 있어야 운행을 기록할 수 있습니다."
 WHERE = "설정 > 권한 > 위치에서 허용하면 기록할 수 있어요"

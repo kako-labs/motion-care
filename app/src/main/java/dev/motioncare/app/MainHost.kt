@@ -6,11 +6,11 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -20,6 +20,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.*
+import dev.motioncare.app.home.HomeColors
+import dev.motioncare.app.home.HomeScreen
+import dev.motioncare.app.home.ReadyHero
+import dev.motioncare.app.home.StartButton
+import dev.motioncare.app.home.environmentCard
+import dev.motioncare.app.home.homeBackground
+import dev.motioncare.app.home.peopleSummary
+import dev.motioncare.app.home.recentTripItems
 import dev.motioncare.data.environment.EnvironmentRepository
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.trip.GuidanceSettings
@@ -28,11 +36,11 @@ import dev.motioncare.feature.driving.DrivingViewModel
 import dev.motioncare.feature.driving.ui.ActiveContent
 import dev.motioncare.feature.driving.ui.GuidanceSwitch
 import dev.motioncare.feature.driving.ui.rememberGuidanceCardsAllowed
-import dev.motioncare.feature.history.departure.ReadyContent
 import dev.motioncare.feature.history.navigation.HistoryRoutes
 import dev.motioncare.feature.history.navigation.historyGraph
 import dev.motioncare.feature.history.report.FinishedContent
-import dev.motioncare.feature.history.ui.RecentTripsRoute
+import java.util.TimeZone
+import kotlin.coroutines.cancellation.CancellationException
 
 private const val HOME_ROUTE = "home"
 // Outdoor air needs the car's position. Recording goes on without it.
@@ -77,59 +85,91 @@ fun MainHost(
     }
     // Read once on opening and again after the permission answer, which may allow outdoor air.
     LaunchedEffect(permissionsAnswered) { environment.refresh() }
+    // The home card lists people; a profile store that fails to open leaves the card empty.
+    LaunchedEffect(profiles) {
+        try {
+            profiles.initialize()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+        }
+    }
     val activeId = drivingState.active?.id
     LaunchedEffect(activeId) {
         if (vehicleConnected && activeId != null) onRecordingStarted()
     }
-    Surface(Modifier.fillMaxSize()) {
-        Column(Modifier.safeDrawingPadding().padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("Motion Care", style = MaterialTheme.typography.headlineMedium)
-            Text(if (vehicleConnected) "개발 버전 · 차량 속도 기록" else "개발 뼈대 · 합성 샘플 전용",
-                color = MaterialTheme.colorScheme.primary)
+    val records by trips.records.collectAsStateWithLifecycle()
+    val people by profiles.people.collectAsStateWithLifecycle()
+    val snapshot by environment.current.collectAsStateWithLifecycle()
+    val zone = remember { TimeZone.getDefault() }
+    val startTrip = {
+        if (vehicleConnected) {
+            speedRationaleBefore = speedRationale(activity)
+            permissions.launch(recordingPermissions())
+        } else driving.start()
+    }
+    Surface(Modifier.fillMaxSize().homeBackground(), color = Color.Transparent, contentColor = HomeColors.Text) {
+        Box(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 20.dp, vertical = 16.dp)) {
             if (!drivingState.ready) {
-                Text(drivingState.error ?: "저장된 기록 확인 중")
-                if (!drivingState.busy) Button(onClick = driving::initialize) { Text("다시 시도") }
-            } else NavHost(navigation, startDestination = HOME_ROUTE, modifier = Modifier.weight(1f)) {
+                Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text(drivingState.error ?: "저장된 기록 확인 중", style = MaterialTheme.typography.titleLarge)
+                    if (!drivingState.busy) Button(onClick = driving::initialize) { Text("다시 시도") }
+                }
+            } else NavHost(navigation, startDestination = HOME_ROUTE, modifier = Modifier.fillMaxSize()) {
                 composable(HOME_ROUTE) {
-                    Column(Modifier.verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        drivingState.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                        SpeedPermissionMessage(speedNotice, onOpenSettings = { openPermissionSettings(context) })
-                        val active = drivingState.active
-                        val finished = drivingState.finishedId
-                        if (guidance != null && finished == null) {
-                            val enabled by guidance.enabled.collectAsStateWithLifecycle()
-                            val sound by guidance.sound.collectAsStateWithLifecycle()
-                            GuidanceSwitch(
-                                enabled = enabled,
-                                sound = sound,
-                                cardsBlocked = !rememberGuidanceCardsAllowed(),
-                                onChange = guidance::setEnabled,
-                                onSound = guidance::setSound,
-                                onTurnOnNotifications = rememberTurnOnNotifications(),
-                            )
-                        }
-                        when {
-                            active != null -> ActiveContent(active, drivingState.busy, vehicleConnected, driving::capture, driving::finish)
-                            finished != null -> FinishedContent(
-                                onDetail = { navigation.navigate(HistoryRoutes.trip(finished)) },
-                                onFeedback = { navigation.navigate(HistoryRoutes.feedback(finished)) },
-                                onDone = driving::dismissFinished)
-                            else -> ReadyContent(
-                                busy = drivingState.busy,
-                                vehicleConnected = vehicleConnected,
-                                onStart = {
-                                    if (vehicleConnected) {
-                                        speedRationaleBefore = speedRationale(activity)
-                                        permissions.launch(recordingPermissions())
-                                    } else driving.start()
-                                },
-                                onProfiles = { navigation.navigate(HistoryRoutes.PROFILES) },
-                            )
-                        }
-                        if (active == null) RecentTripsRoute(trips) { navigation.navigate(HistoryRoutes.trip(it)) }
-                    }
+                    val active = drivingState.active
+                    val finished = drivingState.finishedId
+                    val error = drivingState.error
+                    HomeScreen(
+                        vehicleConnected = vehicleConnected,
+                        people = peopleSummary(people),
+                        environment = environmentCard(snapshot, zone),
+                        recent = remember(records) { recentTripItems(records, zone) },
+                        start = StartButton(
+                            label = when {
+                                active != null -> "기록 중"
+                                vehicleConnected -> "운행 시작"
+                                else -> "샘플 시작"
+                            },
+                            enabled = active == null && finished == null && !drivingState.busy,
+                            onClick = startTrip,
+                        ),
+                        onPeople = { navigation.navigate(HistoryRoutes.PROFILES) },
+                        onTrip = { navigation.navigate(HistoryRoutes.trip(it)) },
+                        notice = if (error != null || speedNotice != SpeedPermissionNotice.NONE) {
+                            @Composable {
+                                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                                SpeedPermissionMessage(speedNotice, onOpenSettings = { openPermissionSettings(context) })
+                            }
+                        } else null,
+                        guidance = guidance?.let { settings ->
+                            @Composable {
+                                val enabled by settings.enabled.collectAsStateWithLifecycle()
+                                val sound by settings.sound.collectAsStateWithLifecycle()
+                                GuidanceSwitch(
+                                    enabled = enabled,
+                                    sound = sound,
+                                    cardsBlocked = !rememberGuidanceCardsAllowed(),
+                                    onChange = settings::setEnabled,
+                                    onSound = settings::setSound,
+                                    onTurnOnNotifications = rememberTurnOnNotifications(),
+                                )
+                            }
+                        },
+                        hero = { sizes ->
+                            when {
+                                active != null ->
+                                    ActiveContent(active, drivingState.busy, vehicleConnected, driving::capture, driving::finish)
+                                finished != null -> FinishedContent(
+                                    onDetail = { navigation.navigate(HistoryRoutes.trip(finished)) },
+                                    onFeedback = { navigation.navigate(HistoryRoutes.feedback(finished)) },
+                                    onDone = driving::dismissFinished,
+                                )
+                                else -> ReadyHero(vehicleConnected, sizes)
+                            }
+                        },
+                    )
                 }
                 historyGraph(
                     navigation = navigation,

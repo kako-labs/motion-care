@@ -142,7 +142,7 @@ def main():
     print("ready screen:", [t for t in texts() if "운행" in t or "개발" in t or "샘플" in t or "안내" in t])
 
     print("\n--- deny")
-    print("tap start:", tap("운행 기록 시작"))
+    print("tap start:", tap("운행 시작"))
     time.sleep(3)
     shot("81_permission")
     print("dialog:", texts()[:8])
@@ -158,7 +158,7 @@ def main():
     print("trips db exists:", "motion-care-trips.db" in shell(f"run-as {PKG} --user 10 ls databases 2>&1"))
 
     print("\n--- allow")
-    print("tap start:", tap("운행 기록 시작"))
+    print("tap start:", tap("운행 시작"))
     time.sleep(3)
     print("dialog:", texts()[:8])
     allow_ids = ("com.android.permissioncontroller:id/permission_allow_button",

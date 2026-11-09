@@ -71,7 +71,7 @@ def describe(row):
 def drive(deny_location, between=None):
     e2e.shell(f"pm clear --user 10 {e2e.PKG}")
     e2e.app_screen()
-    print("tap start:", e2e.tap("운행 기록 시작"))
+    print("tap start:", e2e.tap("운행 시작"))
     print("dialogs:", answer_permissions(deny_location))
     time.sleep(10)
     print("service:", e2e.service_state())

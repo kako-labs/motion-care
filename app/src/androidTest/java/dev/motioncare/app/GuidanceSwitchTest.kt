@@ -13,6 +13,7 @@ import org.junit.Test
 
 private const val NOTICE = "알림이 꺼져 있어 주행 중 안내 카드가 뜨지 않아요"
 private const val TURN_ON = "알림 켜기"
+private const val SOUND = "안내 소리"
 
 /** The switch only appears on automotive devices, so it is checked here on its own. */
 class GuidanceSwitchTest {
@@ -50,5 +51,13 @@ class GuidanceSwitchTest {
         show(enabled = true, cardsBlocked = false)
         compose.onNodeWithText(NOTICE).assertDoesNotExist()
         compose.onNodeWithText(TURN_ON).assertDoesNotExist()
+        compose.onNodeWithText(SOUND).assertIsDisplayed()
+    }
+
+    // The sound plays only with a card, so there is nothing to choose while notifications are off.
+    @Test fun soundChoiceWaitsForNotifications() {
+        show(enabled = true, cardsBlocked = true)
+        compose.onNodeWithText(SOUND).assertDoesNotExist()
+        compose.onNodeWithText("음성").assertDoesNotExist()
     }
 }

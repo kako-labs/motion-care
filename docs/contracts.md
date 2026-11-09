@@ -88,7 +88,7 @@
 - `SHOWN`은 시스템에 알림을 보냈다는 뜻이고 사용자가 봤다는 뜻이 아닙니다.
 - 합성 샘플 주행의 `guidance`는 비어 있습니다. 일반 기기는 환경 값이 미지원이라 환경 카드도 없습니다. 주행 시간 카드는 차량 속도로만 셉니다.
 - 저장 열 `guidance_events.pattern`에는 패턴 이름, 환경 안내 이름, `LONG_DRIVE`가 들어갑니다. 이름이 겹치지 않아 스키마는 v4 그대로입니다.
-- 표시 구현은 `feature:driving`의 `NotificationGuidancePresenter`이고, ON/OFF 스위치는 `GuidanceSwitch`입니다. 알림이 꺼져 카드가 뜰 수 없으면(`guidanceCardsAllowed`가 false) 스위치 아래에 알리고 "알림 켜기"를 보여 줍니다. 버튼 동작은 `app`의 `rememberTurnOnNotifications`가 맡습니다.
+- 표시 구현은 `feature:driving`의 `NotificationGuidancePresenter`이고, ON/OFF 스위치는 `GuidanceSwitch`입니다. 알림이 꺼져 카드가 뜰 수 없으면(`guidanceCardsAllowed`가 false) 스위치 아래에 알리고 "알림 켜기"를 보여 주며, 소리가 나지 않으므로 "안내 소리" 선택은 숨깁니다. 버튼 동작은 `app`의 `rememberTurnOnNotifications`가 맡습니다.
 
 ## 환경 데이터
 

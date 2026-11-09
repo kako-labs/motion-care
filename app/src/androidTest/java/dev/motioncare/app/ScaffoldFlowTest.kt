@@ -21,14 +21,14 @@ class ScaffoldFlowTest {
     }
 
     @Test fun profileScreenReadsTheProfileStoreAndReturnsHome() {
-        click("프로필 연결 자리")
+        click("관리")
         awaitText("등록된 사람이 없습니다.")
         click("돌아가기")
-        awaitText("샘플 주행 시작")
+        awaitText("샘플 시작")
     }
 
     @Test fun sampleTripSurvivesRecreationAndFeedbackReturnsToItsDetail() {
-        click("샘플 주행 시작")
+        click("샘플 시작")
         for (version in 1..3) {
             click("샘플 신호 추가")
             awaitText("원본 버전: $version")
