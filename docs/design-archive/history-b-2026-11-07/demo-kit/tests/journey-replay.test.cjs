@@ -8,7 +8,7 @@ for(const [minutes,stops,starts,repeats,variant] of [[38,5,3,2,0],[34,8,4,3,1],[
   const replay=context.buildJourneyReplay(minutes,stops,starts,variant,repeats);
   assert.equal(replay.origin,'SYNTHETIC');
   assert.equal(replay.samples.length,minutes*60+1);
-  assert.equal(replay.validSeconds,(minutes-1)*60);
+  assert.equal(replay.validSeconds,minutes*60);
   assert.equal(replay.events.length,stops);
   assert.equal(replay.startEvents.length,starts);
   assert.equal(replay.repeatEvents.length,repeats);
@@ -44,7 +44,7 @@ for(const [minutes,stops,starts,repeats,variant] of [[38,5,3,2,0],[34,8,4,3,1],[
   const trip={replay,duration:minutes,date:'11월 4일 08:12'};
   const svg=context.journeyChart(trip);
   const trace=svg.match(/class="journey-trace" d="([^"]+)"/)[1];
-  assert.equal((trace.match(/M/g)||[]).length,2,'one missing span must split the trace into two subpaths');
+  assert.equal((trace.match(/M/g)||[]).length,1,'the speed trace must remain continuous');
   assert.ok(!svg.includes('NaN'));
 }
-console.log('PASS: 6 replay fixtures; stop, rapid-start and repeated-acceleration events remain consistent with the speed trace');
+console.log('PASS: 6 continuous replay fixtures; stop, rapid-start and repeated-acceleration events remain consistent with the speed trace');
