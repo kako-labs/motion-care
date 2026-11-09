@@ -295,6 +295,19 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 
 가려질 때 Activity의 `onPause`는 호출되지 않았고, 주차하면 화면이 자동으로 돌아왔습니다. [23_drive_blocked](shots/23_drive_blocked.png), [24_park_again](shots/24_park_again.png)
 
+### 주행 중 앱 화면
+
+2026-11-09에 실제 앱의 `MainActivity`에 `distractionOptimized`를 선언하고 `driving_screen_e2e.py`를 두 번 돌려 두 번 모두 5개 항목이 통과했습니다. 주차 중 기록을 시작하고 앱을 앞에 둔 채 D 기어 40km/h로 달렸습니다.
+
+| 항목 | 결과 | 증거 |
+| --- | --- | --- |
+| 주행 중 화면 | 앞 화면이 `MainActivity` 그대로이고 "주행 중에는 사용할 수 없습니다" 화면이 뜨지 않음. 홈의 "운행 기록 중"과 카드들이 보임 | [103_driving_app_visible](shots/103_driving_app_visible.jpg) |
+| 주행 제한값 | 주차 `DO: false UxR: 0`, 40km/h `DO: true UxR: 80` | `dumpsys car_service` |
+| 기록 | 주행 중 포그라운드 서비스가 계속 돌고, 주차 후 "운행 기록 종료"로 저장 완료 | |
+
+- **선언 전:** 같은 앱은 주행 중에 시스템 화면으로 가려졌습니다. [홈 화면 점검의 캡처](https://claude.ai/artifact/BUkCqMkXLwRfaxAP5zEc9w)는 선언 전 빌드입니다.
+- **아직 따르지 않는 제한:** UxR 80의 `NO_SETUP`은 주행 중 설정 화면을 막으라는 뜻입니다. 홈 안내 카드의 스위치와 소리 선택은 주행 중에도 바뀝니다. App Market에 올리기 전에 처리합니다.
+
 ### 창 크기
 
 전체 화면은 2560×1440, 160dpi입니다. 앱 하나를 띄운 창은 [853,90]~[2535,1300], 즉 1682×1210입니다.
@@ -318,6 +331,7 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | [tools/car_service_restart_e2e.py](tools/car_service_restart_e2e.py) | 기록 중 차량 서비스 재시작 자동 시험. 앱 프로세스 유지, 속도 재구독, 주행 종료, 재시작 뒤 바깥 온도 확인. `--apk`로 다른 빌드 지정. 약 3분 |
 | [tools/restart_location_voice_e2e.py](tools/restart_location_voice_e2e.py) | 차량 서비스 재시작 뒤 위치와 음성 자동 시험. 재시작 직후 위치를 옮겨 종료 때 대기질 좌표를 보고, 패턴 카드의 음성 재생을 확인. 에뮬레이터 인터넷 필요, 소리를 켠 에뮬레이터 권장. 약 3분 |
 | [tools/notification_off_e2e.py](tools/notification_off_e2e.py) | 알림 꺼짐 안내 자동 시험. "알림 켜기"로 요청 창 거부, "다시 묻지 않음", 설정 화면 열기와 켜기를 차례로 확인. 약 1분 |
+| [tools/driving_screen_e2e.py](tools/driving_screen_e2e.py) | 주행 중 앱 화면 자동 시험. 주차 중 기록 시작, 앱을 앞에 둔 채 40km/h 주행에서 시스템 차단 화면 없이 앱이 보이고 기록이 계속되는지, 주차 후 종료까지 확인. 주행 제한값도 출력. 약 1분 |
 | [tools/speed_permission_e2e.py](tools/speed_permission_e2e.py) | 속도 권한 거부 안내 자동 시험. 요청 창 거부, "다시 묻지 않음", "설정 열기"로 Car Settings에서 위치 허용, 돌아와 기록 시작까지 확인. 약 1분 30초 |
 
 저장소에 넣지 않은 것:

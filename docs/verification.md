@@ -245,6 +245,16 @@ python3 scripts/dev.py verify --clean-home
 
 세로형 창, 실차, 다른 시험 스크립트(`recording_e2e.py` 등)의 새 문구 실행은 확인하지 못했습니다.
 
+## 주행 중 앱 화면 검증
+
+2026-11-09, macOS ARM64 / JDK 17 / Android SDK 35에서 확인했습니다.
+
+| 검사 | 결과 |
+| --- | --- |
+| Pleos 에뮬레이터 주행 중 화면 | `driving_screen_e2e.py`, 두 번 모두 5개 항목 통과. 40km/h에서 차단 화면 없이 앱이 보이고 기록이 계속됨. 주행 제한값 UxR 80 확인. [결과](pleos-emulator/README.md#주행-중-앱-화면) |
+
+주행 중 제한(설정 화면 금지)을 앱이 따르는지는 처리하지 않아 검증하지 않았습니다. 실차와 App Market 심사는 확인하지 못했습니다.
+
 ## 아직 별도 검증이 필요한 환경
 
 Windows/Linux 개인 컴퓨터에서의 설치·실행은 별도 확인이 필요합니다. Linux 검증은 위 GitHub-hosted Ubuntu 실행 결과입니다. 실제 Pleos 시스템·Vehicle SDK·차량 주행 제한은 샘플 테스트로 검증하지 않습니다. Pleos 에뮬레이터에서 별도로 측정한 결과는 [측정 기록](pleos-emulator/README.md)에 있고, 실차는 아직 확인하지 못했습니다.
