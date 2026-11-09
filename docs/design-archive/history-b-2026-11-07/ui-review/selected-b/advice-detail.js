@@ -7,7 +7,8 @@ function adviceContext(){
   const rate=t=>t.patterns.stop*600/t.replay.validSeconds;
   const mean=values=>values.length?values.reduce((a,b)=>a+b,0)/values.length:null;
   const prior=trips.slice(1,4);
-  const ranking=Object.keys(labels).map(key=>({key,label:labels[key],rate:mean(recent.map(t=>t.patterns[key]*600/t.replay.validSeconds))??0})).sort((a,b)=>b.rate-a.rate);
+  const rankingKeys=typeof supportedMovementKeys==='undefined'?Object.keys(labels).filter(key=>['stop','start','repeat'].includes(key)):supportedMovementKeys;
+  const ranking=rankingKeys.map(key=>({key,label:labels[key],rate:mean(recent.map(t=>t.patterns[key]*600/t.replay.validSeconds))??0})).sort((a,b)=>b.rate-a.rate);
   return {person,trips,recent,latest,prior,rate,priorRate:mean(prior.map(rate)),recentRate:mean(recent.map(rate)),ranking};
 }
 function adviceClock(trip,second){return clockTime(trip,second)+':'+String(second%60).padStart(2,'0');}
