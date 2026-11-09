@@ -6,6 +6,10 @@ const demoEnvironment = {
 };
 const routeFixtures = window.MOTION_ROUTE_MAP.routes;
 const originalDemoFixture=JSON.parse(JSON.stringify(demo));
+try{
+  const savedPeople=JSON.parse(localStorage.getItem('motion-care-b-people'));
+  if(savedPeople&&typeof savedPeople==='object'&&Object.keys(savedPeople).length)demo.people=savedPeople;
+}catch(_){}
 let environmentMode='available',chosenRoute='comfortable',appliedRoute=null;
 const main=document.querySelector('main');
 main.insertAdjacentHTML('beforeend','<section class="screen" id="screen-environment"></section><section class="screen" id="screen-routes"></section>');
@@ -47,7 +51,47 @@ function renderExtras(name){
   if(name==='feedback')updateRatingWord();
 }
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function openProfileEditor(){
+function persistPeople(){
+  try{localStorage.setItem('motion-care-b-people',JSON.stringify(demo.people));}catch(_){}
+}
+function openProfileEditor(mode='edit'){
+  document.querySelector('.profile-editor')?.remove();
+  const editing=mode==='edit',person=editing?demo.people[selectedPerson]:{name:'',avatar:'assets/avatar-doyun.png',kind:'성인',role:'동승자',sensitivity:'보통',temp:'22°C',rest:'30분',triggers:['출발·정차']};
+  const avatarOptions=['avatar-minjun.png','avatar-seoa.png','avatar-jiyoung.png','avatar-doyun.png'];
+  const triggerOptions=['출발·정차','반복 가감속','커브','좌우 움직임'];
+  const container=document.createElement('div');container.className='profile-editor';container.setAttribute('role','dialog');container.setAttribute('aria-modal','true');container.setAttribute('aria-labelledby','editorTitle');
+  container.innerHTML=`<form id="profileForm">
+    <div class="editor-topbar">
+      <div class="editor-person-preview"><img id="editorAvatarPreview" src="${person.avatar}" alt=""></div>
+      <div class="editor-heading"><div class="kicker">PERSONAL COMFORT</div><h2 id="editorTitle">${editing?'프로필 편집':'새 프로필 추가'}</h2><p>함께 타는 사람의 특성을 기록하면 출발 전 조언에 반영할 수 있어요.</p></div>
+      <button type="button" class="editor-close" data-close-editor aria-label="닫기">✕</button>
+    </div>
+    <div class="editor-body">
+      <section class="editor-section">
+        <div class="editor-section-title"><div><span>01 · PROFILE</span><h3>기본 정보</h3></div><em class="editor-mode-badge">${editing?'수정':'신규'}</em></div>
+        <label class="editor-field">표시할 이름<input name="displayName" type="text" value="${escapeHtml(person.name)}" maxlength="20" placeholder="이름을 입력하세요" required></label>
+        ${editing?`<input type="hidden" name="kind" value="${person.kind}"><div class="editor-field">프로필 유형<div class="choice-row two"><label class="choice"><input type="radio" checked disabled><span>${person.kind}</span></label><label class="choice"><input type="radio" disabled><span>${person.role}</span></label></div></div>`:`<div class="editor-field">프로필 유형<div class="choice-row two"><label class="choice"><input type="radio" name="kind" value="성인" checked><span>성인</span></label><label class="choice"><input type="radio" name="kind" value="어린이"><span>어린이</span></label></div></div>`}
+        <div class="editor-field">프로필 이미지<div class="avatar-choices">${avatarOptions.map(file=>`<label class="avatar-choice"><input type="radio" name="avatar" value="assets/${file}" ${person.avatar.endsWith(file)?'checked':''}><span><img src="assets/${file}" alt=""></span></label>`).join('')}</div></div>
+      </section>
+      <section class="editor-section">
+        <div class="editor-section-title"><div><span>02 · COMFORT</span><h3>편안함 설정</h3></div><small>직접 등록한<br>선호 정보</small></div>
+        <div class="editor-field">멀미 민감도<div class="choice-row">${['낮음','보통','높음'].map(value=>`<label class="choice"><input type="radio" name="sensitivity" value="${value}" ${person.sensitivity===value?'checked':''}><span>${value}</span></label>`).join('')}</div></div>
+        <div class="editor-two"><label class="editor-field">선호 온도 · °C<input name="temperature" type="number" min="16" max="32" step="0.5" value="${parseFloat(person.temp)||22}" required></label><label class="editor-field">휴식 간격 · 분<input name="rest" type="number" min="5" max="180" step="5" value="${parseInt(person.rest)||30}" required></label></div>
+        <div class="editor-field">신경 쓸 상황<div class="trigger-grid">${triggerOptions.map(value=>`<label class="trigger"><input type="checkbox" name="triggers" value="${value}" ${person.triggers?.includes(value)?'checked':''}><span>${value}</span></label>`).join('')}</div></div>
+      </section>
+    </div>
+    <div class="editor-footer"><p>저장한 내용은 프로필과 좌석 선택 화면에 바로 반영됩니다.<br>멀미 여부를 진단하는 정보가 아니라 개인화 조언을 위한 참고 정보예요.</p><div class="editor-actions"><button type="button" class="btn" data-close-editor>취소</button><button class="btn primary" type="submit">${editing?'변경 저장':'프로필 추가'}</button></div></div>
+  </form>`;
+  document.body.append(container);container.querySelector('input[name="displayName"]').focus();
+  container.querySelectorAll('input[name="avatar"]').forEach(input=>input.addEventListener('change',()=>{container.querySelector('#editorAvatarPreview').src=input.value;}));
+  container.addEventListener('click',e=>{if(e.target===container||e.target.closest('[data-close-editor]'))container.remove();});
+  container.querySelector('form').addEventListener('submit',e=>{e.preventDefault();const data=new FormData(e.target),name=escapeHtml(data.get('displayName').trim().slice(0,20));if(!name)return;
+    const triggers=data.getAll('triggers'),values={name,avatar:data.get('avatar'),kind:data.get('kind'),role:'동승자',sensitivity:data.get('sensitivity'),temp:data.get('temperature')+'°C',rest:data.get('rest')+'분',triggers,summary:(triggers[0]||'편안한 이동')+' 상황 주의'};
+    if(editing){const oldName=person.name;Object.assign(person,values,{role:person.role});demo.trips.forEach(t=>{if(t.driver===oldName)t.driver=name;if(t.passenger===oldName)t.passenger=name;});}
+    else{const id='person-'+Date.now();demo.people[id]={id,...values};selectedPerson=id;}
+    persistPeople();renderSelector();renderSeats();renderHome();renderRecords();container.remove();go('profile-detail');});
+}
+function openProfileEditorLegacy(){
   document.querySelector('.profile-editor')?.remove();
   const person=demo.people[selectedPerson],container=document.createElement('div');container.className='profile-editor';container.setAttribute('role','dialog');container.setAttribute('aria-modal','true');container.setAttribute('aria-labelledby','editorTitle');
   container.innerHTML=`<form id="profileForm"><span class="kicker">PERSONAL COMFORT</span><h2 id="editorTitle">프로필 편집</h2><label>표시할 이름<input name="displayName" value="${escapeHtml(person.name)}" maxlength="20" required></label><label>등록한 민감도<select name="sensitivity">${['낮음','보통','높음'].map(v=>`<option ${person.sensitivity===v?'selected':''}>${v}</option>`).join('')}</select></label>${person.kind==='어린이'||person.id!=='driver'?`<label>선호 온도 · °C<input name="temperature" type="number" min="16" max="32" step="0.5" value="${parseFloat(person.temp)||22}" required></label><label>선호 휴식 간격 · 분<input name="rest" type="number" min="5" max="180" value="${parseInt(person.rest)||20}" required></label>`:''}<div class="editor-actions"><button type="button" class="btn" data-close-editor>취소</button><button class="btn primary" type="submit">저장</button></div></form>`;
@@ -66,10 +110,11 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-demo-reset]')){
     seatAssignments={...defaultSeats};chosenRating=null;chosenReasons.clear();environmentMode='available';chosenRoute='comfortable';appliedRoute=null;
     demo.people=JSON.parse(JSON.stringify(originalDemoFixture.people));demo.trips=JSON.parse(JSON.stringify(originalDemoFixture.trips));selectedTrip='j1';selectedPerson='jiyoung';
-    ['motion-care-demo-seats','motion-care-b-feedback'].forEach(k=>localStorage.removeItem(k));
+    ['motion-care-demo-seats','motion-care-b-feedback','motion-care-b-people'].forEach(k=>localStorage.removeItem(k));
     document.querySelector('#environmentMode').value='available';renderHome();renderRecords();renderFeedback();go('home');
     document.querySelector('.demo-tools').open=false;
   }
+  if(e.target.closest('[data-add-person]')){openProfileEditor('add');return;}
   if(e.target.closest('[data-rating]'))updateRatingWord();
   if(e.target.closest('[data-go]'))document.querySelector('.demo-tools').open=false;
 });
