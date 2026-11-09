@@ -123,7 +123,7 @@ internal fun ReadyHero(vehicleConnected: Boolean, sizes: HomeSizes) {
         Spacer(Modifier.height(16.dp))
         Text(
             if (vehicleConnected) {
-                "운행을 기록하면 정차·출발 때의 속도 변화를 찾아 저장해요.\n주행 중에 이 화면이 가려져도 기록은 계속돼요."
+                "운행을 기록하면 정차·출발 때의 속도 변화를 찾아 저장해요.\n내비를 띄워도 기록은 계속돼요."
             } else {
                 "이 기기에는 차량이 연결되지 않아 합성 샘플만 기록해요."
             },

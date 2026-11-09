@@ -110,7 +110,7 @@ Pleos Connect 에뮬레이터 v2.1.0(API 34)에서 시험 앱으로 직접 확�
 | 속도 | `CarPropertyManager`의 `PERF_VEHICLE_SPEED`, `android.car.permission.CAR_SPEED` | 앱에서 저장까지 확인. 10Hz 요청에 초당 약 6.4건, 최대 간격 204ms. Vehicle SDK 2.3.2에는 속도 API가 없어 이 경로를 사용. 권한 요청 창에는 위치 정보로 표시됨 |
 | 기어 | `GEAR_SELECTION`, Vehicle SDK 기어 리스너 | 수신 확인 |
 | 조향·브레이크 | Pleos Vehicle SDK 2.3.2 리스너 | 수신 확인. 조향 값의 부호가 입력과 반대로 나와 구현 시 방향 확인 필요 |
-| 주행 중 화면 | Activity의 `distractionOptimized` 선언, 주행 제한 상태 반영 | 미선언 화면은 5km/h부터 가려지고, 선언 화면은 40km/h에서도 표시됨 |
+| 주행 중 화면 | Activity의 `distractionOptimized` 선언, 주행 제한 상태 반영 | 미선언 화면은 5km/h부터 가려지고, 선언 화면은 40km/h에서도 표시됨. 앱은 시험·시연을 위해 선언했고, 주행 제한 상태 반영은 미구현 |
 | 백그라운드 기록 | 포그라운드 서비스(`dataSync`) | 내비 뒤에서 171초 동안 끊기지 않음. 일반 서비스는 60초 뒤 종료 |
 | 주행 중 안내 | `CATEGORY_MESSAGE` 알림 | 40km/h 주행 중 내비 위 상단에 약 9초 표시되고 사라짐. 일반 알림은 뜨지 않음. App Market 승인은 미확인 |
 | 안내 소리 | TextToSpeech SDK(온디바이스), 앱 재생 알림음, 오디오 포커스 | 40km/h 내비 앞에서 재생 상태 확인. 내비 음성과 겹치면 생략. 음성은 에뮬레이터에서 듣고 확인. 실차 음량·음질과 App Market 승인은 미확인 |

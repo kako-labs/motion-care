@@ -76,7 +76,7 @@ AppGraph는 명시적 생성자 주입으로 Repository를 조립합니다. 프�
 
 - **주행 기록:** 일반 서비스는 앱이 뒤로 가고 60초 뒤 종료되므로 `TripRecordingService`(포그라운드)에서 돌립니다. Repository가 Application 범위의 AppGraph에 있어 서비스와 화면이 같은 객체를 씁니다.
 - **기기 구분:** AppGraph는 자동차 기기에서만 차량 입력을 조립합니다. 그 외 기기는 `android.car` 클래스를 불러오지 않고 합성 샘플로 동작합니다.
-- **주행 중 화면:** Activity에 `distractionOptimized`를 선언해야 가려지지 않습니다. 선언한 화면 아래에 일반 화면이 있으면 가려지는데, 현재 Activity가 하나뿐이라 이 문제는 생기지 않습니다. 현재 Manifest에는 아직 선언이 없습니다.
+- **주행 중 화면:** Activity에 `distractionOptimized`를 선언해야 가려지지 않습니다. 선언한 화면 아래에 일반 화면이 있으면 가려지는데, 현재 Activity가 하나뿐이라 이 문제는 생기지 않습니다. `MainActivity`에 선언했습니다(시험·시연용). 주행 제한 상태를 읽어 화면을 바꾸는 처리는 아직 없습니다.
 - **창 변화:** Pleos 문서에 따르면 앱은 화면 분할과 다른 앱 실행으로 앞뒤로 자주 오갑니다. 화면 종료를 운행 종료로 해석하지 않는 현재 원칙을 유지합니다.
 
 ## 외부 API·차량 SDK
