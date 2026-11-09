@@ -20,7 +20,7 @@ fun ActiveContent(
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (vehicleConnected) {
             Text("운행 기록 중", style = MaterialTheme.typography.headlineMedium)
-            Text("차량 속도를 기록하고 있습니다. 주행 중에는 이 화면이 가려질 수 있습니다.")
+            Text("차량 속도를 기록하고 있습니다. 내비를 띄워도 기록은 계속됩니다.")
             Button(onClick = onFinish, enabled = !busy) { Text("운행 기록 종료") }
         } else {
             Text("샘플 주행 기록 중", style = MaterialTheme.typography.headlineMedium)
