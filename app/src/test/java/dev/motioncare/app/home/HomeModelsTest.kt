@@ -232,6 +232,14 @@ class HomeModelsTest {
         assertEquals(HeroAction.CHOOSE_SEATS, hero.action)
     }
 
+    @Test fun departureAdviceTurnedOffSaysSoInsteadOfAdvising() {
+        val hero = homeAdvice(advice(previous = 2.4, recent = 1.4), MINJUN.id, enabled = false)
+        assertEquals("출발 안내가 꺼져 있어요.", hero.headline)
+        assertEquals("아래 안내 카드에서 다시 켤 수 있어요.", hero.context)
+        assertNull(hero.comparison)
+        assertEquals(HeroAction.NONE, hero.action)
+    }
+
     @Test fun recentTripsNameWhoRode() {
         val items = recentTripItems(
             listOf(trip("a", NOV_2_0812, NOV_2_0812 + MINUTE), trip("b", NOV_2_0812 - MINUTE * 90, NOV_2_0812 - MINUTE * 60)),

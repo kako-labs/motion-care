@@ -152,9 +152,11 @@ internal fun AdviceHero(advice: HomeAdvice, sizes: HomeSizes, onExplain: () -> U
         }
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            val explain = advice.action == HeroAction.EXPLAIN
-            HeroButton(if (explain) "왜 이런 조언을 받았나요?" else "좌석에서 운전자 고르기", sizes,
-                if (explain) onExplain else onChooseSeats)
+            when (advice.action) {
+                HeroAction.EXPLAIN -> HeroButton("왜 이런 조언을 받았나요?", sizes, onExplain)
+                HeroAction.CHOOSE_SEATS -> HeroButton("좌석에서 운전자 고르기", sizes, onChooseSeats)
+                HeroAction.NONE -> Unit
+            }
             if (advice.comparison != null && advice.comparisonLabel != null) {
                 Column(
                     Modifier.glass(RoundedCornerShape(22.dp)).padding(horizontal = 22.dp, vertical = 10.dp),

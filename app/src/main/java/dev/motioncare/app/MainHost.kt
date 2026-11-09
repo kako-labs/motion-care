@@ -216,7 +216,7 @@ fun MainHost(
                                     onDone = driving::dismissFinished,
                                 )
                                 else -> AdviceHero(
-                                    homeAdvice(departureState.advice, departureState.seating.driverId), sizes,
+                                    homeAdvice(departureState.advice, departureState.seating.driverId, departureState.guidanceEnabled), sizes,
                                     onExplain = { navigation.navigate(HistoryRoutes.advice(departureState.seating.driverId)) },
                                     onChooseSeats = { navigation.navigate(HistoryRoutes.PROFILES) },
                                 )

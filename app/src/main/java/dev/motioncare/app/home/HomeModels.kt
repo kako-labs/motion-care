@@ -165,7 +165,7 @@ private fun roleOf(seat: SeatPosition, person: PersonProfile) = when {
     else -> "동승자"
 }
 
-enum class HeroAction { EXPLAIN, CHOOSE_SEATS }
+enum class HeroAction { EXPLAIN, CHOOSE_SEATS, NONE }
 
 /** The departure advice in the home hero. The comparison reads like Home2: "2.4회에서 1.4회로". */
 data class HomeAdvice(
@@ -176,7 +176,9 @@ data class HomeAdvice(
     val action: HeroAction,
 )
 
-fun homeAdvice(advice: AdviceInsight, driverId: PersonId?): HomeAdvice {
+/** With the departure advice turned off the hero says so, as the history feature's seat screen does. */
+fun homeAdvice(advice: AdviceInsight, driverId: PersonId?, enabled: Boolean = true): HomeAdvice {
+    if (!enabled) return HomeAdvice("출발 안내가 꺼져 있어요.", "아래 안내 카드에서 다시 켤 수 있어요.", null, null, HeroAction.NONE)
     val previous = advice.previousAverage
     val recent = advice.recentAverage
     val pattern = advice.pattern
