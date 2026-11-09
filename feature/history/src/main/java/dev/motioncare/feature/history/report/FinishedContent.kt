@@ -23,10 +23,13 @@ import dev.motioncare.feature.history.TripExperienceViewModel
 import dev.motioncare.feature.history.insights.*
 import dev.motioncare.feature.history.ui.*
 
-/** Home card the app shows right after a trip; the full summary lives on the detail screen. */
+/**
+ * Home card the app shows right after a trip; the full summary lives on the detail screen. The home's hero card is
+ * its frame, so it adds no panel of its own.
+ */
 @Composable
 fun FinishedContent(onDetail: () -> Unit, onFeedback: () -> Unit, onDone: () -> Unit) {
-    GlassPanel(Modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         BActionRibbon("이번 이동", "운행을 마쳤어요", onClick = onDetail)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             PrimaryAction("이동 평가", onFeedback, Modifier.weight(1.4f))

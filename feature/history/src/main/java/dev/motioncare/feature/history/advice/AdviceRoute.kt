@@ -1,6 +1,7 @@
 package dev.motioncare.feature.history.advice
 
 import androidx.compose.foundation.layout.*
+import dev.motioncare.feature.history.ui.ExpandToggle
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -43,9 +44,7 @@ internal fun AdviceRoute(driverId: PersonId?, trips: TripRepository, profiles: P
                     Text(comparison.comparison, fontSize = 26.sp, lineHeight = 38.sp)
                     Text(comparison.basis, color = MotionSubtle, fontSize = 18.sp, lineHeight = 28.sp)
                     var showCalculation by remember(latest.trip.id, pattern) { mutableStateOf(false) }
-                    TextButton(onClick = { showCalculation = !showCalculation }, modifier = Modifier.heightIn(min = 56.dp)) {
-                        Text("실제 횟수와 계산 방법 ${if (showCalculation) "⌃" else "⌄"}")
-                    }
+                    ExpandToggle("실제 횟수와 계산 방법", showCalculation) { showCalculation = !showCalculation }
                     if (showCalculation) {
                         Text(comparison.observation, color = MotionSubtle, fontSize = 18.sp, lineHeight = 28.sp)
                         Text(comparison.calculation, color = MotionSubtle, fontSize = 17.sp, lineHeight = 27.sp)
@@ -59,7 +58,7 @@ internal fun AdviceRoute(driverId: PersonId?, trips: TripRepository, profiles: P
                 Text("다음 이동에서", fontSize = 24.sp)
                 state.advice.tips.forEachIndexed { index, tip -> Text("${index + 1}  $tip", fontSize = 20.sp) }
                 var expanded by remember { mutableStateOf(false) }
-                TextButton({ expanded = !expanded }, Modifier.heightIn(min = 56.dp)) { Text("데이터 기준 ${if (expanded) "⌃" else "⌄"}") }
+                ExpandToggle("데이터 기준", expanded) { expanded = !expanded }
                 if (expanded) Text("완료되고 분석 가능한 운행의 10분당 빈도를 비교합니다. 최근 최대 3회의 평균 빈도가 가장 높은 항목을 골라요. 동승자의 응답은 참고 기록이며 선정 점수에 포함하지 않아요. 그래프는 저장된 속도 표본과 관찰 시각을 표시하며 기록 공백은 연결하지 않습니다.", color = MotionSubtle)
             }
         }

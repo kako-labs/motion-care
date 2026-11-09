@@ -1,6 +1,7 @@
 package dev.motioncare.feature.history.ui
 
 import androidx.compose.foundation.Canvas
+import dev.motioncare.core.ui.MotionIcons
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -99,7 +100,13 @@ val MotionLine = MotionPalette.CardBorder
         border = androidx.compose.foundation.BorderStroke(1.5.dp, MotionLine),
         modifier = modifier.size(52.dp).glass(CircleShape)
             .semantics { contentDescription = when (symbol) { "‹" -> "뒤로"; "✕" -> "닫기"; else -> symbol } }) {
-        Box(contentAlignment = Alignment.Center) { Text(symbol, fontSize = 27.sp, lineHeight = 30.sp, color = MotionSubtle) }
+        Box(contentAlignment = Alignment.Center) {
+            when (symbol) {
+                "‹" -> Icon(MotionIcons.Back, contentDescription = null, tint = MotionText, modifier = Modifier.size(26.dp))
+                "✕" -> Icon(MotionIcons.Close, contentDescription = null, tint = MotionText, modifier = Modifier.size(24.dp))
+                else -> Text(symbol, fontSize = 27.sp, lineHeight = 30.sp, color = MotionSubtle)
+            }
+        }
     }
 }
 
@@ -123,6 +130,17 @@ fun avatarFor(person: PersonProfile): Int {
 @Composable private fun FaceImage(face: Int, modifier: Modifier, description: String? = null) {
     Image(painterResource(face), description, modifier.clip(CircleShape),
         contentScale = ContentScale.Crop)
+}
+
+/** "더 보기" style toggle. No start padding, so its text lines up with the card text above it. */
+@Composable fun ExpandToggle(label: String, expanded: Boolean, onToggle: () -> Unit) {
+    TextButton(onClick = onToggle, modifier = Modifier.heightIn(min = 56.dp),
+        contentPadding = PaddingValues(start = 0.dp, end = 12.dp, top = 8.dp, bottom = 8.dp)) {
+        Text(label, fontSize = 17.sp, fontWeight = FontWeight.Medium, color = MotionCyan)
+        Spacer(Modifier.width(6.dp))
+        Icon(if (expanded) MotionIcons.ChevronUp else MotionIcons.ChevronDown, contentDescription = null,
+            tint = MotionCyan, modifier = Modifier.size(20.dp))
+    }
 }
 
 private val ActionShape = RoundedCornerShape(18.dp)

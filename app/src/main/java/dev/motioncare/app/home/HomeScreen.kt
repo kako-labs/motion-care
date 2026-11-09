@@ -430,8 +430,8 @@ private fun BottomNav(start: StartButton, links: HomeLinks, sizes: HomeSizes) {
             NavItem(HomeIcons.Clock, "기록", active = false, sizes = sizes, onClick = links.onRecords, modifier = Modifier.weight(1f))
             Spacer(Modifier.width(sizes.navButton * 1.8f))
             NavItem(HomeIcons.Person, "프로필", active = false, sizes = sizes, onClick = links.onProfile, modifier = Modifier.weight(1f))
-            // Home2's last tab opens the vehicle screen, which does not exist yet; the slot keeps the bar balanced.
-            Spacer(Modifier.weight(1f))
+            // Home2's last tab is the vehicle screen, which does not exist yet; the seats take its place.
+            NavItem(HomeIcons.Car, "좌석", active = false, sizes = sizes, onClick = links.onSeats, modifier = Modifier.weight(1f))
         }
         StartCircle(start, sizes, Modifier.align(Alignment.TopCenter))
     }

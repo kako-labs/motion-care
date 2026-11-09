@@ -1,6 +1,8 @@
 package dev.motioncare.feature.history.departure
 
 import androidx.compose.foundation.Image
+import androidx.compose.material3.Icon
+import dev.motioncare.core.ui.MotionIcons
 import dev.motioncare.feature.history.ui.MotionSelected
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.semantics
@@ -66,13 +68,13 @@ fun ReadyContent(busy: Boolean, vehicleConnected: Boolean, onStart: () -> Unit, 
             Row(Modifier.padding(horizontal = 22.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Box(Modifier.size(64.dp).border(2.dp, MotionCyan, CircleShape), contentAlignment = Alignment.Center) {
-                    Text("＋", fontSize = 34.sp, color = MotionCyan)
+                    Icon(MotionIcons.Plus, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(34.dp))
                 }
                 Column(Modifier.weight(1f)) {
                     Text("함께 타는 사람 · 출발 안내", fontSize = 24.sp, fontWeight = FontWeight.Medium)
                     Text("좌석 · 오늘의 조언", color = MotionSubtle, fontSize = 17.sp)
                 }
-                Text("›", fontSize = 40.sp, color = MotionCyan)
+                Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(32.dp))
             }
         }
         PrimaryAction(if (vehicleConnected) "운행 기록 시작" else "샘플 주행 시작", onStart, Modifier.fillMaxWidth(), enabled = !busy)
@@ -245,7 +247,7 @@ private fun DepartureContent(
             top?.let { Text("${patternIcon(it)} ${patternLabel(it)} ${last.count(it)}회", fontSize = 20.sp, color = MotionCyan, fontWeight = FontWeight.Medium) }
             Spacer(Modifier.weight(1f))
             Row(horizontalArrangement = Arrangement.spacedBy((-10).dp)) { riders.forEach { PersonAvatar(it, Modifier.size(44.dp)) } }
-            Text("›", fontSize = 32.sp, color = MotionCyan)
+            Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(28.dp))
         }
     }
 }
@@ -341,6 +343,7 @@ private fun DepartureOverview(
                 Text("탑승 인원 " + occupied.size + "명", color = MotionMuted, fontSize = 14.sp)
             }
             Text("출발 안내", color = MotionSubtle, fontSize = 14.sp)
+            Spacer(Modifier.width(12.dp))
             Switch(state.guidanceEnabled, { onToggleGuidance() })
         }
         if (occupied.isEmpty()) {
@@ -485,7 +488,7 @@ private fun Availability.shortStatus() = when (this) {
         modifier = Modifier.size(size, size + 12.dp).semantics { contentDescription = "${seat.label()} · ${person?.displayName ?: "빈 자리"}" }) {
         Column(Modifier.padding(4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
             if (person == null) Box(Modifier.size(32.dp).background(Color(0x800A1724), RoundedCornerShape(10.dp)).border(1.dp, MotionCyan.copy(.22f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                Text("＋", fontSize = 24.sp, fontWeight = FontWeight.Light, color = MotionSubtle)
+                Icon(MotionIcons.Plus, contentDescription = null, tint = MotionSubtle, modifier = Modifier.size(20.dp))
             } else PersonAvatar(person, Modifier.size((size * .52f).coerceAtLeast(28.dp)))
             if (person != null) Text(person.displayName, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MotionText, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
@@ -574,7 +577,7 @@ private fun SeatPicker(
                                     fontSize = 12.sp,
                                 )
                             }
-                            Text("›", color = MotionCyan, fontSize = 24.sp)
+                            Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(24.dp))
                         }
                     }
                 }

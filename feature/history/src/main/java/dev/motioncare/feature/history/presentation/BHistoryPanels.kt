@@ -1,6 +1,8 @@
 package dev.motioncare.feature.history.presentation
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.Icon
+import dev.motioncare.core.ui.MotionIcons
 import dev.motioncare.feature.history.ui.MotionSelected
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -32,13 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import dev.motioncare.core.ui.MotionBrushes
 import dev.motioncare.core.ui.MotionPalette
 import dev.motioncare.core.ui.glass
@@ -84,49 +80,23 @@ internal fun BGlass(modifier: Modifier = Modifier, content: @Composable ColumnSc
 }
 
 /**
- * The tilted pane's outline. The cut stays within [maxCut] so a tall ribbon does not lean further into its text,
- * and the text starts past the top-left corner.
+ * An action card that opens something. It was a tilted pane in the B design; the tilt had uneven sides and
+ * corners and read as a warped box, so it now uses Home2's rounded card with a stronger glass tint.
  */
-private class RibbonShape(private val maxCut: Dp) : Shape {
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val cut = minOf(size.width * .04f, size.height * .2f, with(density) { maxCut.toPx() })
-        return Outline.Generic(Path().apply { ribbon(size, cut) })
-    }
-}
-
-private val RibbonCut = 18.dp
-
-/** The tilted pane carries the surface, while text and touch bounds stay upright. */
 @Composable
 internal fun BActionRibbon(label: String, title: String, enabled: Boolean = true, compact: Boolean = false, onClick: () -> Unit) {
-    val shape = RibbonShape(RibbonCut)
+    val shape = RoundedCornerShape(if (compact) 20.dp else 24.dp)
     Surface(onClick = onClick, enabled = enabled, shape = shape, color = Color.Transparent,
-        border = BorderStroke(1.5.dp, if (enabled) MotionPalette.ActionBorder else BLine), modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp)) {
-        // The left padding clears the top-left corner, which sits two cuts in from the edge.
-        Row(Modifier.background(MotionBrushes.Action)
-            .padding(start = RibbonCut * 2 + if (compact) 4.dp else 8.dp, end = if (compact) 20.dp else 28.dp,
-                top = if (compact) 20.dp else 24.dp, bottom = if (compact) 20.dp else 24.dp),
+        border = BorderStroke(1.5.dp, if (enabled) MotionPalette.ActionBorder else BLine), modifier = Modifier.fillMaxWidth().heightIn(min = 96.dp)) {
+        Row(Modifier.background(MotionBrushes.Action).padding(horizontal = if (compact) 20.dp else 28.dp, vertical = if (compact) 18.dp else 22.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(label, color = BSubtle, fontSize = 14.sp)
                 Text(title, color = if (enabled) BText else BSubtle, fontSize = if (compact) 19.sp else 22.sp, lineHeight = if (compact) 28.sp else 32.sp, fontWeight = FontWeight.Medium)
             }
-            Text("↗", color = BCyan, fontSize = 25.sp)
+            Icon(MotionIcons.ArrowUpRight, contentDescription = null, tint = BCyan, modifier = Modifier.size(26.dp))
         }
     }
-}
-
-private fun Path.ribbon(size: Size, cut: Float) {
-    moveTo(cut * 2, 0f)
-    lineTo(size.width - cut, 0f)
-    quadraticTo(size.width, 0f, size.width - cut / 2, cut)
-    lineTo(size.width - cut * 2, size.height - cut)
-    quadraticTo(size.width - cut * 2.5f, size.height, size.width - cut * 3, size.height)
-    lineTo(cut, size.height)
-    quadraticTo(0f, size.height, cut / 2, size.height - cut)
-    lineTo(cut * 1.5f, cut)
-    quadraticTo(cut * 1.7f, 0f, cut * 2, 0f)
-    close()
 }
 
 @Composable

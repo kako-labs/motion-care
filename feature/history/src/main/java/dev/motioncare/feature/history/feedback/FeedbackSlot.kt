@@ -1,6 +1,8 @@
 package dev.motioncare.feature.history.feedback
 
 import dev.motioncare.feature.history.presentation.BFeedbackPanel
+import androidx.compose.material3.Icon
+import dev.motioncare.core.ui.MotionIcons
 import dev.motioncare.feature.history.ui.MotionSelected
 import dev.motioncare.feature.history.presentation.BReason
 import androidx.compose.foundation.BorderStroke
@@ -75,7 +77,7 @@ internal fun FeedbackRoute(
                             Row(Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 PersonAvatar(person, Modifier.size(64.dp))
                                 Text(person.displayName, fontSize = 22.sp, fontWeight = FontWeight.Medium)
-                                if (drafts[person.id]?.handled == true) Text("✓", fontSize = 24.sp, color = MotionCyan)
+                                if (drafts[person.id]?.handled == true) Icon(MotionIcons.Check, contentDescription = "응답함", tint = MotionCyan, modifier = Modifier.size(24.dp))
                             }
                         }
                     }

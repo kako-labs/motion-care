@@ -1,6 +1,8 @@
 package dev.motioncare.feature.history.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.Icon
+import dev.motioncare.core.ui.MotionIcons
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -89,7 +91,8 @@ import dev.motioncare.feature.history.HistoryViewModel
                 }
                 Spacer(Modifier.width(20.dp))
                 Text(if (trip.origin == DataOrigin.VEHICLE) "차량 기록" else "합성 주행", color = MotionCyan)
-                Spacer(Modifier.width(12.dp)); Text("›", fontSize = 28.sp)
+                Spacer(Modifier.width(12.dp))
+                Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionSubtle, modifier = Modifier.size(24.dp))
             }
             HorizontalDivider(color = MotionLine)
         }
