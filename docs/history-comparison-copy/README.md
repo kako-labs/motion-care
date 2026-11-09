@@ -51,4 +51,4 @@ UI/수명 흐름은 바꾸지 않았으므로 기존 앱 instrumentation 소스�
 
 실패는 `ScaffoldFlowTest.profileScreenReadsTheProfileStoreAndReturnsHome`의31행이다. `출발 전 안내` 도착 후 기존 `운전자 0 · 동승자 0` 문구를15초 기다리다가 만료했다. 인수 기준 `4b37cc0`의 `ReadyContent.kt`도 이미 `탑승 인원 0명`과 좌석 선택 안내를 표시하며 이전 문구는 없다. 이번 후속은 해당 화면·테스트를 변경하지 않았다. 타임아웃을 늘려도 없는 문구는 나타나지 않는다.
 
-통합 담당의 `app` 테스트는 직접 수정하지 않았다. [검토용 패치](scaffold-empty-seating-test.patch)는 빈 좌석 상태의 현재 인원수와 안내를 확인하도록 기대값만 맞춘다. `git apply --check docs/history-comparison-copy/scaffold-empty-seating-test.patch`로 적용 가능함을 확인했으며 **미적용·실행 검증 전**이다. 기존 탐색·뒤로 이동 검사는 유지한다. 통합 담당은 패치를 검토·적용한 뒤 `python scripts/dev.py ui`로5개 검사를 다시 실행해야 한다. 저장소 조회 자체를 검증하는 별도 검사의 필요 여부도 담당자가 판단한다.
+초기에는 [검토용 패치](scaffold-empty-seating-test.patch)로 준비했으며, 후속 사용자 지시에 따라 `app`의 해당 테스트에 적용했다. 빈 좌석 상태의 현재 인원수와 안내를 확인하도록 기대값만 맞췄다. 기존 탐색·뒤로 이동 검사와15초 제한은 유지한다. 앱 동작·DB·내비 계약 변경은 없다. 실패 근거는 위 원격 실행에 있으며, 수정 후 UI 재검증 결과는 PR Checks에서 해당 커밋을 확인한다. 패치는 적용 내역 참고용으로 보존한다.
