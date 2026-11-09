@@ -1,0 +1,13 @@
+diff --git a/app/src/androidTest/java/dev/motioncare/app/ScaffoldFlowTest.kt b/app/src/androidTest/java/dev/motioncare/app/ScaffoldFlowTest.kt
+--- a/app/src/androidTest/java/dev/motioncare/app/ScaffoldFlowTest.kt
++++ b/app/src/androidTest/java/dev/motioncare/app/ScaffoldFlowTest.kt
+@@ -28,7 +28,8 @@ class ScaffoldFlowTest {
+     @Test fun profileScreenReadsTheProfileStoreAndReturnsHome() {
+         click("함께 타는 사람 · 출발 안내")
+         awaitText("출발 전 안내")
+-        awaitText("운전자 0 · 동승자 0")
++        awaitText("탑승 인원 0명")
++        awaitText("차량 좌석을 눌러 운전자와 동승자를 선택해 주세요.")
+         compose.onNodeWithContentDescription("뒤로").performClick()
+         awaitText("샘플 주행 시작")
+     }
