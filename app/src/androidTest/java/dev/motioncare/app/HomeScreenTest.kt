@@ -11,8 +11,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import dev.motioncare.app.home.EnvironmentCard
 import dev.motioncare.app.home.EnvironmentItem
+import dev.motioncare.app.home.HomeLinks
 import dev.motioncare.app.home.HomeScreen
-import dev.motioncare.app.home.MotionCareTheme
+import dev.motioncare.app.home.SeatedPerson
+import dev.motioncare.core.ui.MotionTheme
 import dev.motioncare.app.home.PeopleSummary
 import dev.motioncare.app.home.RecentTripItem
 import dev.motioncare.app.home.StartButton
@@ -30,6 +32,7 @@ class HomeScreenTest {
 
     private var started = 0
     private var peopleOpened = 0
+    private var recordsOpened = 0
     private val opened = mutableListOf<TripId>()
 
     /** Wide screens show everything at once; phones scroll the home column. */
@@ -41,22 +44,25 @@ class HomeScreenTest {
 
     private fun show(
         start: StartButton = StartButton("샘플 시작", enabled = true) { started += 1 },
-        people: PeopleSummary = PeopleSummary(emptyList(), 0),
+        people: PeopleSummary = PeopleSummary(emptyList(), more = 0, registered = 0),
         environment: EnvironmentCard = UNSUPPORTED,
         recent: List<RecentTripItem> = emptyList(),
-        guidance: Boolean = false,
     ) = compose.setContent {
-        MotionCareTheme {
+        MotionTheme {
             HomeScreen(
                 vehicleConnected = false,
                 people = people,
                 environment = environment,
                 recent = recent,
                 start = start,
-                onPeople = { peopleOpened += 1 },
-                onTrip = { opened += it },
+                links = HomeLinks(
+                    onSeats = { peopleOpened += 1 },
+                    onRecords = { recordsOpened += 1 },
+                    onProfile = {},
+                    onTrip = { opened += it },
+                ),
                 notice = null,
-                guidance = if (guidance) { { Text("주행 중 안내") } } else null,
+                guidance = { Text("출발 안내") },
                 hero = { Text("히어로 자리") },
             )
         }
@@ -77,15 +83,16 @@ class HomeScreenTest {
     @Test fun emptyStatesSayWhatIsMissing() {
         show()
         see("합성 샘플 전용")
-        see("아직 등록한 사람이 없어요.")
+        see("아직 등록한 사람이 없어요. \"변경\"에서 좌석을 눌러 추가해요.")
         see("이 기기에서는 차량 환경 값을 읽을 수 없어요.")
         see("아직 기록이 없어요. 운행을 시작하면 여기에 쌓여요.")
     }
 
     @Test fun peopleCardOpensTheProfiles() {
-        show(people = PeopleSummary(listOf(PersonProfile(PersonId("p1"), "민준")), 0))
+        show(people = PeopleSummary(listOf(SeatedPerson(PersonProfile(PersonId("p1"), "민준"), "운전자")), 0, 1))
         see("민준")
-        see("관리").performClick()
+        see("운전자")
+        see("변경").performClick()
         assertEquals(1, peopleOpened)
     }
 
@@ -114,14 +121,16 @@ class HomeScreenTest {
         assertEquals(listOf(TripId("t1")), opened)
     }
 
-    @Test fun guidanceCardAppearsOnlyWithTheVehicleSetting() {
-        show(guidance = true)
-        see("주행 중 안내")
+    @Test fun guidanceCardHoldsTheSwitches() {
+        show()
         see("안내")
+        see("출발 안내")
     }
 
-    @Test fun noGuidanceCardWithoutTheVehicleSetting() {
-        show(guidance = false)
-        compose.onNodeWithText("안내").assertDoesNotExist()
+    @Test fun recordsTabAndFullRecordsLinkOpenTheRecords() {
+        show()
+        see("기록").performClick()
+        see("전체 기록 보기").performClick()
+        assertEquals(2, recordsOpened)
     }
 }

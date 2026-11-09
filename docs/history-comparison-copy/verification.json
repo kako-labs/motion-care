@@ -1,0 +1,39 @@
+{
+  "base": "4b37cc0",
+  "unit": {
+    "tests": 280,
+    "failures": 0,
+    "errors": 0,
+    "suites": 33
+  },
+  "requiredVerify": "passed",
+  "htmlRegressionFiles": 4,
+  "copyTests": 4,
+  "htmlWidths": [
+    1600,
+    1024,
+    390
+  ],
+  "htmlStates": [
+    "current/prior",
+    "expanded calculation",
+    "no previous",
+    "higher",
+    "equal"
+  ],
+  "eventLink": {
+    "trip": "j1",
+    "event": 1,
+    "passed": true
+  },
+  "nativeDevice": {
+    "api": 35,
+    "sizes": [
+      "1024x768",
+      "768x1024"
+    ],
+    "readOnly": true,
+    "debugFixture": true
+  },
+  "scope": "presentation only; rate and selection windows unchanged"
+}

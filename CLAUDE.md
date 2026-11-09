@@ -69,7 +69,7 @@ data:* ───────► core:model
 - **데이터 접근:** data 모듈은 Repository 인터페이스와 생성 함수만 공개하고 나머지는 `internal`입니다. 모듈마다 DB 파일과 스키마 버전을 따로 가지며, `onUpgrade`는 명시적 마이그레이션이 없으면 실패합니다. 파일이 나뉘어 있어 모듈을 넘는 트랜잭션은 쓸 수 없습니다.
 - **조립:** DI 프레임워크 없이 Application 범위의 `AppGraph`가 Repository를 만들고, `MainActivity`를 거쳐 `MainHost`로 전달합니다.
 - **화면 이동:** `MainHost`는 home 경로와 `historyGraph` 호출만 갖습니다. 기록 쪽 경로는 `feature/history/.../navigation/HistoryNavigation.kt`에 추가하며 `MainHost`를 고치지 않습니다.
-- **home 화면:** `app`의 `home` 패키지가 `Home2` 시안 배치로 조립합니다. 큰 카드에는 `DrivingViewModel` 상태에 따라 준비 문구, `ActiveContent`(feature:driving), `FinishedContent`(feature:history)가 들어가고, 아래에 사람·환경·안내·최근 기록 카드와 "운행 시작" 버튼이 있습니다. 화면에 넣는 값의 변환은 `HomeModels.kt`에 있습니다. 담당이 다른 영역이 한 화면에 모이는 지점입니다. 앱 전체 색은 `MotionCareTheme`가 정합니다.
+- **home 화면:** `app`의 `home` 패키지가 `Home2` 시안 배치로 조립합니다. 큰 카드에는 `DrivingViewModel` 상태에 따라 출발 조언, `ActiveContent`(feature:driving), `FinishedContent`(feature:history)가 들어가고, 아래에 사람·환경·안내·최근 기록 카드와 "운행 시작" 버튼이 있습니다. 좌석·사람·출발 조언은 feature:history의 `DepartureViewModel`에서 읽습니다. 화면에 넣는 값의 변환은 `HomeModels.kt`에 있습니다. 담당이 다른 영역이 한 화면에 모이는 지점입니다. 색·배경·유리 카드·버튼은 `core:ui`의 `MotionStyle.kt`(`MotionTheme`)를 홈과 기록 화면이 함께 씁니다.
 - **화면 패턴:** `*Route` 컴포저블이 ViewModel을 만들고 상태를 `*Content`에 넘깁니다. 도메인 거부는 `CommandResult.Rejected`, 저장 실패는 예외로 전달되며 ViewModel이 화면 상태로 바꿉니다.
 - **주행 기록:** `TripSessionController`가 기록 중인 주행을 하나로 유지합니다. 새 프로세스에서 미완료 기록은 `INTERRUPTED`가 되고, `SqliteTripStore`는 오래된 revision의 저장을 거부합니다. `UnavailableVehicleDataSource`는 차량 입력이 없을 때 합성값으로 대체되지 않도록 예외를 던집니다.
 - **차량 기록:** `AppGraph`는 자동차 기기에서만 `createVehicleTripData`를 조립합니다. 주행이 시작되면 `TripRecordingService`가 `VehicleRecorder.record()`를 돌리고, 속도는 이벤트 시각 기준으로 약 1초마다 묶어 추가 저장합니다. 단위 테스트로 잡히지 않는 이 흐름은 `docs/pleos-emulator/tools/recording_e2e.py`로 확인합니다.

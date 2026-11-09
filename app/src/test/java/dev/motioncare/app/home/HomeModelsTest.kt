@@ -9,7 +9,14 @@ import dev.motioncare.core.model.EnvironmentSource
 import dev.motioncare.core.model.MissingReason
 import dev.motioncare.core.model.OutdoorAir
 import dev.motioncare.core.model.PersonId
+import dev.motioncare.core.model.PersonKind
 import dev.motioncare.core.model.PersonProfile
+import dev.motioncare.core.model.SeatPosition
+import dev.motioncare.core.model.SeatingPlan
+import dev.motioncare.core.model.DrivingPattern
+import dev.motioncare.core.model.TripParticipants
+import dev.motioncare.feature.history.insights.AdviceInsight
+import dev.motioncare.feature.history.insights.AdviceState
 import dev.motioncare.core.model.TripId
 import dev.motioncare.core.model.TripRecord
 import dev.motioncare.core.model.TripStatus
@@ -173,9 +180,103 @@ class HomeModelsTest {
         assertTrue(card.unsupported)
     }
 
-    @Test fun peopleBeyondTwoAreCounted() {
-        val people = listOf("민준", "서아", "도윤").mapIndexed { i, name -> PersonProfile(PersonId("p$i"), name) }
-        assertEquals(PeopleSummary(people.take(2), 1), peopleSummary(people))
-        assertEquals(PeopleSummary(people.take(1), 0), peopleSummary(people.take(1)))
+    @Test fun seatedPeopleComeDriverFirstWithTheirRole() {
+        val summary = peopleSummary(listOf(MINJUN, SEOA, DOYUN), SeatingPlan(mapOf(
+            SeatPosition.REAR_RIGHT to SEOA.id,
+            SeatPosition.DRIVER to MINJUN.id,
+        )))
+        assertEquals(listOf("민준" to "운전자", "서아" to "어린이 동승자"), summary.shown.map { it.person.displayName to it.role })
+        assertEquals(0, summary.more)
+        assertEquals(3, summary.registered)
+    }
+
+    @Test fun anAdultPassengerIsAPassenger() {
+        val summary = peopleSummary(listOf(MINJUN), SeatingPlan(mapOf(SeatPosition.FRONT_PASSENGER to MINJUN.id)))
+        assertEquals("동승자", summary.shown.single().role)
+    }
+
+    @Test fun seatsBeyondTwoAreCounted() {
+        val summary = peopleSummary(listOf(MINJUN, SEOA, DOYUN), SeatingPlan(mapOf(
+            SeatPosition.DRIVER to MINJUN.id,
+            SeatPosition.REAR_LEFT to DOYUN.id,
+            SeatPosition.REAR_RIGHT to SEOA.id,
+        )))
+        assertEquals(listOf("민준", "도윤"), summary.shown.map { it.person.displayName })
+        assertEquals(1, summary.more)
+    }
+
+    @Test fun nobodySeatedShowsNoOne() {
+        val summary = peopleSummary(listOf(MINJUN), SeatingPlan())
+        assertTrue(summary.shown.isEmpty())
+        assertEquals(1, summary.registered)
+    }
+
+    @Test fun adviceWithAComparisonShowsTheChange() {
+        val hero = homeAdvice(advice(previous = 2.4, recent = 1.4), MINJUN.id)
+        assertEquals("정차 시 조금 일찍 감속해 보세요.", hero.headline)
+        assertEquals("최근 기록에서 관찰 빈도가 줄었어요.", hero.context)
+        assertEquals("10분당 정차 직전 속도 변화", hero.comparisonLabel)
+        assertEquals("2.4회에서 1.4회로", hero.comparison)
+        assertEquals(HeroAction.EXPLAIN, hero.action)
+    }
+
+    @Test fun adviceWithoutEnoughHistoryHasNoComparison() {
+        val hero = homeAdvice(advice(previous = null, recent = 1.4), MINJUN.id)
+        assertNull(hero.comparison)
+        assertNull(hero.comparisonLabel)
+    }
+
+    @Test fun withoutADriverTheHeroAsksWhoDrives() {
+        val hero = homeAdvice(advice(state = AdviceState.FIRST_TRIP, headline = "누가 운전하나요?", pattern = null), null)
+        assertEquals("누가 운전하나요?", hero.headline)
+        assertEquals(HeroAction.CHOOSE_SEATS, hero.action)
+    }
+
+    @Test fun departureAdviceTurnedOffSaysSoInsteadOfAdvising() {
+        val hero = homeAdvice(advice(previous = 2.4, recent = 1.4), MINJUN.id, enabled = false)
+        assertEquals("출발 안내가 꺼져 있어요.", hero.headline)
+        assertEquals("아래 안내 카드에서 다시 켤 수 있어요.", hero.context)
+        assertNull(hero.comparison)
+        assertEquals(HeroAction.NONE, hero.action)
+    }
+
+    @Test fun recentTripsNameWhoRode() {
+        val items = recentTripItems(
+            listOf(trip("a", NOV_2_0812, NOV_2_0812 + MINUTE), trip("b", NOV_2_0812 - MINUTE * 90, NOV_2_0812 - MINUTE * 60)),
+            SEOUL,
+            participants = listOf(TripParticipants(TripId("a"), MINJUN.id, setOf(SEOA.id), revision = 1)),
+            people = listOf(MINJUN, SEOA),
+        )
+        assertEquals(listOf("민준 · 서아", "인물 미지정"), items.map { it.people })
+    }
+
+    @Test fun recentTripsWithoutProfilesNameNoOne() {
+        val item = recentTripItems(listOf(trip("a", NOV_2_0812, NOV_2_0812 + MINUTE)), SEOUL).single()
+        assertNull(item.people)
     }
 }
+
+private val MINJUN = PersonProfile(PersonId("minjun"), "민준")
+private val SEOA = PersonProfile(PersonId("seoa"), "서아", PersonKind.CHILD)
+private val DOYUN = PersonProfile(PersonId("doyun"), "도윤", PersonKind.CHILD)
+
+private fun advice(
+    state: AdviceState = AdviceState.READY,
+    pattern: DrivingPattern? = DrivingPattern.HARD_STOP,
+    headline: String = "정차 시 조금 일찍 감속해 보세요.",
+    previous: Double?,
+    recent: Double?,
+) = AdviceInsight(
+    state = state,
+    pattern = pattern,
+    headline = headline,
+    context = if (pattern == null) null else "최근 기록에서 관찰 빈도가 줄었어요.",
+    latestCount = null,
+    latestAnalyzedMinutes = null,
+    recentRates = emptyList(),
+    previousAverage = previous,
+    recentAverage = recent,
+)
+
+private fun advice(state: AdviceState, headline: String, pattern: DrivingPattern?) =
+    advice(state = state, pattern = pattern, headline = headline, previous = null, recent = null)

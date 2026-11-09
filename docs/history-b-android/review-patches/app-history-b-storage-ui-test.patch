@@ -1,0 +1,138 @@
+--- /dev/null
++++ b/app/src/androidTest/java/dev/motioncare/app/HistoryBStorageFlowTest.kt
+@@ -0,0 +1,135 @@
++package dev.motioncare.app
++
++import android.content.Context
++import android.content.ContextWrapper
++import android.content.SharedPreferences
++import android.database.DatabaseErrorHandler
++import android.database.sqlite.SQLiteDatabase
++import androidx.compose.ui.test.*
++import androidx.compose.ui.test.junit4.createComposeRule
++import androidx.navigation.compose.NavHost
++import androidx.navigation.compose.rememberNavController
++import androidx.test.platform.app.InstrumentationRegistry
++import dev.motioncare.core.model.*
++import dev.motioncare.data.profile.createProfileRepository
++import dev.motioncare.data.trip.createSampleTripRepository
++import dev.motioncare.feature.history.navigation.HistoryRoutes
++import dev.motioncare.feature.history.navigation.historyGraph
++import dev.motioncare.feature.history.ui.MotionCareTheme
++import dev.motioncare.feature.history.ui.tripTime
++import kotlinx.coroutines.delay
++import kotlinx.coroutines.runBlocking
++import org.junit.Assert.*
++import org.junit.Rule
++import org.junit.Test
++import java.io.File
++import java.util.UUID
++import java.security.MessageDigest
++
++/** The actual public SQLite repositories, isolated by test-only file names. No user DB is seeded. */
++class HistoryBStorageFlowTest {
++    @get:Rule val compose = createComposeRule()
++    private fun fingerprint(file: File) = file.takeIf { it.exists() }?.readBytes()?.let { bytes ->
++        MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
++    }
++    private class TestStorage(base: Context, val prefix: String) : ContextWrapper(base) {
++        override fun getApplicationContext(): Context = this
++        override fun getDatabasePath(name: String): File = super.getDatabasePath(prefix + name)
++        override fun openOrCreateDatabase(name: String, mode: Int, factory: SQLiteDatabase.CursorFactory?): SQLiteDatabase =
++            baseContext.openOrCreateDatabase(prefix + name, mode, factory)
++        override fun openOrCreateDatabase(name: String, mode: Int, factory: SQLiteDatabase.CursorFactory?, handler: DatabaseErrorHandler?): SQLiteDatabase =
++            baseContext.openOrCreateDatabase(prefix + name, mode, factory, handler)
++        override fun getSharedPreferences(name: String, mode: Int): SharedPreferences = baseContext.getSharedPreferences(prefix + name, mode)
++    }
++    private fun click(text: String, substring: Boolean = false) {
++        compose.waitUntil(20_000) { compose.onAllNodesWithText(text, substring).fetchSemanticsNodes().isNotEmpty() }
++        val node = compose.onAllNodesWithText(text, substring).onFirst()
++        if (!node.isDisplayed()) node.performScrollTo()
++        node.performClick()
++    }
++
++    @Test fun profileAndFeedbackPersistThroughActualRepositoriesWithoutSeedingUserStorage() {
++        val target = InstrumentationRegistry.getInstrumentation().targetContext
++        val prefix = "history-b-test-${UUID.randomUUID()}-"
++        val storage = TestStorage(target, prefix)
++        val databaseNames = listOf("motion-care-profile.db", "motion-care-sample.db")
++        val before = databaseNames.associateWith { name -> fingerprint(target.getDatabasePath(name)) }
++        val profiles = createProfileRepository(storage)
++        val trips = createSampleTripRepository(storage)
++        try {
++            lateinit var child: PersonProfile
++            val tripId = runBlocking {
++                profiles.initialize(); trips.initialize()
++                val driver = profiles.addPerson("테스트 운전자", PersonKind.ADULT)
++                child = profiles.addPerson("테스트 동승자", PersonKind.CHILD)
++                profiles.placePerson(driver.id, SeatPosition.DRIVER)
++                profiles.placePerson(child.id, SeatPosition.REAR_RIGHT)
++                val startedId = (trips.start() as CommandResult.Success).tripId
++                profiles.assignCurrentSeating(startedId)
++                repeat(3) { delay(40); trips.captureSample() }
++                trips.finish()
++                startedId
++            }
++            val title = tripTime(trips.records.value.single().startedAtEpochMs)
++            compose.setContent {
++                MotionCareTheme {
++                    val navigation = rememberNavController()
++                    NavHost(navigation, startDestination = HistoryRoutes.PROFILES) {
++                        historyGraph(navigation, trips, profiles, onBackToHome = { navigation.popBackStack(HistoryRoutes.PROFILES, false) })
++                    }
++                }
++            }
++            click(title)
++            compose.onNodeWithText("완료된 운행").assertExists()
++            click("평가 남기기", substring = true)
++            // NavHost may briefly expose the destination only in the unmerged transition tree.
++            // Wait for the user-facing destination, then keep exercising a real touch.
++            compose.waitUntil(20_000) {
++                compose.onAllNodesWithText("이동 평가").fetchSemanticsNodes().isNotEmpty() &&
++                    compose.onAllNodesWithContentDescription("5점").fetchSemanticsNodes().size == 1
++            }
++            val fiveStars = compose.onNodeWithContentDescription("5점")
++            if (!fiveStars.isDisplayed()) fiveStars.performScrollTo()
++            fiveStars.performClick()
++            click("커브")
++            click("나의 응답 남기기")
++            compose.waitUntil(20_000) { profiles.feedback.value.any { it.tripId == tripId && (it.answer as? FeedbackAnswer.Rating)?.value == 5 } }
++            compose.onNodeWithText("테스트 동승자 5/5").assertExists()
++            click("‹")
++            val seat = compose.onNodeWithContentDescription("뒤 오른쪽 · 테스트 동승자")
++            if (!seat.isDisplayed()) seat.performScrollTo()
++            seat.performClick()
++            click("프로필")
++            click("수정")
++            click("높음")
++            click("저장")
++            compose.waitUntil(20_000) { profiles.people.value.any { it.id == child.id && it.motionSensitivity == MotionSensitivity.HIGH } }
++
++            runBlocking {
++                val reopened = createProfileRepository(storage)
++                reopened.initialize()
++                assertEquals(MotionSensitivity.HIGH, reopened.people.value.first { it.id == child.id }.motionSensitivity)
++                val saved = reopened.feedback.value.single { it.tripId == tripId }
++                assertEquals(FeedbackAnswer.Rating(5, "COMFORT_5_V1"), saved.answer)
++                assertEquals(setOf(FeedbackReason.CURVE), saved.reasons)
++                assertEquals(FeedbackRespondent.GUARDIAN, saved.respondent)
++                val reopenedTrips = createSampleTripRepository(storage)
++                reopenedTrips.initialize()
++                assertEquals(TripStatus.COMPLETED, reopenedTrips.get(tripId)?.trip?.status)
++                assertEquals(3, reopenedTrips.get(tripId)?.samples?.size)
++            }
++            for (name in databaseNames) {
++                assertEquals("Normal app database changed: $name", before[name], fingerprint(target.getDatabasePath(name)))
++                assertTrue(target.getDatabasePath(prefix + name).exists())
++            }
++        } finally {
++            // Only this test's UUID-prefixed files are removed.
++            databaseNames.forEach { name ->
++                val file = target.getDatabasePath(prefix + name)
++                check(file.name.startsWith(prefix))
++                target.deleteDatabase(file.name)
++            }
++            target.deleteSharedPreferences(prefix + "motion-care-profile-settings")
++        }
++    }
++}

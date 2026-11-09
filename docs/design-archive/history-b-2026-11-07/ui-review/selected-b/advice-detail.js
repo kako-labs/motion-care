@@ -1,0 +1,76 @@
+/* Explanation consumes the same replay and per-trip rates as the report. No detector policy is changed. */
+let adviceEventIndex=0;
+function adviceContext(){
+  const person=demo.people[seatAssignments.driver];
+  const trips=person?demo.trips.filter(t=>t.driver===person.name&&t.replay?.validSeconds>=60&&(!t.status||t.status==='COMPLETED')):[];
+  const recent=trips.slice(0,3),latest=recent[0];
+  const rate=t=>t.patterns.stop*600/t.replay.validSeconds;
+  const mean=values=>values.length?values.reduce((a,b)=>a+b,0)/values.length:null;
+  const prior=trips.slice(1,4);
+  const rankingKeys=typeof supportedMovementKeys==='undefined'?Object.keys(labels).filter(key=>['stop','start','repeat'].includes(key)):supportedMovementKeys;
+  const ranking=rankingKeys.map(key=>({key,label:labels[key],rate:mean(recent.map(t=>t.patterns[key]*600/t.replay.validSeconds))??0})).sort((a,b)=>b.rate-a.rate);
+  return {person,trips,recent,latest,prior,rate,priorRate:mean(prior.map(rate)),recentRate:mean(recent.map(rate)),ranking};
+}
+function adviceComparisonCopy(c){
+  if(!c.latest)return null;
+  const rate=c.rate(c.latest).toFixed(1),count=c.latest.patterns.stop;
+  const minutes=Number((c.latest.replay.validSeconds/60).toFixed(2)),value=c.rate(c.latest);
+  const direction=c.priorRate===null?null:value<c.priorRate?'낮았어요':value>c.priorRate?'높았어요':'같았어요';
+  return {
+    title:'정차 직전 큰 감속',
+    comparison:`이번 운행 ${rate}회/10분 · ${c.prior.length?`이전 ${c.prior.length}회 평균 ${c.priorRate.toFixed(1)}회/10분`:'이전 운행 없음'}`,
+    basis:c.prior.length?`같은 운전자의 이번 운행보다 앞선 완료 운행 중 분석 가능한 ${c.prior.length}회와 비교해요.`:'비교할 같은 운전자의 이전 완료 운행이 없어요.',
+    observation:`${c.latest.duration}분 동안 ${count}회 관찰 · 유효 분석 ${minutes}분`,
+    calculation:`${count}회 ÷ ${minutes}분 × 10 ≈ ${rate}회/10분. 계산에는 반올림 전 유효 분석 시간을 사용하고, 표시만 소수 첫째 자리로 반올림해요. 기록 공백은 제외해요.`,
+    trendHeading:c.priorRate===null?'비교할 이전 운행을 기다리고 있어요.':value<c.priorRate?'줄어들었지만, 최근 자주 보인 항목이에요.':value>c.priorRate?'이전보다 자주 관찰됐어요.':'이전과 같은 빈도로 관찰됐어요.',
+    trendText:c.priorRate===null?`이번 운행은 ${rate}회/10분이었어요. 비교할 이전 운행이 없어요.`:`이번 운행은 ${rate}회/10분으로, 이전 ${c.prior.length}회 평균 ${c.priorRate.toFixed(1)}회/10분과 비교하면 ${direction}.`,
+  };
+}
+function adviceClock(trip,second){return clockTime(trip,second)+':'+String(second%60).padStart(2,'0');}
+function syncHomeAdvice(){
+  const c=adviceContext(),summary=document.querySelector('.recent-summary');
+  if(!c.latest){
+    summary.querySelector('small').textContent='운전자를 선택하고 기록을 쌓아보세요';summary.querySelector('strong').textContent='첫 이동 준비';
+    document.querySelector('#screen-home .advice-copy h2').textContent='출발과 감속을 여유 있게 해보세요.';return;
+  }
+  summary.querySelector('small').textContent=`직전 ${c.prior.length}회 평균 → 최근 운행 · 10분당`;
+  summary.querySelector('strong').innerHTML=`${c.priorRate===null?'—':c.priorRate.toFixed(1)} <span>→</span> ${c.rate(c.latest).toFixed(1)}<span> 회</span>`;
+  document.querySelector('#screen-home .advice-copy h2').textContent='정차 전, 조금 일찍 감속해 보세요.';
+}
+function adviceEventPlot(trip,event){
+  const points=event.detailSamples||trip.replay.samples.filter(p=>p.second>=Math.max(0,event.start-24)&&p.second<=event.end+36);
+  const start=points[0].second,end=points.at(-1).second,ceiling=Math.max(60,Math.ceil(Math.max(...points.map(p=>p.kmh??0))/20)*20);
+  const x=t=>50+(t-start)/(end-start)*766,y=v=>226-v/ceiling*180;
+  const line=samples=>{let open=false;return samples.map(p=>{if(p.kmh===null){open=false;return '';}const command=open?'L':'M';open=true;return command+x(p.second).toFixed(2)+' '+y(p.kmh).toFixed(2);}).join(' ');};
+  const braking=points.filter(p=>p.second>=event.start&&p.second<=event.end),restart=points.find(p=>p.second>event.end&&p.kmh>.5)?.second??end;
+  const ticks=[start];for(let t=Math.ceil((start+7)/15)*15;t<end-7;t+=15)ticks.push(t);ticks.push(end);
+  const grid=[];for(let t=Math.ceil(start/5)*5;t<end;t+=5)grid.push(`<line x1="${x(t)}" x2="${x(t)}" y1="39" y2="226" class="event-grid-vertical"/>`);
+  const dots=points.filter(p=>p.kmh!==null&&Math.abs(p.second-Math.round(p.second))<.01);
+  return `<div class="event-chart-meta"><span><i></i>주행 속도 <i class="brake-key"></i>감속 구간</span><span>${Math.round(end-start)}초 확대 · 0.2초 간격</span></div><div class="event-chart-wrap"><svg id="adviceEventChart" viewBox="0 0 840 279" class="advice-event-plot" role="img" aria-label="${adviceClock(trip,event.start)} 전후의 주행 속도. 접근, 감속, 정차, 재출발을 0.2초 간격으로 표시"><defs><linearGradient id="eventArea" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#96d7ff" stop-opacity=".17"/><stop offset="1" stop-color="#96d7ff" stop-opacity="0"/></linearGradient></defs><rect x="${x(event.end)}" y="39" width="${x(restart)-x(event.end)}" height="187" class="event-stop-band"/><rect x="${x(event.start)}" y="39" width="${x(event.end)-x(event.start)}" height="187" class="event-brake-band"/>${grid.join('')}${Array.from({length:ceiling/20+1},(_,i)=>i*20).map(v=>`<line x1="50" x2="816" y1="${y(v)}" y2="${y(v)}" class="event-grid-horizontal"/><text x="14" y="${y(v)+4}">${v}</text>`).join('')}<text x="13" y="24" class="event-unit">km/h</text><path d="${line(points)} L816 226 L50 226Z" class="event-area"/><path d="${line(points)}" class="event-speed-line"/>${dots.map(p=>`<circle cx="${x(p.second)}" cy="${y(p.kmh)}" r="1.5" class="event-sample"/>`).join('')}<path d="${line(braking)}" class="event-brake-line"/><circle cx="${x(event.start)}" cy="${y(event.before)}" r="4.5" class="event-boundary"/><circle cx="${x(event.end)}" cy="226" r="4.5" class="event-boundary"/><line x1="${x(event.start)}" x2="${x(event.start)}" y1="39" y2="226" class="event-boundary-line"/><line x1="${x(event.end)}" x2="${x(event.end)}" y1="39" y2="226" class="event-boundary-line"/><text x="${x((event.start+event.end)/2)}" y="24" text-anchor="middle" class="event-brake-label">감속 ${event.end-event.start}초</text><text x="${x((event.end+restart)/2)}" y="211" text-anchor="middle" class="event-stop-label">정차</text>${ticks.map((t,i)=>`<text x="${x(t)}" y="252" text-anchor="${i===0?'start':i===ticks.length-1?'end':'middle'}">${adviceClock(trip,t)}</text>`).join('')}<line id="eventCrosshair" x1="50" x2="50" y1="39" y2="226" style="display:none"/><circle id="eventCursor" r="4" style="display:none"/></svg><div class="event-value-readout" id="eventValueReadout"><span>${adviceClock(trip,event.start)}</span><strong>${event.before.toFixed(1)}<small>km/h</small></strong></div></div>`;
+}
+
+function renderAdviceDetail(){
+  const c=adviceContext(),host=document.querySelector('#screen-why');
+  if(!c.latest){host.innerHTML=`<button class="btn back small" data-go="home">← 출발 안내</button><article class="panel advice-empty"><div class="kicker">BEFORE THE FIRST TRIP</div><h1>출발과 감속을 여유 있게 해보세요.</h1><p>${c.person?escapeHtml(c.person.name)+'의':'운전자'} 기록이 쌓이면 어떤 움직임이 자주 나타나는지 함께 살펴볼 수 있어요.</p><button class="btn" data-go="home">출발 준비로</button></article>`;return;}
+  const t=c.latest,events=t.replay.events,comparison=adviceComparisonCopy(c);
+  if(adviceEventIndex>=events.length)adviceEventIndex=0;
+  const e=events[adviceEventIndex],currentRate=c.rate(t),p=c.person;
+  const reasons=t.feedbackReasons===undefined?['출발·정차']:t.feedbackReasons;
+  const feedback=t.feedback===null?'아직 응답이 없어요.':`${escapeHtml(t.passenger)}가 ${t.feedback}/5점을 남겼어요.${reasons.length?' 불편했던 순간은 '+reasons.map(escapeHtml).join(' · ')+'였어요.':''}`;
+  host.innerHTML=`<div class="advice-topline"><button class="btn back small" data-go="home">← 출발 안내</button><span>${escapeHtml(p.name)}의 기록 · ${t.date}</span></div><article class="advice-explanation"><header class="advice-explanation-heading"><div class="kicker">WHY THIS ADVICE</div><h1>정차 전, 조금 일찍 감속해 보세요.</h1><p>멈추기 직전 짧은 시간에 속도가 크게 줄어든 구간이 반복됐어요.<br>최근 운행에서 자주 나타난 움직임을 기준으로, 다음 이동에서 신경 쓸 행동을 골랐어요.</p></header><section class="advice-facts" aria-label="운행 비교"><h2>${comparison.title}</h2><p class="comparison-lead">${comparison.comparison}</p><p class="comparison-basis">${comparison.basis}</p><details class="comparison-method"><summary>실제 횟수와 계산 방법</summary><p>${comparison.observation}</p><p>${comparison.calculation}</p></details><p class="comparison-limit">운전 패턴 관찰 빈도의 비교이며, 멀미가 줄었다는 뜻은 아니에요.</p></section><section class="advice-observation"><div class="advice-section-title"><span>01</span><div><h2>어떤 구간이었나요?</h2><p>번호를 고르면 정차 직전의 속도 변화를 볼 수 있어요.</p></div></div><div class="advice-event-layout"><div class="panel advice-event-card"><div class="advice-event-summary"><div><small>정차 전 큰 감속 · ${adviceEventIndex+1}</small><h3>${adviceClock(t,e.start)}</h3></div><div><strong>${Math.round(e.before)}<small>km/h</small> <i>→</i> 0<small>km/h</small></strong><p>${e.end-e.start}초 동안 줄어들었어요.</p></div></div>${adviceEventPlot(t,e)}<button class="text-action" data-advice-report="${adviceEventIndex}">운행 상세에서 이 구간 보기 ↗</button></div><div class="advice-event-list">${events.map((event,index)=>`<button data-advice-event="${index}" class="${index===adviceEventIndex?'selected':''}" aria-pressed="${index===adviceEventIndex}"><span>${String(index+1).padStart(2,'0')}</span><div><b>${adviceClock(t,event.start)}</b><small>${Math.round(event.before)} → 0km/h · ${event.end-event.start}초</small></div><i>↗</i></button>`).join('')}</div></div><details class="advice-method"><summary>이 횟수는 어떻게 세나요?</summary><div><p>차가 멈추기 직전 <b>5초</b>를 살펴보고, 1초 단위 속도 변화에 <b>2.0m/s² 이상의 감속</b>이 기록된 정차를 한 번으로 세어요. 같은 정차 과정의 여러 표본을 여러 번 세지 않아요.</p><p>이번 기록에서는 분석 가능한 ${t.analyzed}분 동안 ${events.length}회였어요. 길이가 다른 이동을 비교하기 위해 <b>${events.length} ÷ ${t.analyzed} × 10 = ${currentRate.toFixed(2)}회</b>, 화면에는 소수 첫째 자리인 <b>${currentRate.toFixed(1)}회 / 10분</b>로 표시했어요. 기록이 없는 1분은 계산에서 제외했어요.</p></div></details></section><section class="advice-comparison"><div class="advice-section-title"><span>02</span><div><h2>이전보다 나빠졌다는 뜻인가요?</h2><p>${c.priorRate!==null&&currentRate<c.priorRate?'이번 기록의 관찰 빈도는 직전 기록보다 낮았어요.':'같은 기준으로 이전 기록과 비교해 볼 수 있어요.'}</p></div></div><div class="advice-comparison-layout"><div class="panel advice-trend"><h3>정차 전 큰 감속 · 10분당</h3><div class="advice-trend-bars">${c.recent.slice().reverse().map((trip,index)=>{const value=c.rate(trip),latest=trip.id===t.id;return `<div class="${latest?'latest':''}"><b>${value.toFixed(1)}<small>회</small></b><div class="trend-column"><i style="height:${value/Math.max(...c.recent.map(c.rate))*100}%"></i></div><span>${trip.date.split(' ')[0]+' '+trip.date.split(' ')[1]}</span><small>${latest?'최근 운행':index===0?'이전 운행':''}</small></div>`;}).join('')}</div></div><div class="advice-comparison-copy"><h3>${comparison.trendHeading}</h3><p>${comparison.trendText}</p><p>조언은 ‘이전보다 나빠진 항목’만 고르지 않아요. 최근 ${c.recent.length}번의 운행에서 각 움직임이 얼마나 자주 관찰됐는지 비교해, 가장 자주 나타난 항목을 우선해요.</p><p>그래서 이번에는 <b>감속을 조금 일찍 나누어 시작하는 행동</b>을 추천했어요.</p></div></div></section><section class="advice-selection"><div class="advice-section-title"><span>03</span><div><h2>다른 조언보다 이 조언을 먼저 고른 이유</h2><p>최근 ${c.recent.length}회에서 각 운행을 10분 기준으로 바꾼 뒤 평균을 냈어요.</p></div></div><div class="panel advice-ranking">${c.ranking.map((item,index)=>`<div class="${index===0?'chosen':''}"><span>${item.label}</span><div><i style="width:${item.rate/c.ranking[0].rate*100}%"></i></div><b>${item.rate.toFixed(1)}<small>회 / 10분</small></b>${index===0?'<em>이번 조언</em>':'<em></em>'}</div>`).join('')}</div><div class="advice-feedback-context"><span>함께 남긴 응답</span><p>${feedback}</p><small>동승자 응답은 옆에 참고 기록으로 보여주고, 위 조언의 우선순위는 운전 기록의 관찰 빈도로 정했어요.</small></div></section><section class="advice-next"><div class="advice-section-title"><span>04</span><div><h2>다음 이동에서는 이렇게 해보세요.</h2></div></div><div class="advice-next-grid"><div><span>01 / 미리 살피기</span><h3>앞차와 정차 지점을<br>조금 일찍 확인해요.</h3><p>앞차와 간격을 넉넉히 두고, 속도를 줄여야 할 상황을 먼저 살펴보세요.</p></div><div><span>02 / 감속 나누기</span><h3>마지막 몇 초에<br>감속이 몰리지 않게 해요.</h3><p>정차 직전에 한 번에 줄이기보다, 정차 지점 전부터 여유 있게 감속해 보세요.</p></div><div><span>03 / 다음 기록 보기</span><h3>같은 항목의 변화를<br>다음 이동에서 확인해요.</h3><p>운행 상세의 감속 구간과 10분당 빈도를 보고, 동승자의 응답도 함께 살펴보세요.</p></div></div></section><div class="advice-bottom-actions"><button class="btn" data-advice-report="${adviceEventIndex}">운행 기록 자세히 ↗</button><button class="btn primary" data-go="home">출발 준비로</button></div></article>`;
+}
+document.addEventListener('click',e=>{
+  const event=e.target.closest('[data-advice-event]');if(event){adviceEventIndex=Number(event.dataset.adviceEvent);const top=document.querySelector('main').scrollTop;renderAdviceDetail();document.querySelector('main').scrollTop=top;}
+  const report=e.target.closest('[data-advice-report]');if(report){const c=adviceContext();if(!c.latest)return;selectedTrip=c.latest.id;go('records');selectJourneyEvent(Number(report.dataset.adviceReport));document.querySelector('#brakingDetail').scrollIntoView({block:'center',behavior:'smooth'});}
+});
+syncHomeAdvice();
+if(document.querySelector('#screen-why').classList.contains('active'))renderAdviceDetail();
+
+document.addEventListener('pointermove',e=>{
+ const svg=e.target.closest('#adviceEventChart');if(!svg)return;
+ const point=new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.getScreenCTM().inverse());if(point.x<50||point.x>816)return;
+ const event=adviceContext().latest.replay.events[adviceEventIndex],samples=event.detailSamples;
+ const index=Math.max(0,Math.min(samples.length-1,Math.round((point.x-50)/766*(samples.length-1)))),sample=samples[index],ceiling=Math.max(60,Math.ceil(Math.max(...samples.map(p=>p.kmh??0))/20)*20);
+ const cross=document.querySelector('#eventCrosshair'),dot=document.querySelector('#eventCursor');cross.style.display='';cross.setAttribute('x1',point.x);cross.setAttribute('x2',point.x);dot.style.display=sample.kmh===null?'none':'';dot.setAttribute('cx',point.x);dot.setAttribute('cy',226-(sample.kmh??0)/ceiling*180);
+ const seconds=Math.floor(sample.second),fraction=Math.round((sample.second-seconds)*10);document.querySelector('#eventValueReadout').innerHTML='<span>'+adviceClock(adviceContext().latest,seconds)+'.'+fraction+'</span><strong>'+(sample.kmh===null?'—':sample.kmh.toFixed(1))+'<small>km/h</small></strong>';
+});

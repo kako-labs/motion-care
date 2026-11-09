@@ -12,6 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -20,12 +22,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.*
-import dev.motioncare.app.home.HomeColors
 import dev.motioncare.app.home.HomeScreen
-import dev.motioncare.app.home.ReadyHero
+import dev.motioncare.app.home.AdviceHero
+import dev.motioncare.app.home.DepartureGuidanceSwitch
+import dev.motioncare.app.home.HomeLinks
+import dev.motioncare.app.home.homeAdvice
 import dev.motioncare.app.home.StartButton
+import dev.motioncare.core.ui.MotionPalette
+import dev.motioncare.core.ui.motionBackground
 import dev.motioncare.app.home.environmentCard
-import dev.motioncare.app.home.homeBackground
 import dev.motioncare.app.home.peopleSummary
 import dev.motioncare.app.home.recentTripItems
 import dev.motioncare.data.environment.EnvironmentRepository
@@ -36,13 +41,20 @@ import dev.motioncare.feature.driving.DrivingViewModel
 import dev.motioncare.feature.driving.ui.ActiveContent
 import dev.motioncare.feature.driving.ui.GuidanceSwitch
 import dev.motioncare.feature.driving.ui.rememberGuidanceCardsAllowed
+import dev.motioncare.feature.history.DepartureViewModel
 import dev.motioncare.feature.history.navigation.HistoryRoutes
 import dev.motioncare.feature.history.navigation.historyGraph
 import dev.motioncare.feature.history.report.FinishedContent
+import dev.motioncare.core.model.TripStatus
 import java.util.TimeZone
-import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 
 private const val HOME_ROUTE = "home"
+private const val HISTORY_TEXT_SCALE = 1.3f
 // Outdoor air needs the car's position. Recording goes on without it.
 private const val LOCATION_PERMISSION = "pleos.car.permission.FUSED_LOCATION"
 
@@ -85,21 +97,40 @@ fun MainHost(
     }
     // Read once on opening and again after the permission answer, which may allow outdoor air.
     LaunchedEffect(permissionsAnswered) { environment.refresh() }
-    // The home card lists people; a profile store that fails to open leaves the card empty.
-    LaunchedEffect(profiles) {
-        try {
-            profiles.initialize()
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Exception) {
+    // Seats, people and departure advice come from the history feature, as on its own departure screen.
+    val departure: DepartureViewModel = viewModel(factory = viewModelFactory {
+        initializer { DepartureViewModel(trips, profiles, environment.current) }
+    })
+    val departureState by departure.uiState.collectAsStateWithLifecycle()
+    val activeId = drivingState.active?.id
+    // A new trip keeps who sat where at its start and the environment at that moment, then starts recording.
+    LaunchedEffect(activeId) {
+        if (activeId != null) {
+            withContext(NonCancellable) {
+                runCatching {
+                    profiles.initialize()
+                    if (profiles.participants.value.none { it.tripId == activeId }) {
+                        profiles.assignCurrentSeating(activeId)
+                    }
+                }
+                runCatching {
+                    if (environment.history(activeId).isEmpty()) environment.capture(activeId)
+                }
+            }
+            currentCoroutineContext().ensureActive()
+            val stillRecording = try {
+                trips.get(activeId)?.trip?.status == TripStatus.RECORDING
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                false
+            }
+            currentCoroutineContext().ensureActive()
+            if (vehicleConnected && stillRecording) onRecordingStarted()
         }
     }
-    val activeId = drivingState.active?.id
-    LaunchedEffect(activeId) {
-        if (vehicleConnected && activeId != null) onRecordingStarted()
-    }
     val records by trips.records.collectAsStateWithLifecycle()
-    val people by profiles.people.collectAsStateWithLifecycle()
+    val participants by profiles.participants.collectAsStateWithLifecycle()
     val snapshot by environment.current.collectAsStateWithLifecycle()
     val zone = remember { TimeZone.getDefault() }
     val startTrip = {
@@ -108,8 +139,15 @@ fun MainHost(
             permissions.launch(recordingPermissions())
         } else driving.start()
     }
-    Surface(Modifier.fillMaxSize().homeBackground(), color = Color.Transparent, contentColor = HomeColors.Text) {
-        Box(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 20.dp, vertical = 16.dp)) {
+    Surface(Modifier.fillMaxSize().motionBackground(), color = Color.Transparent, contentColor = MotionPalette.Text) {
+        BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 20.dp, vertical = 16.dp)) {
+            // History screens set small text sizes for phones and 1024-wide windows. On the car's wide window they get
+            // a larger font scale, toward the Pleos guide's 18 px minimum. Android 14 scales sp non-linearly, so on
+            // the emulator 14 sp labels grew about 1.25 times while 30 sp titles stayed put. The home sets its own sizes.
+            val route = navigation.currentBackStackEntryAsState().value?.destination?.route
+            val density = LocalDensity.current
+            val textScale = if (route != null && route != HOME_ROUTE && maxWidth >= 1100.dp) HISTORY_TEXT_SCALE else 1f
+            CompositionLocalProvider(LocalDensity provides Density(density.density, density.fontScale * textScale)) {
             if (!drivingState.ready) {
                 Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -123,9 +161,11 @@ fun MainHost(
                     val error = drivingState.error
                     HomeScreen(
                         vehicleConnected = vehicleConnected,
-                        people = peopleSummary(people),
+                        people = peopleSummary(departureState.people, departureState.seating),
                         environment = environmentCard(snapshot, zone),
-                        recent = remember(records) { recentTripItems(records, zone) },
+                        recent = remember(records, participants, departureState.people) {
+                            recentTripItems(records, zone, participants = participants, people = departureState.people)
+                        },
                         start = StartButton(
                             label = when {
                                 active != null -> "기록 중"
@@ -135,16 +175,25 @@ fun MainHost(
                             enabled = active == null && finished == null && !drivingState.busy,
                             onClick = startTrip,
                         ),
-                        onPeople = { navigation.navigate(HistoryRoutes.PROFILES) },
-                        onTrip = { navigation.navigate(HistoryRoutes.trip(it)) },
+                        links = HomeLinks(
+                            onSeats = { navigation.navigate(HistoryRoutes.PROFILES) },
+                            onRecords = { navigation.navigate(HistoryRoutes.RECORDS) },
+                            onProfile = {
+                                val driver = departureState.seating.driverId
+                                navigation.navigate(if (driver != null) HistoryRoutes.profile(driver) else HistoryRoutes.PROFILES)
+                            },
+                            onTrip = { navigation.navigate(HistoryRoutes.trip(it)) },
+                        ),
                         notice = if (error != null || speedNotice != SpeedPermissionNotice.NONE) {
                             @Composable {
                                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                                 SpeedPermissionMessage(speedNotice, onOpenSettings = { openPermissionSettings(context) })
                             }
                         } else null,
-                        guidance = guidance?.let { settings ->
-                            @Composable {
+                        guidance = {
+                            DepartureGuidanceSwitch(departureState.guidanceEnabled, onChange = { departure.toggleGuidance() })
+                            // In-drive cards need the car; devices without one show the departure switch only.
+                            guidance?.let { settings ->
                                 val enabled by settings.enabled.collectAsStateWithLifecycle()
                                 val sound by settings.sound.collectAsStateWithLifecycle()
                                 GuidanceSwitch(
@@ -166,7 +215,11 @@ fun MainHost(
                                     onFeedback = { navigation.navigate(HistoryRoutes.feedback(finished)) },
                                     onDone = driving::dismissFinished,
                                 )
-                                else -> ReadyHero(vehicleConnected, sizes)
+                                else -> AdviceHero(
+                                    homeAdvice(departureState.advice, departureState.seating.driverId, departureState.guidanceEnabled), sizes,
+                                    onExplain = { navigation.navigate(HistoryRoutes.advice(departureState.seating.driverId)) },
+                                    onChooseSeats = { navigation.navigate(HistoryRoutes.PROFILES) },
+                                )
                             }
                         },
                     )
@@ -175,8 +228,10 @@ fun MainHost(
                     navigation = navigation,
                     trips = trips,
                     profiles = profiles,
+                    environment = environment.current,
                     onBackToHome = { navigation.popBackStack(HOME_ROUTE, inclusive = false) },
                 )
+            }
             }
         }
     }

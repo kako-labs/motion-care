@@ -1,0 +1,56 @@
+{
+  "motion-care-profile.db": {
+    "sha256": "e4c59cc8418c01a42797b976e4d2666f13496a9f8e3d5edfb0bdbb922281130d",
+    "tables": {
+      "android_metadata": {
+        "rows": 1,
+        "fixture_matches": 0
+      },
+      "people": {
+        "rows": 2,
+        "fixture_matches": 0
+      },
+      "current_seats": {
+        "rows": 2,
+        "fixture_matches": 0
+      },
+      "trip_participants": {
+        "rows": 12,
+        "fixture_matches": 0
+      },
+      "trip_feedback": {
+        "rows": 6,
+        "fixture_matches": 0
+      }
+    }
+  },
+  "motion-care-sample.db": {
+    "sha256": "6f1295fce444b55d6e72c8bff6f4030f5cbf757b9c45e7796f627adaaf1253ed",
+    "tables": {
+      "android_metadata": {
+        "rows": 1,
+        "fixture_matches": 0
+      },
+      "trips": {
+        "rows": 6,
+        "fixture_matches": 0
+      },
+      "speed_samples": {
+        "rows": 3611,
+        "fixture_matches": 0
+      },
+      "observations": {
+        "rows": 50,
+        "fixture_matches": 0
+      },
+      "steering_samples": {
+        "rows": 0,
+        "fixture_matches": 0
+      },
+      "guidance_events": {
+        "rows": 0,
+        "fixture_matches": 0
+      }
+    }
+  }
+}

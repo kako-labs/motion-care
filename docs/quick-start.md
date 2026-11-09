@@ -1,5 +1,7 @@
 # 두 사람이 바로 시작하기
 
+현재 기능 브랜치의 완료·합성 시연·남은 통합 작업은 [통합 전 준비 현황](meeting-readiness/README.md)을 먼저 확인합니다.
+
 ## 공통
 
 1. README대로 JDK 17·SDK 준비.
@@ -25,7 +27,7 @@
 - `feature/history/.../TripDetailViewModel.kt`: 선택 주행 조회·오류·재시도.
 - `feature/history/.../ui/RecentTrips.kt`: 목록 UI.
 - `feature/history/.../report/TripDetailContent.kt`: 상세 UI.
-- feedback/departure 패키지: 다음 기능을 붙일 자리.
+- feedback/departure 패키지: 평가 저장·좌석 등록·출발 조언/현재 환경 표시가 연결된 화면.
 
 UI 개발에는 차량·API 키가 필요하지 않습니다. ViewModel 단위 테스트에서는 해당 Repository의 fake를 주입합니다.
 

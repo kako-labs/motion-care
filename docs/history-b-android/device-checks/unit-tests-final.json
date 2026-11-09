@@ -1,0 +1,199 @@
+{
+  "total_tests": 274,
+  "failures": 0,
+  "errors": 0,
+  "suites": [
+    {
+      "suite": "dev.motioncare.feature.driving.DrivingViewModelTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.feature.driving.guidance.GuidanceCopyTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.feature.driving.guidance.NotificationAccessTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.feature.history.HistoryPresentationStateTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.feature.history.insights.HistoryInsightsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.feature.history.presentation.EnvironmentPresentationTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.feature.history.presentation.SpeedTraceTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.feature.history.profile.ProfileViewModelTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.feature.history.report.ObservationSummaryTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.feature.history.TripDetailViewModelTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.environment.air.AirGradesTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.environment.air.OpenMeteoTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.environment.EnvironmentRepositoryTest",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.environment.location.CoordinatesTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.environment.storage.SqliteEnvironmentStoreTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.environment.vehicle.CelsiusTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.profile.ProfileRepositoryTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.analysis.LateralDetectorTest",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.analysis.PatternDetectorTest",
+      "tests": 25,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.guidance.ChimeTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.guidance.EnvironmentAdvisorTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.guidance.GuidancePolicyTest",
+      "tests": 35,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.guidance.GuidanceSoundPlayerTest",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.guidance.LongDriveTrackerTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.guidance.StoredGuidanceSettingsTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.session.TripSessionControllerTest",
+      "tests": 28,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.storage.SqliteTripStoreTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.vehicle.RestartingSubscriptionTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.vehicle.SpeedReadingMappingTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.data.trip.vehicle.SteeringReadingMappingTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.core.model.EnvironmentModelsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "dev.motioncare.core.model.TripModelsTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0
+    }
+  ]
+}

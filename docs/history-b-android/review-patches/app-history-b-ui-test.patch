@@ -1,0 +1,94 @@
+--- /dev/null
++++ b/app/src/androidTest/java/dev/motioncare/app/HistoryBFlowTest.kt
+@@ -0,0 +1,91 @@
++package dev.motioncare.app
++
++import androidx.compose.ui.test.*
++import androidx.compose.ui.test.junit4.createAndroidComposeRule
++import androidx.compose.ui.semantics.SemanticsActions
++import dev.motioncare.feature.history.demo.HistoryDemoActivity
++import org.junit.Assert.*
++import org.junit.Rule
++import org.junit.Test
++
++/** Review-only app test overlay. Reuses the feature's debug repositories, never AppGraph. */
++class HistoryBFlowTest {
++    @get:Rule val compose = createAndroidComposeRule<HistoryDemoActivity>()
++    private fun click(text: String, substring: Boolean = false) {
++        compose.waitUntil(20_000) { compose.onAllNodesWithText(text, substring).fetchSemanticsNodes().isNotEmpty() }
++        val node = compose.onAllNodesWithText(text, substring).onFirst()
++        val scrollable = hasText(text, substring = substring) and hasAnyAncestor(hasScrollAction())
++        if (compose.onAllNodes(scrollable).fetchSemanticsNodes().isNotEmpty()) node.performScrollTo()
++        node.performClick()
++    }
++    private fun scenario(extra: String) {
++        compose.runOnUiThread { compose.activity.intent.putExtra(extra, true) }
++        compose.activityRule.scenario.recreate()
++    }
++
++    @Test fun selectedObservationOpensTheSameTripAndEvent() {
++        click("프로필")
++        click("자세히  ›")
++        // Exercise the selected-event navigation contract independently of clipped touch coordinates.
++        val event = compose.onAllNodesWithText("감속 3 ·", substring = true).onFirst()
++        event.performScrollTo()
++        event.performSemanticsAction(SemanticsActions.OnClick) { it() }
++        val selected = hasText("감속 3 ·", substring = true) and hasText("→", substring = true)
++        compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(selected)
++        compose.onNode(selected).assertIsDisplayed()
++        click("운행 상세에서 보기")
++        compose.onNodeWithText("운행 상세").assertIsDisplayed()
++        compose.onNodeWithText("완료된 운행").assertExists()
++        try {
++            compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(selected)
++            compose.onNode(selected).assertIsDisplayed()
++        } catch (error: AssertionError) {
++            throw AssertionError(compose.onRoot(useUnmergedTree = true).printToString(maxDepth = 80), error)
++        }
++    }
++
++    @Test fun ratingUsesExistingSaveAndSurvivesRecreation() {
++        click("완료 평가")
++        compose.onNodeWithContentDescription("4점").performClick()
++        click("나의 응답 남기기")
++        click("완료 평가")
++        compose.onNodeWithText("편안했어요").assertExists()
++        compose.activityRule.scenario.recreate()
++        click("완료 평가")
++        compose.onNodeWithText("편안했어요").assertExists()
++    }
++
++    @Test fun skippingAnUnansweredTripDoesNotCreateARating() {
++        scenario("unanswered")
++        click("완료 평가")
++        compose.onNodeWithText("이동은 어땠나요?").assertExists()
++        click("건너뛰기")
++        click("완료 평가")
++        compose.onNodeWithText("이동은 어땠나요?").assertExists()
++    }
++
++    @Test fun noHistoryStaysEmptyAndInterruptedStatusRemainsVisible() {
++        scenario("empty")
++        click("운행 기록")
++        compose.onNodeWithText("아직 기록이 없습니다.").assertExists()
++        compose.runOnUiThread { compose.activity.intent.removeExtra("empty"); compose.activity.intent.putExtra("interrupted", true) }
++        compose.activityRule.scenario.recreate()
++        click("운행 기록")
++        click("11월 4일", substring = true)
++        compose.onNodeWithText("중단된 운행").assertExists()
++    }
++
++    @Test fun rearSeatsHaveSeparateTouchTargetsAndRatingsStayLarge() {
++        val left = compose.onNodeWithContentDescription("뒤 왼쪽", substring = true)
++        if (!left.isDisplayed()) left.performScrollTo()
++        val first = left.fetchSemanticsNode().boundsInRoot
++        val middle = compose.onNodeWithContentDescription("뒤 가운데", substring = true).fetchSemanticsNode().boundsInRoot
++        val right = compose.onNodeWithContentDescription("뒤 오른쪽", substring = true).fetchSemanticsNode().boundsInRoot
++        assertTrue(first.right <= middle.left)
++        assertTrue(middle.right <= right.left)
++        click("완료 평가")
++        val star = compose.onNodeWithContentDescription("4점")
++        if (!star.isDisplayed()) star.performScrollTo()
++        assertTrue(star.fetchSemanticsNode().boundsInRoot.width / compose.density.density >= 55.5f)
++    }
++}

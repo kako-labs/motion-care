@@ -1,0 +1,133 @@
+{
+  "device": "mc_car Android API 35 x86_64",
+  "size": [
+    1682,
+    1210
+  ],
+  "checks": [
+    {
+      "screen": "departure",
+      "required": [
+        "최근 운행",
+        "지영",
+        "서아",
+        "오늘의 제안"
+      ],
+      "passed": true,
+      "sha256": "c3c75daac30c0dbc3a2dc84aa71457495cf0e58b6fbbcf60b92f47d353384862"
+    },
+    {
+      "screen": "records",
+      "required": [
+        "전체 운행 기록",
+        "11월 4일"
+      ],
+      "passed": true,
+      "sha256": "7cee073dff21ce5cd782078ed67ec1480c1c2409665c82895a570ce0ed8ce6b7"
+    },
+    {
+      "screen": "driver",
+      "required": [
+        "전체 운전 기록",
+        "지영"
+      ],
+      "passed": true,
+      "sha256": "7bded41e9c4766d7e5f51206fa5c0d712ec3f823332afd70b321f1528b33c81e"
+    },
+    {
+      "screen": "driver-history",
+      "required": [
+        "전체 운전 기록",
+        "최근 1.3회"
+      ],
+      "passed": true,
+      "sha256": "2b759068a47113a1ed91216476485337e75f5f03900f0b82b28dcf6328178805"
+    },
+    {
+      "screen": "passenger",
+      "required": [
+        "서아",
+        "민감도",
+        "조금 더 신경 쓸 순간"
+      ],
+      "passed": true,
+      "sha256": "86926d8c46e549ef16a5cdceb54b05612183dd13afcb9995a4e6ac0c9b9a8baf"
+    },
+    {
+      "screen": "advice",
+      "required": [
+        "왜 이 조언인가요?",
+        "1.3",
+        "2.1"
+      ],
+      "passed": true,
+      "sha256": "9a45a46729a8e90745c1bcd0f39a8baa95f5b7f3fa18416f7d554b99a1790520"
+    },
+    {
+      "screen": "braking-detail",
+      "required": [
+        "감속 3 ·",
+        "km/h",
+        "운행 상세에서 보기"
+      ],
+      "passed": true,
+      "sha256": "afa11f04617d0c94b545c0532dd02a2216c3a617a0310cd874681ab640f91237"
+    },
+    {
+      "screen": "trip",
+      "required": [
+        "운행 상세",
+        "완료된 운행",
+        "지영 · 서아"
+      ],
+      "passed": true,
+      "sha256": "918c463d783d5e929be2c79c75165aa3d016a7d4588a5e12c9186fa7db1c23f0"
+    },
+    {
+      "screen": "trip-graph",
+      "required": [
+        "감속 3 ·",
+        "감속 전 접근과 정차 후 재출발 상세 그래프"
+      ],
+      "passed": true,
+      "sha256": "53d241d9c85315166f2d32a32bff2b6a138c8f02f0c231b75b051f9d62c8264a"
+    },
+    {
+      "screen": "feedback",
+      "required": [
+        "서아의 한마디",
+        "1점",
+        "5점"
+      ],
+      "passed": true,
+      "sha256": "a5092d8891c032edbdaf7001879b4668428f30a0bd3ff9c2d1ee375166fd1109"
+    },
+    {
+      "screen": "feedback-actions",
+      "required": [
+        "나의 응답 남기기",
+        "건너뛰기"
+      ],
+      "passed": true,
+      "sha256": "8d902fc8f310f1d636fa65ec7cdaa00d550ac0a03dc961f90f5f9b5e8f2afc1e"
+    },
+    {
+      "screen": "finished",
+      "required": [
+        "운행을 마쳤어요",
+        "운행 시간"
+      ],
+      "passed": true,
+      "sha256": "2f4779f0aeb14edca97a4512b4a3e91cbc68029e88460ce61dac55230737945a"
+    },
+    {
+      "screen": "finished-actions",
+      "required": [
+        "주행 상세",
+        "완료"
+      ],
+      "passed": true,
+      "sha256": "2f4779f0aeb14edca97a4512b4a3e91cbc68029e88460ce61dac55230737945a"
+    }
+  ]
+}
