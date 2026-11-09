@@ -1,0 +1,218 @@
+[
+  {
+    "width": 1600,
+    "screen": "screen-home",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1600,
+    "screen": "screen-records",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1600,
+    "screen": "screen-profiles",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1600,
+    "screen": "screen-profile-detail",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1600,
+    "screen": "screen-feedback",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1600,
+    "screen": "screen-why",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1600,
+    "screen": "screen-environment",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1600,
+    "screen": "screen-routes",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1600,
+    "screen": "screen-finished",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1024,
+    "screen": "screen-home",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1024,
+    "screen": "screen-records",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1024,
+    "screen": "screen-profiles",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1024,
+    "screen": "screen-profile-detail",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1024,
+    "screen": "screen-feedback",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1024,
+    "screen": "screen-why",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1024,
+    "screen": "screen-environment",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1024,
+    "screen": "screen-routes",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 1024,
+    "screen": "screen-finished",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 768,
+    "screen": "screen-home",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 768,
+    "screen": "screen-records",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 768,
+    "screen": "screen-profiles",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 768,
+    "screen": "screen-profile-detail",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 768,
+    "screen": "screen-feedback",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 768,
+    "screen": "screen-why",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 768,
+    "screen": "screen-environment",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 768,
+    "screen": "screen-routes",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 768,
+    "screen": "screen-finished",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 390,
+    "screen": "screen-home",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 390,
+    "screen": "screen-records",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 390,
+    "screen": "screen-profiles",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 390,
+    "screen": "screen-profile-detail",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 390,
+    "screen": "screen-feedback",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 390,
+    "screen": "screen-why",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 390,
+    "screen": "screen-environment",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 390,
+    "screen": "screen-routes",
+    "outerOverflow": false,
+    "mainOverflow": false
+  },
+  {
+    "width": 390,
+    "screen": "screen-finished",
+    "outerOverflow": false,
+    "mainOverflow": false
+  }
+]

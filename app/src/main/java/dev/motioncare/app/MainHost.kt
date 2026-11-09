@@ -39,8 +39,13 @@ import dev.motioncare.feature.driving.ui.rememberGuidanceCardsAllowed
 import dev.motioncare.feature.history.navigation.HistoryRoutes
 import dev.motioncare.feature.history.navigation.historyGraph
 import dev.motioncare.feature.history.report.FinishedContent
+import dev.motioncare.core.model.TripStatus
 import java.util.TimeZone
-import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 
 private const val HOME_ROUTE = "home"
 // Outdoor air needs the car's position. Recording goes on without it.
@@ -95,8 +100,31 @@ fun MainHost(
         }
     }
     val activeId = drivingState.active?.id
+    // A new trip keeps who sat where at its start and the environment at that moment, then starts recording.
     LaunchedEffect(activeId) {
-        if (vehicleConnected && activeId != null) onRecordingStarted()
+        if (activeId != null) {
+            withContext(NonCancellable) {
+                runCatching {
+                    profiles.initialize()
+                    if (profiles.participants.value.none { it.tripId == activeId }) {
+                        profiles.assignCurrentSeating(activeId)
+                    }
+                }
+                runCatching {
+                    if (environment.history(activeId).isEmpty()) environment.capture(activeId)
+                }
+            }
+            currentCoroutineContext().ensureActive()
+            val stillRecording = try {
+                trips.get(activeId)?.trip?.status == TripStatus.RECORDING
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                false
+            }
+            currentCoroutineContext().ensureActive()
+            if (vehicleConnected && stillRecording) onRecordingStarted()
+        }
     }
     val records by trips.records.collectAsStateWithLifecycle()
     val people by profiles.people.collectAsStateWithLifecycle()
@@ -175,6 +203,7 @@ fun MainHost(
                     navigation = navigation,
                     trips = trips,
                     profiles = profiles,
+                    environment = environment.current,
                     onBackToHome = { navigation.popBackStack(HOME_ROUTE, inclusive = false) },
                 )
             }

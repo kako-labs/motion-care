@@ -1,5 +1,7 @@
 # 화면 디자인 기록
 
+> 아래는 초기 시안의 결정 기록입니다. 이후 승인된 기록 담당 B 화면은 [selected-b HTML](design-archive/history-b-2026-11-07/ui-review/selected-b/index.html)과 Android `feature/history`에 있습니다. 현재 연결·시연 전용·통합 대기 범위는 [통합 전 준비 현황](meeting-readiness/README.md)을 우선합니다. 앱 전체 공통 홈·주행 화면을 임의로 교체했다는 뜻은 아닙니다.
+
 2026-11-03 기준입니다. 화면을 구현하거나 시안을 고칠 때 이 문서를 먼저 확인합니다.
 
 ## 링크

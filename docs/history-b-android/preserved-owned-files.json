@@ -1,0 +1,17 @@
+{
+  "feature/history/src/main/java/dev/motioncare/feature/history/MotionCareViewModels.kt": true,
+  "feature/history/src/main/java/dev/motioncare/feature/history/advice/AdviceRoute.kt": true,
+  "feature/history/src/main/java/dev/motioncare/feature/history/departure/ReadyContent.kt": true,
+  "feature/history/src/main/java/dev/motioncare/feature/history/feedback/FeedbackSlot.kt": true,
+  "feature/history/src/main/java/dev/motioncare/feature/history/insights/HistoryInsights.kt": true,
+  "feature/history/src/main/java/dev/motioncare/feature/history/navigation/HistoryNavigation.kt": true,
+  "feature/history/src/main/java/dev/motioncare/feature/history/profile/ProfileRoute.kt": true,
+  "feature/history/src/main/java/dev/motioncare/feature/history/report/FinishedContent.kt": true,
+  "feature/history/src/main/java/dev/motioncare/feature/history/report/TripDetailContent.kt": true,
+  "feature/history/src/main/java/dev/motioncare/feature/history/ui/MotionCareComponents.kt": true,
+  "feature/history/src/main/java/dev/motioncare/feature/history/ui/RecentTrips.kt": true,
+  "feature/history/src/main/res/drawable-nodpi/mc_avatar_adult.jpg": true,
+  "feature/history/src/main/res/drawable-nodpi/mc_avatar_boy.jpg": true,
+  "feature/history/src/main/res/drawable-nodpi/mc_avatar_child.jpg": true,
+  "feature/history/src/main/res/drawable-nodpi/mc_avatar_woman.jpg": true
+}

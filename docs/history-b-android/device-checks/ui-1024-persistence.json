@@ -1,0 +1,40 @@
+{
+  "size": [
+    1024,
+    768
+  ],
+  "tests": 6,
+  "failures": 0,
+  "cases": [
+    {
+      "name": "skippingAnUnansweredTripDoesNotCreateARating",
+      "classname": "dev.motioncare.app.HistoryBFlowTest",
+      "time": "6.967"
+    },
+    {
+      "name": "selectedObservationOpensTheSameTripAndEvent",
+      "classname": "dev.motioncare.app.HistoryBFlowTest",
+      "time": "2.374"
+    },
+    {
+      "name": "noHistoryStaysEmptyAndInterruptedStatusRemainsVisible",
+      "classname": "dev.motioncare.app.HistoryBFlowTest",
+      "time": "2.592"
+    },
+    {
+      "name": "ratingUsesExistingSaveAndSurvivesRecreation",
+      "classname": "dev.motioncare.app.HistoryBFlowTest",
+      "time": "2.717"
+    },
+    {
+      "name": "rearSeatsHaveSeparateTouchTargetsAndRatingsStayLarge",
+      "classname": "dev.motioncare.app.HistoryBFlowTest",
+      "time": "1.684"
+    },
+    {
+      "name": "profileAndFeedbackPersistThroughActualRepositoriesWithoutSeedingUserStorage",
+      "classname": "dev.motioncare.app.HistoryBStorageFlowTest",
+      "time": "4.056"
+    }
+  ]
+}

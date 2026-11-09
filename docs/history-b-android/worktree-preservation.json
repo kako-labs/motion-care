@@ -1,0 +1,66 @@
+{
+  "original": {
+    "head": "a436c420364057e9b1af8ab4ea9b2bff47d0e5b6",
+    "status": [
+      " M hackathons/hyundai-app-2026/FEEDBACK.md",
+      " M hackathons/hyundai-app-2026/demo-kit/MERGE-HANDOFF.md",
+      " M hackathons/hyundai-app-2026/demo-kit/SOURCES.md",
+      " M hackathons/hyundai-app-2026/demo-kit/START-HERE.md",
+      " M hackathons/hyundai-app-2026/demo-kit/VERIFICATION.md",
+      " M hackathons/hyundai-app-2026/demo-kit/android/BHistoryPanels.kt",
+      " M hackathons/hyundai-app-2026/demo-kit/android/EnvironmentPanel.kt",
+      " M hackathons/hyundai-app-2026/demo-kit/android/source-hashes.json",
+      " M hackathons/hyundai-app-2026/ui-review/DECISIONS.md",
+      " M hackathons/hyundai-app-2026/ui-review/README.md",
+      " M hackathons/hyundai-app-2026/ui-review/index.html",
+      " M hackathons/hyundai-app-2026/ui-review/selected-b/app.js",
+      " M hackathons/hyundai-app-2026/ui-review/selected-b/demo-extras.js",
+      " M hackathons/hyundai-app-2026/ui-review/selected-b/index.html",
+      " M hackathons/hyundai-app-2026/ui-review/selected-b/review.html",
+      "?? .android-b-integration/",
+      "?? hackathons/hyundai-app-2026/demo-kit/ADVICE-DETAIL-2026-11-08.md",
+      "?? hackathons/hyundai-app-2026/demo-kit/APPROVED-BASELINE-2026-11-08.md",
+      "?? hackathons/hyundai-app-2026/demo-kit/NEXT-SESSION-HANDOFF.md",
+      "?? hackathons/hyundai-app-2026/demo-kit/ROUTE-AND-CHART-2026-11-08.md",
+      "?? hackathons/hyundai-app-2026/demo-kit/tests/",
+      "?? hackathons/hyundai-app-2026/notion-api/TEAM-NOTION.md",
+      "?? hackathons/hyundai-app-2026/ui-review/UI-REFERENCES-2026-11-07.md",
+      "?? hackathons/hyundai-app-2026/ui-review/index-before-b.html",
+      "?? hackathons/hyundai-app-2026/ui-review/redesign-v3/",
+      "?? hackathons/hyundai-app-2026/ui-review/selected-b/advice-detail.css",
+      "?? hackathons/hyundai-app-2026/ui-review/selected-b/advice-detail.js",
+      "?? hackathons/hyundai-app-2026/ui-review/selected-b/assets/MAP-SOURCES.md",
+      "?? hackathons/hyundai-app-2026/ui-review/selected-b/assets/route-map-data.js",
+      "?? hackathons/hyundai-app-2026/ui-review/selected-b/journey-data.js",
+      "?? hackathons/hyundai-app-2026/ui-review/selected-b/previews/v5/",
+      "?? hackathons/hyundai-app-2026/ui-review/selected-b/previews/v6/",
+      "?? hackathons/hyundai-app-2026/ui-review/selected-b/previews/v7/",
+      "?? hackathons/hyundai-app-2026/ui-review/selected-b/realistic.css"
+    ]
+  },
+  "owned": {
+    "head": "ab53c65f3eb89280d6f7ee02b9a6f8789978c1bc",
+    "status": [
+      " M feature/history/src/main/java/dev/motioncare/feature/history/MotionCareViewModels.kt",
+      " M feature/history/src/main/java/dev/motioncare/feature/history/advice/AdviceRoute.kt",
+      " M feature/history/src/main/java/dev/motioncare/feature/history/departure/ReadyContent.kt",
+      " M feature/history/src/main/java/dev/motioncare/feature/history/feedback/FeedbackSlot.kt",
+      " M feature/history/src/main/java/dev/motioncare/feature/history/insights/HistoryInsights.kt",
+      " M feature/history/src/main/java/dev/motioncare/feature/history/navigation/HistoryNavigation.kt",
+      " M feature/history/src/main/java/dev/motioncare/feature/history/profile/ProfileRoute.kt",
+      " M feature/history/src/main/java/dev/motioncare/feature/history/report/FinishedContent.kt",
+      " M feature/history/src/main/java/dev/motioncare/feature/history/report/TripDetailContent.kt",
+      " M feature/history/src/main/java/dev/motioncare/feature/history/ui/MotionCareComponents.kt",
+      " M feature/history/src/main/java/dev/motioncare/feature/history/ui/RecentTrips.kt",
+      "?? feature/history/src/main/res/"
+    ]
+  },
+  "prepared": {
+    "head": "625929bd436f04f8985a508f7ef0cbfe705457a5",
+    "status": []
+  },
+  "saved": {
+    "head": "ee2898cc6c12a141bf69b99a761ab17dae1d82fc",
+    "status": []
+  }
+}

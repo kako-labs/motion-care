@@ -1,0 +1,44 @@
+## 최신 변경 · B 화면 정교화 / CI 복구
+
+차량·얼굴 원본과 네이비·하늘색, 유리 질감, 사선 제안, 상세 감속 그래프를 유지했습니다. 큰 좌석 링·과한 광택·반복 숫자 카드·장식 라벨을 줄이고 출발·기록·프로필·조언·평가·종료의 여백과 글자 위계를 맞췄습니다. HTML 지영 프로필도 본인의 3건을 사용하도록 회귀 검사 후 수정했습니다.
+
+- CI의 Gradle 다운로드 타임아웃과 옛 화면 문구를 기다리는 실패를 분리했습니다. `ScaffoldFlowTest`는 현재 화면 왕복과 공개 Repository의 샘플 보존을 검증합니다. 복구 커밋 `1a20003`의 [verify/UI 성공 기록](https://github.com/kako-labs/motion-care/actions/runs/42480565484); 최신 커밋은 이 PR의 Checks 참조.
+- 최종 로컬 verifyAll 274개/32 suite 통과. 1024×768·1682×1210 격리 UI/실제 SQLite 저장 검사 각 6개 통과, 정상 DB 전후 해시 동일. release에 debug fixture 없음. HTML Node 3개와 4개 너비의 화면 확인.
+- [최신 구현·검증·18장 Android 캡처](https://github.com/kako-labs/motion-care/blob/feat/history-b-android/docs/history-b-android/REFINEMENT.md), [HTML 화면 모음](https://github.com/kako-labs/motion-care/blob/feat/history-b-android/docs/design-archive/history-b-2026-11-07/ui-review/selected-b/review.html).
+- app **제품 코드**·공통 계약·DB·SDK·서비스·탐지·내비는 변경하지 않았습니다. 명시적 CI 수정 요청에 따라 app instrumentation 검사만 변경했습니다. 루트 테마는 미적용 `app-b-theme.patch`로 제공합니다. 아래 이전 검증 기록은 이전 전달 시점의 결과입니다.
+
+---
+
+기존 기록 담당 화면의 ViewModel·저장 흐름에 확정 B 디자인을 연결했습니다. 출발의 큰 차량/좌석·최근 기록·사선 제안, 프로필, 조언과 선택 감속 상세, 운행 리포트, 평가가 같은 Repository 값을 사용합니다. 1024×768에서도 좌석·기록·제안을 함께 보고, 동승자 얼굴·편집 버튼은 한 번만 표시합니다.
+
+## 선행 작업과 리뷰 범위
+
+- **Depends on #10, #17.** 두 기존 PR을 로컬에서 결합한 기준입니다. main에 바로 병합하지 않는 Draft입니다.
+- `315bee2`는 기존 기록 담당 미커밋 화면/자산 사본을 보존한 기준입니다. **이번 신규 연결만 보려면 `315bee2..HEAD`를 비교**해 주세요.
+- main 기준 전체 diff에 포함된 좌석/평가 공통 모델·DB 변경은 선행 #10의 기존 내용입니다. 이번 신규 범위에서 app 제품 코드/core/data/Gradle/SDK/서비스/탐지/내비를 바꾸지 않았습니다. CI 복구를 위한 app 검사 파일 변경은 위 최신 변경을 참고하세요.
+- 원본 작업 트리의 기존 미커밋 변경 15개 파일과 준비/저장 트리를 보존했습니다.
+
+## 데이터와 상태
+
+- 실제 자료는 저장된 표본 해상도와 Observation을 그립니다. 기록 공백은 연결하지 않고 선택 감속의 같은 운행/사건을 상세로 전달합니다.
+- 기존 표시 집계에서 UNAVAILABLE 표본을 건너뛰어 적분하던 오류는 회귀 검사 후 수정했습니다. 탐지기/임계값/DB는 바꾸지 않았습니다.
+- 지영·서아/j1~j3와 0.2초 합성 상세 자료는 **debug source set에만** 둡니다. 정상 사용자 DB에 시연 운행을 주입하지 않습니다. 일반 앱에 기록이 없으면 빈 상태를 유지합니다.
+- 기존 프로필 편집·보호자/직접 응답·여러 동승자·저장 오류·미응답·중단 상태를 유지합니다.
+
+## 검증
+
+- `python scripts/dev.py verify`: APK, 아키텍처, lint, 전체 단위 검사 **274개 통과**(history 28개).
+- 실제 Android API 35 x86_64 / `mc_car` / 1024×768에서 UI·저장 검사 **6개 통과**: 선택 구간 이동, 저장/재생성, 미응답, 빈/중단 상태, 터치 영역, 실제 SQLite 프로필/평가 저장·재조회.
+- 실제 SQLite 검사는 UUID 접두어를 가진 테스트 저장소만 사용하고 정상 DB SHA-256 불변을 확인합니다. 앱 소유 검사 파일은 임시 적용 후 제거해 검토용 패치로 남겼습니다.
+- 1682×1210과 1024×768 최종 Native 캡처 **각 13장**. 문구/PNG 해시, 대표 화면 시각 검토와 터치 검사 결과를 보존했습니다.
+- release 빌드 통과. APK dex/assets에서 debug Activity·시연 Repository·합성 JSON 제외 확인.
+- 종료 분기 패치와 UI 검사 패치 2개는 `git apply --check` 통과, 미적용 상태로 전달합니다.
+
+## 통합 담당에게 남은 부분
+
+- 앱 홈 바깥 틀의 최종 배치와 종료 분기 `FinishedRoute` 연결(준비 패치 제공).
+- 실제 운행 시작 시 탑승 링크 고정. 선행 #10의 `linkSeatingIfMissing()` 임시 방식은 과거 기록에 현재 좌석을 붙일 수 있어 시작 시점 연결과 함께 정리해야 합니다.
+- 환경 current/history 주입·허용 의존성 및 실제 주행/내비 위 안내는 기존 담당 소유입니다.
+- 위 기능을 합친 고정 APK의 주행→종료→기록→평가 저장/재진입, Pleos·실차 검증은 별도입니다. 이번 일반 Android 검증을 실차 결과로 소개하지 않습니다.
+
+문서: [연결 범위](docs/history-b-android/README.md), [통합 검토](docs/history-b-android/INTEGRATION-REVIEW.md), [검증](docs/history-b-android/VERIFICATION.md), [실제 화면 모음](docs/history-b-android/SCREENS.md).

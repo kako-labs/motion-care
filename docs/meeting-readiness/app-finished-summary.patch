@@ -1,0 +1,23 @@
+--- a/app/src/main/java/dev/motioncare/app/MainHost.kt
++++ b/app/src/main/java/dev/motioncare/app/MainHost.kt
+@@ -28,7 +28,7 @@
+ import dev.motioncare.feature.history.departure.ReadyContent
+ import dev.motioncare.feature.history.navigation.HistoryRoutes
+ import dev.motioncare.feature.history.navigation.historyGraph
+-import dev.motioncare.feature.history.report.FinishedContent
++import dev.motioncare.feature.history.report.FinishedRoute
+ import dev.motioncare.feature.history.ui.RecentTripsRoute
+ import kotlinx.coroutines.NonCancellable
+ import kotlinx.coroutines.CancellationException
+@@ -129,7 +129,10 @@
+                         }
+                         when {
+                             active != null -> ActiveContent(active, drivingState.busy, vehicleConnected, driving::capture, driving::finish)
+-                            finished != null -> FinishedContent(
++                            finished != null -> FinishedRoute(
++                                tripId = finished,
++                                trips = trips,
++                                profiles = profiles,
+                                 onDetail = { navigation.navigate(HistoryRoutes.trip(finished)) },
+                                 onFeedback = { navigation.navigate(HistoryRoutes.feedback(finished)) },
+                                 onDone = driving::dismissFinished)

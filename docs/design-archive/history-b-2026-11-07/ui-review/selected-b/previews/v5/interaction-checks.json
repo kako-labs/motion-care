@@ -1,0 +1,14 @@
+[
+  "sample times, coverage and braking events agree",
+  "event list and chart select the same interval",
+  "switching trips changes trace and event count",
+  "real geographic road network and route polylines rendered",
+  "route selection changes map and turn count",
+  "selected route acknowledgement",
+  "product copy cleaned: home",
+  "product copy cleaned: profile-detail",
+  "product copy cleaned: records",
+  "product copy cleaned: feedback",
+  "product copy cleaned: environment",
+  "product copy cleaned: routes"
+]

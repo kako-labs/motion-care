@@ -1,0 +1,14 @@
+{
+  "size": "1024x768",
+  "tests": 6,
+  "passed": true,
+  "normalDatabaseBefore": {
+    "motion-care-profile.db": "cf37b163dc784e2b90308fe9aabbabe82336cfa480c0b63d9f10d0ec948551eb",
+    "motion-care-sample.db": "2fa3b0cdf6e848ad040ff25c57f9a2f543d58ba05b12be88a84e45eeec8516f6"
+  },
+  "normalDatabaseAfter": {
+    "motion-care-profile.db": "cf37b163dc784e2b90308fe9aabbabe82336cfa480c0b63d9f10d0ec948551eb",
+    "motion-care-sample.db": "2fa3b0cdf6e848ad040ff25c57f9a2f543d58ba05b12be88a84e45eeec8516f6"
+  },
+  "normalDatabaseUnchanged": true
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "width": 1920,
+    "height": 1080,
+    "overflow": false,
+    "chart": true,
+    "invalid": false
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "overflow": false,
+    "chart": true,
+    "invalid": false
+  },
+  {
+    "width": 1280,
+    "height": 800,
+    "overflow": false,
+    "chart": true,
+    "invalid": false
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "overflow": false,
+    "chart": true,
+    "invalid": false
+  }
+]
