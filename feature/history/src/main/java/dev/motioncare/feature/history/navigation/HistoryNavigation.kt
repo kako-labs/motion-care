@@ -9,6 +9,9 @@ import dev.motioncare.core.model.PersonId
 import dev.motioncare.core.model.TripId
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.trip.TripRepository
+import dev.motioncare.core.model.EnvironmentSnapshot
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import dev.motioncare.feature.history.advice.AdviceRoute
 import dev.motioncare.feature.history.departure.DepartureRoute
 import dev.motioncare.feature.history.feedback.FeedbackRoute
@@ -32,10 +35,11 @@ fun NavGraphBuilder.historyGraph(
     navigation: NavController,
     trips: TripRepository,
     profiles: ProfileRepository,
+    environment: Flow<EnvironmentSnapshot?> = flowOf(null),
     onBackToHome: () -> Unit,
 ) {
     composable(HistoryRoutes.PROFILES) {
-        DepartureRoute(trips, profiles,
+        DepartureRoute(trips, profiles, environment,
             onBack = { navigation.popBackStack() },
             onProfile = { navigation.navigate(HistoryRoutes.profile(it)) },
             onAdvice = { navigation.navigate(HistoryRoutes.advice(it)) },

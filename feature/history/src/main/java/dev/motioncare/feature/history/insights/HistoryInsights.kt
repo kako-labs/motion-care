@@ -93,7 +93,7 @@ fun adviceFor(driverId: PersonId?, all: List<TripInsight>): AdviceInsight {
 }
 
 fun actionFor(pattern: DrivingPattern?): String = when (pattern) {
-    DrivingPattern.HARD_STOP -> "정지 시 조금 일찍 감속해 보세요."
+    DrivingPattern.HARD_STOP -> "정차 시 조금 일찍 감속해 보세요."
     DrivingPattern.RAPID_START -> "출발할 때 조금 천천히 가속해 보세요."
     DrivingPattern.REPEATED_SPEED_CHANGE -> "앞차와 간격을 두고 속도를 일정하게 유지해 보세요."
     DrivingPattern.FAST_TURN -> "커브 진입 전에 미리 감속해 보세요."

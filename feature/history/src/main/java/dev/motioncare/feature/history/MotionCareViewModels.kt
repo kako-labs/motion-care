@@ -21,11 +21,14 @@ data class DepartureUiState(
     /** The most recent finished trip in this car, whoever drove. */
     val lastTrip: TripInsight? = null,
     val recentTrips: List<TripInsight> = emptyList(),
+    /** Live departure reading. Missing and unsupported values remain explicit in the reading. */
+    val environment: EnvironmentSnapshot? = null,
 )
 
 class DepartureViewModel(
     private val trips: TripRepository,
     private val profiles: ProfileRepository,
+    private val environment: Flow<EnvironmentSnapshot?> = flowOf(null),
 ) : ViewModel() {
     private val mutable = MutableStateFlow(DepartureUiState())
     val uiState = mutable.asStateFlow()
@@ -33,13 +36,16 @@ class DepartureViewModel(
     private fun observe() = viewModelScope.launch {
         try {
             profiles.initialize(); trips.initialize()
-            combine(changes(trips, profiles), profiles.departureGuidanceEnabled) { _, enabled -> enabled }.collectLatest { enabled ->
+            combine(changes(trips, profiles), profiles.departureGuidanceEnabled, environment) { _, enabled, snapshot ->
+                enabled to snapshot
+            }.collectLatest { (enabled, snapshot) ->
                 val insights = loadInsights(trips, profiles)
                 val seating = profiles.seating.value
                 mutable.value = DepartureUiState(false, null, profiles.people.value, seating,
                     adviceFor(seating.driverId, insights), enabled,
                     insights.filter { it.trip.status == TripStatus.COMPLETED }.maxByOrNull { it.trip.startedAtEpochMs },
-                    insights.filter { it.participants?.driverId == seating.driverId && seating.driverId != null && it.trip.status == TripStatus.COMPLETED }.take(3))
+                    insights.filter { it.participants?.driverId == seating.driverId && seating.driverId != null && it.trip.status == TripStatus.COMPLETED }.take(3),
+                    snapshot)
             }
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { mutable.update { it.copy(loading = false, error = "정보를 불러오지 못했습니다.") } }
@@ -166,7 +172,6 @@ class TripExperienceViewModel(
     private fun observe() = viewModelScope.launch {
         try {
             profiles.initialize(); trips.initialize()
-            linkSeatingIfMissing()
             changes(trips, profiles).collectLatest {
                 val all = loadInsights(trips, profiles)
                 val selected = all.firstOrNull { it.trip.id == tripId }
@@ -177,15 +182,6 @@ class TripExperienceViewModel(
             }
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { mutable.update { it.copy(loading = false, error = "운행 정보를 불러오지 못했습니다.") } }
-    }
-    // TEMPORARY: the app does not yet call assignCurrentSeating when a trip starts, so the
-    // seating is attached the first time this trip's result, detail or rating screen opens.
-    // Remove once the trip start hook exists (requested from the driving owner).
-    private suspend fun linkSeatingIfMissing() {
-        if (profiles.participants.value.any { it.tripId == tripId }) return
-        if (profiles.seating.value.assignments.isEmpty()) return
-        if (trips.records.value.none { it.id == tripId }) return
-        profiles.assignCurrentSeating(tripId)
     }
     fun saveRating(
         personId: PersonId,

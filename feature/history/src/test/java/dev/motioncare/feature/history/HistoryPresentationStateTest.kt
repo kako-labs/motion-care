@@ -35,12 +35,16 @@ class HistoryPresentationStateTest {
         override val feedback = MutableStateFlow<List<TripFeedback>>(emptyList())
         override val departureGuidanceEnabled = MutableStateFlow(true)
         var failSave = false
+        var assignCalls = 0
         override suspend fun initialize() = Unit
         override suspend fun addPerson(displayName: String, kind: PersonKind) = error("Unused")
         override suspend fun updatePerson(profile: PersonProfile) = Unit
         override suspend fun placePerson(personId: PersonId, seat: SeatPosition) = error("Unused")
         override suspend fun clearSeat(seat: SeatPosition) = error("Unused")
-        override suspend fun assignCurrentSeating(tripId: TripId) = error("Existing participant links must be preserved")
+        override suspend fun assignCurrentSeating(tripId: TripId): TripParticipants {
+            assignCalls += 1
+            error("Presentation must not attach current seating to a past trip")
+        }
         override suspend fun saveFeedback(feedback: TripFeedback) {
             if (failSave) throw java.io.IOException("disk full")
             this.feedback.value = listOf(feedback)
@@ -51,13 +55,28 @@ class HistoryPresentationStateTest {
         TripSnapshot(TripRecord(TripId(id), 1000, 1000 + duration, status, origin = DataOrigin.VEHICLE),
             (0..duration step 1000).map { SpeedSample(it, 10.0, Quality.VALID) })
 
+    private fun environment(at: Long) = EnvironmentSnapshot(
+        at,
+        EnvironmentReading(null, Availability.UNSUPPORTED, EnvironmentSource.VEHICLE),
+        EnvironmentReading(null, Availability.UNSUPPORTED, EnvironmentSource.VEHICLE),
+        EnvironmentReading(null, Availability.UNSUPPORTED, EnvironmentSource.VEHICLE),
+        EnvironmentReading(null, Availability.UNSUPPORTED, EnvironmentSource.VEHICLE),
+        EnvironmentReading(null, Availability.UNSUPPORTED, EnvironmentSource.VEHICLE),
+        EnvironmentReading(null, Availability.UNSUPPORTED, EnvironmentSource.OPEN_METEO_CAMS),
+    )
+
     @Test fun selectedDriverOnlyAndEmptyRepositoryStayFaithfulToStorage() = runTest(dispatcher) {
         val trips = Trips(listOf(trip("mine"), trip("other")))
         val profiles = Profiles(driver, rider, listOf(TripParticipants(TripId("mine"), driver, setOf(rider), 0), TripParticipants(TripId("other"), other, setOf(rider), 0)))
-        val model = DepartureViewModel(trips, profiles)
+        val environment = MutableStateFlow<EnvironmentSnapshot?>(null)
+        val model = DepartureViewModel(trips, profiles, environment)
         try {
             advanceUntilIdle()
             assertEquals(listOf("mine"), model.uiState.value.recentTrips.map { it.trip.id.value })
+            val unsupported = environment(1234)
+            environment.value = unsupported
+            advanceUntilIdle()
+            assertEquals(unsupported, model.uiState.value.environment)
             profiles.seating.value = SeatingPlan()
             advanceUntilIdle()
             assertTrue(model.uiState.value.recentTrips.isEmpty())
@@ -91,6 +110,18 @@ class HistoryPresentationStateTest {
             assertTrue(completed)
             assertEquals(FeedbackAnswer.Rating(4, "COMFORT_5_V1"), profiles.feedback.value.single().answer)
             assertEquals(FeedbackRespondent.GUARDIAN, profiles.feedback.value.single().respondent)
+        } finally { model.viewModelScope.cancel() }
+    }
+
+    @Test fun missingStartSnapshotRemainsMissingInsteadOfUsingCurrentSeating() = runTest(dispatcher) {
+        val profiles = Profiles(driver, rider, emptyList())
+        val model = TripExperienceViewModel(TripId("one"), Trips(listOf(trip("one"))), profiles)
+        try {
+            advanceUntilIdle()
+            assertFalse(model.uiState.value.loading)
+            assertNull(model.uiState.value.error)
+            assertNull(model.uiState.value.participants)
+            assertEquals(0, profiles.assignCalls)
         } finally { model.viewModelScope.cancel() }
     }
 }

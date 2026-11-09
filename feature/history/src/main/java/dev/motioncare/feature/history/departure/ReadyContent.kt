@@ -7,17 +7,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.layout.ContentScale
 import dev.motioncare.feature.history.R
 import dev.motioncare.feature.history.presentation.BActionRibbon
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -42,6 +36,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -49,6 +45,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.motioncare.core.model.*
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.trip.TripRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import dev.motioncare.feature.history.DepartureUiState
 import dev.motioncare.feature.history.DepartureViewModel
 import dev.motioncare.feature.history.insights.AdviceState
@@ -84,6 +82,7 @@ fun ReadyContent(busy: Boolean, vehicleConnected: Boolean, onStart: () -> Unit, 
 fun DepartureRoute(
     trips: TripRepository,
     profiles: ProfileRepository,
+    environment: Flow<EnvironmentSnapshot?> = flowOf(null),
     onBack: () -> Unit,
     onProfile: (PersonId) -> Unit,
     onAdvice: (PersonId?) -> Unit,
@@ -91,7 +90,7 @@ fun DepartureRoute(
     onTrip: (TripId) -> Unit = { onRecords() },
 ) {
     val model: DepartureViewModel = viewModel(factory = viewModelFactory {
-        initializer { DepartureViewModel(trips, profiles) }
+        initializer { DepartureViewModel(trips, profiles, environment) }
     })
     val state by model.uiState.collectAsStateWithLifecycle()
     DepartureContent(state, model::place, model::clear, model::addPerson, model::toggleGuidance, onBack, onProfile, onAdvice, onRecords, onTrip)
@@ -129,27 +128,16 @@ private fun DepartureContent(
                 state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
                 if (wide) Row(Modifier.fillMaxWidth().height(panelHeight), horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-                    SeatingPanel(state, openSeat, { openSeat = it }, Modifier.weight(1.5f), panelHeight - 94.dp)
-                    Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(22.dp)) {
-                        DepartureRecent(state, onTrip, Modifier.weight(1f), compact)
-                        BActionRibbon("오늘의 제안", if (state.guidanceEnabled) state.advice.headline else "출발 안내 꺼짐", compact = compact) { onAdvice(state.seating.driverId) }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("출발 안내", Modifier.weight(1f), color = MotionSubtle)
-                            Switch(state.guidanceEnabled, { onToggleGuidance() })
-                        }
-                    }
+                    SeatingPanel(state, openSeat, { openSeat = it }, Modifier.weight(1.15f).fillMaxHeight(), panelHeight)
+                    DepartureConsole(state, { openSeat = it }, onAdvice, onTrip, onToggleGuidance,
+                        Modifier.weight(.9f).fillMaxHeight(), compact)
                 } else Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
                     SeatingPanel(state, openSeat, { openSeat = it })
-                    DepartureRecent(state, onTrip)
-                    BActionRibbon("오늘의 제안", if (state.guidanceEnabled) state.advice.headline else "출발 안내 꺼짐") { onAdvice(state.seating.driverId) }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("출발 안내", Modifier.weight(1f), color = MotionSubtle)
-                        Switch(state.guidanceEnabled, { onToggleGuidance() })
-                    }
+                    DepartureConsole(state, { openSeat = it }, onAdvice, onTrip, onToggleGuidance)
                 }
             }
         }
-        SeatDrawer(openSeat, state, { openSeat = null },
+        SeatPicker(openSeat, state, { openSeat = null },
             onPick = { person, seat -> onPlace(person, seat); openSeat = null },
             onClear = { seat -> onClear(seat); openSeat = null },
             onProfile = { person -> openSeat = null; onProfile(person) },
@@ -308,14 +296,146 @@ private val adviceSteps = listOf("◉" to "자리", "▶" to "운행", "★" to 
     modifier: Modifier = Modifier,
     maxCarHeight: Dp = 860.dp,
 ) {
-    Column(modifier.heightIn(min = 500.dp).padding(horizontal = 8.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("함께 타는 사람", fontSize = 24.sp, fontWeight = FontWeight.Medium)
-            Spacer(Modifier.weight(1f))
-            Text("운전자 ${if (state.seating.driverId == null) 0 else 1} · 동승자 ${state.seating.passengerIds.size}", color = MotionMuted, fontSize = 14.sp)
-        }
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CarInterior(state, openSeat, onSeat, maxCarHeight) }
+    Box(modifier.heightIn(min = 500.dp).padding(horizontal = 8.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
+        CarInterior(state, openSeat, onSeat, maxCarHeight)
     }
+}
+
+@Composable
+private fun DepartureConsole(
+    state: DepartureUiState,
+    onSeat: (SeatPosition) -> Unit,
+    onAdvice: (PersonId?) -> Unit,
+    onTrip: (TripId) -> Unit,
+    onToggleGuidance: () -> Unit,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false,
+) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 18.dp)) {
+        DepartureOverview(state, onSeat, onToggleGuidance, compact)
+        EnvironmentSummary(state.environment, compact)
+        BActionRibbon(
+            "이번 이동의 제안",
+            if (state.guidanceEnabled) state.advice.headline else "출발 안내가 꺼져 있어요.",
+            compact = compact,
+        ) { onAdvice(state.seating.driverId) }
+        DepartureRecent(state, onTrip, if (compact) Modifier.weight(1f) else Modifier, compact)
+    }
+}
+
+@Composable
+private fun DepartureOverview(
+    state: DepartureUiState,
+    onSeat: (SeatPosition) -> Unit,
+    onToggleGuidance: () -> Unit,
+    compact: Boolean,
+) {
+    val occupied = SeatPosition.entries.mapNotNull { seat ->
+        state.seating.assignments[seat]?.let { id -> state.people.firstOrNull { it.id == id }?.let { seat to it } }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("출발 준비", fontSize = if (compact) 25.sp else 30.sp, fontWeight = FontWeight.Medium)
+                Text("탑승 인원 " + occupied.size + "명", color = MotionMuted, fontSize = 14.sp)
+            }
+            Text("안내", color = MotionSubtle, fontSize = 14.sp)
+            Switch(state.guidanceEnabled, { onToggleGuidance() })
+        }
+        if (occupied.isEmpty()) {
+            Text("차량 좌석을 눌러 운전자와 동승자를 선택해 주세요.", color = MotionSubtle, fontSize = 15.sp)
+        } else {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                occupied.take(3).forEach { (seat, person) ->
+                    Surface(
+                        onClick = { onSeat(seat) },
+                        color = MotionPanel,
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, MotionLine),
+                        modifier = Modifier.weight(1f).heightIn(min = if (compact) 58.dp else 72.dp),
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(9.dp),
+                        ) {
+                            PersonAvatar(person, Modifier.size(if (compact) 34.dp else 42.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(person.displayName, fontSize = if (compact) 14.sp else 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(if (seat == SeatPosition.DRIVER) "운전자" else seat.shortLabel(), color = MotionMuted, fontSize = 11.sp, maxLines = 1)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EnvironmentSummary(snapshot: EnvironmentSnapshot?, compact: Boolean) {
+    GlassPanel(Modifier.fillMaxWidth(), compact = compact) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("실내·외부 환경", Modifier.weight(1f), fontSize = if (compact) 18.sp else 21.sp, fontWeight = FontWeight.Medium)
+            Text(snapshot?.let { tripTime(it.capturedAtEpochMs) } ?: "확인 전", color = MotionMuted, fontSize = 12.sp)
+        }
+        if (snapshot == null) {
+            Text("환경 정보를 확인하고 있어요.", color = MotionSubtle, fontSize = 14.sp)
+        } else {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                EnvironmentValue("실내", temperatureValue(snapshot.cabinTemperature), Modifier.weight(1f))
+                EnvironmentValue("바깥", temperatureValue(snapshot.outsideTemperature), Modifier.weight(1f))
+                EnvironmentValue("대기질", airValue(snapshot.outdoorAir), Modifier.weight(1f))
+            }
+            Text(
+                "실내·외기: 차량 신호 · 대기질: Open-Meteo/CAMS 예측 · " + environmentStatus(snapshot),
+                color = MotionMuted,
+                fontSize = 11.sp,
+                lineHeight = 15.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun EnvironmentValue(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Text(label, color = MotionMuted, fontSize = 12.sp)
+        Text(value, color = MotionText, fontSize = 18.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+    }
+}
+
+private fun temperatureValue(reading: EnvironmentReading<Double>): String =
+    reading.value?.let { "%.1f°C".format(it) } ?: reading.availability.shortStatus()
+
+private fun airValue(reading: EnvironmentReading<OutdoorAir>): String =
+    reading.value?.grade?.let {
+        when (it) {
+            AirGrade.GOOD -> "좋음"
+            AirGrade.MODERATE -> "보통"
+            AirGrade.BAD -> "나쁨"
+            AirGrade.VERY_BAD -> "매우 나쁨"
+        }
+    } ?: reading.availability.shortStatus()
+
+private fun environmentStatus(snapshot: EnvironmentSnapshot): String {
+    val states = listOf(snapshot.cabinTemperature, snapshot.outsideTemperature, snapshot.outdoorAir)
+        .map { it.availability }
+    return when {
+        states.any { it == Availability.LOADING } -> "갱신 중"
+        states.all { it == Availability.UNSUPPORTED } -> "이 기기에서 미지원"
+        states.any { it == Availability.UNAVAILABLE } -> "일부 정보 없음"
+        states.any { it == Availability.STALE } -> "이전 확인값 포함"
+        else -> "최신 확인값"
+    }
+}
+
+private fun Availability.shortStatus() = when (this) {
+    Availability.AVAILABLE -> "확인됨"
+    Availability.STALE -> "이전 값"
+    Availability.LOADING -> "확인 중"
+    Availability.UNSUPPORTED -> "미지원"
+    Availability.UNAVAILABLE -> "정보 없음"
 }
 
 // Top-down view with the front of the car at the top; the driver sits front-left.
@@ -371,7 +491,8 @@ private val adviceSteps = listOf("◉" to "자리", "▶" to "운행", "★" to 
     }
 }
 
-@Composable private fun BoxScope.SeatDrawer(
+@Composable
+private fun SeatPicker(
     seat: SeatPosition?,
     state: DepartureUiState,
     onDismiss: () -> Unit,
@@ -380,70 +501,81 @@ private val adviceSteps = listOf("◉" to "자리", "▶" to "운행", "★" to 
     onProfile: (PersonId) -> Unit,
     onAdd: () -> Unit,
 ) {
-    // Keep the last seat while the drawer slides out.
-    var shown by remember { mutableStateOf(seat) }
-    LaunchedEffect(seat) { if (seat != null) shown = seat }
-    AnimatedVisibility(seat != null, enter = fadeIn(), exit = fadeOut()) {
-        Box(Modifier.fillMaxSize().background(Color(0xA6010814))
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onDismiss))
-    }
-    AnimatedVisibility(seat != null, Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-        enter = slideInHorizontally { it }, exit = slideOutHorizontally { it }) {
-        val current = seat ?: shown ?: return@AnimatedVisibility
-        val occupant = state.seating.assignments[current]?.let { id -> state.people.firstOrNull { it.id == id } }
-        Column(Modifier.fillMaxHeight().width(460.dp)
-            .background(Brush.verticalGradient(listOf(Color(0xFF0E3358), Color(0xFF061528))))
-            .border(1.dp, MotionLine).padding(24.dp)
-            .verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(current.label(), Modifier.weight(1f), fontSize = 30.sp, fontWeight = FontWeight.Medium)
-                RoundIconButton("✕", onDismiss)
-            }
-            occupant?.let { person ->
-                Surface(color = MotionBlue.copy(.3f), shape = RoundedCornerShape(20.dp),
-                    border = BorderStroke(1.dp, MotionCyan), modifier = Modifier.fillMaxWidth()) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        PersonAvatar(person, Modifier.size(64.dp))
-                        Text(person.displayName, Modifier.weight(1f), fontSize = 22.sp, fontWeight = FontWeight.Medium)
-                        PrimaryAction("프로필", { onProfile(person.id) })
-                        SecondaryAction("비우기", { onClear(current) })
+    val current = seat ?: return
+    val occupant = state.seating.assignments[current]?.let { id -> state.people.firstOrNull { it.id == id } }
+    Popup(
+        alignment = Alignment.Center,
+        onDismissRequest = onDismiss,
+        properties = PopupProperties(focusable = true, dismissOnBackPress = true, dismissOnClickOutside = true),
+    ) {
+        MotionCareTheme {
+            Column(
+                Modifier.fillMaxWidth(.9f).widthIn(max = 420.dp).heightIn(max = 620.dp)
+                    .background(Brush.verticalGradient(listOf(Color(0xF2172D45), Color(0xFA08182B))), RoundedCornerShape(24.dp))
+                    .border(1.dp, MotionCyan.copy(.32f), RoundedCornerShape(24.dp))
+                    .padding(20.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(current.label(), fontSize = 22.sp, fontWeight = FontWeight.Medium)
+                        Text("앉을 사람을 선택해 주세요.", color = MotionMuted, fontSize = 13.sp)
                     }
+                    RoundIconButton("✕", onDismiss)
                 }
-            }
-            state.people.filter { it.id != occupant?.id }.forEach { person ->
-                val blocked = current == SeatPosition.DRIVER && person.kind == PersonKind.CHILD
-                val elsewhere = state.seating.assignments.entries.firstOrNull { it.value == person.id }?.key
-                Surface(onClick = { onPick(person.id, current) }, enabled = !blocked,
-                    color = MotionPanel, shape = RoundedCornerShape(20.dp), border = BorderStroke(1.dp, MotionLine),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 88.dp).alpha(if (blocked) .4f else 1f)) {
-                    Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        PersonAvatar(person, Modifier.size(60.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text(person.displayName, fontSize = 22.sp, fontWeight = FontWeight.Medium)
-                            Text(elsewhere?.label() ?: if (person.kind == PersonKind.CHILD) "어린이" else "성인",
-                                color = if (elsewhere != null) MotionCyan else MotionSubtle, fontSize = 15.sp)
+                occupant?.let { person ->
+                    Surface(
+                        color = MotionCyan.copy(.10f),
+                        shape = RoundedCornerShape(17.dp),
+                        border = BorderStroke(1.dp, MotionCyan.copy(.42f)),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                PersonAvatar(person, Modifier.size(46.dp))
+                                Text(person.displayName, Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                SecondaryAction("프로필", { onProfile(person.id) }, Modifier.weight(1f))
+                                SecondaryAction("자리 비우기", { onClear(current) }, Modifier.weight(1f))
+                            }
                         }
                     }
                 }
-            }
-            val nobodyElse = state.people.none { it.id != occupant?.id }
-            Surface(onClick = onAdd, color = if (nobodyElse) MotionCyan.copy(.12f) else Color.Transparent, shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(if (nobodyElse) 2.dp else 1.dp, if (nobodyElse) MotionCyan else MotionLine),
-                modifier = Modifier.fillMaxWidth().heightIn(min = if (nobodyElse) 220.dp else 88.dp)) {
-                if (nobodyElse) Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically)) {
-                    Box(Modifier.size(56.dp).border(1.dp, MotionLine, RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
-                        Text("＋", fontSize = 28.sp, color = MotionCyan)
+                state.people.filter { it.id != occupant?.id }.forEach { person ->
+                    val blocked = current == SeatPosition.DRIVER && person.kind == PersonKind.CHILD
+                    val elsewhere = state.seating.assignments.entries.firstOrNull { it.value == person.id }?.key
+                    Surface(
+                        onClick = { onPick(person.id, current) },
+                        enabled = !blocked,
+                        color = Color.Transparent,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 62.dp).alpha(if (blocked) .38f else 1f),
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(11.dp),
+                        ) {
+                            PersonAvatar(person, Modifier.size(42.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(person.displayName, fontSize = 17.sp, fontWeight = FontWeight.Medium)
+                                Text(
+                                    when {
+                                        blocked -> "어린이는 운전석을 선택할 수 없어요."
+                                        elsewhere != null -> elsewhere.label()
+                                        person.kind == PersonKind.CHILD -> "어린이"
+                                        else -> "성인"
+                                    },
+                                    color = if (elsewhere != null) MotionCyan else MotionMuted,
+                                    fontSize = 12.sp,
+                                )
+                            }
+                            Text("›", color = MotionCyan, fontSize = 24.sp)
+                        }
                     }
-                    Text("사람 추가", fontSize = 24.sp, fontWeight = FontWeight.Medium, color = MotionCyan)
-                } else Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Box(Modifier.size(48.dp).border(1.dp, MotionLine, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                        Text("＋", fontSize = 26.sp, color = MotionCyan)
-                    }
-                    Text("사람 추가", fontSize = 22.sp, fontWeight = FontWeight.Medium, color = MotionCyan)
                 }
+                SecondaryAction("＋  사람 추가", onAdd, Modifier.fillMaxWidth())
             }
         }
     }

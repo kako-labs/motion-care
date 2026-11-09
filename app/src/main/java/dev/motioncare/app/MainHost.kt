@@ -20,6 +20,7 @@ import dev.motioncare.data.environment.EnvironmentRepository
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.trip.GuidanceSettings
 import dev.motioncare.data.trip.TripRepository
+import dev.motioncare.core.model.TripStatus
 import dev.motioncare.feature.driving.DrivingViewModel
 import dev.motioncare.feature.driving.ui.ActiveContent
 import dev.motioncare.feature.driving.ui.GuidanceSwitch
@@ -29,6 +30,11 @@ import dev.motioncare.feature.history.navigation.HistoryRoutes
 import dev.motioncare.feature.history.navigation.historyGraph
 import dev.motioncare.feature.history.report.FinishedContent
 import dev.motioncare.feature.history.ui.RecentTripsRoute
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 
 private const val HOME_ROUTE = "home"
 private const val CAR_SPEED_PERMISSION = "android.car.permission.CAR_SPEED"
@@ -66,7 +72,29 @@ fun MainHost(
     LaunchedEffect(permissionsAnswered) { environment.refresh() }
     val activeId = drivingState.active?.id
     LaunchedEffect(activeId) {
-        if (vehicleConnected && activeId != null) onRecordingStarted()
+        if (activeId != null) {
+            withContext(NonCancellable) {
+                runCatching {
+                    profiles.initialize()
+                    if (profiles.participants.value.none { it.tripId == activeId }) {
+                        profiles.assignCurrentSeating(activeId)
+                    }
+                }
+                runCatching {
+                    if (environment.history(activeId).isEmpty()) environment.capture(activeId)
+                }
+            }
+            currentCoroutineContext().ensureActive()
+            val stillRecording = try {
+                trips.get(activeId)?.trip?.status == TripStatus.RECORDING
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                false
+            }
+            currentCoroutineContext().ensureActive()
+            if (vehicleConnected && stillRecording) onRecordingStarted()
+        }
     }
     Surface(Modifier.fillMaxSize()) {
         Column(Modifier.safeDrawingPadding().padding(20.dp),
@@ -123,6 +151,7 @@ fun MainHost(
                     navigation = navigation,
                     trips = trips,
                     profiles = profiles,
+                    environment = environment.current,
                     onBackToHome = { navigation.popBackStack(HOME_ROUTE, inclusive = false) },
                 )
             }
