@@ -14,7 +14,7 @@
 | 출발 환경 | `MainHost → historyGraph → DepartureViewModel`에 current 주입 | 온도·대기질·미지원/누락 상태·출처. 미지원 기기에 가짜 값 없음 |
 | 상세의 과거 환경 | 표시 컴포넌트 준비, Repository history 조회 미연결 | 현재 환경을 과거 값인 것처럼 표시하지 않음. 통합 후속 |
 | 앱 첫 화면 | 개발용 바깥 프레임 안에서 B 출발 화면을 여는 버튼 | 큰 B 화면을 홈 자체로 쓸지는 통합 담당과 결정 |
-| 종료 화면 | 일반 앱은 간단 FinishedContent, 전체 FinishedRoute는 debug에서 확인 가능 | 기존 app-finished-summary.patch는 선택 검토안. 이번 준비에서 적용하지 않음 |
+| 종료 화면 | 일반 앱은 간단 FinishedContent, 전체 FinishedRoute는 debug에서 확인 가능 | [현재 코드 기준 검토 패치](app-finished-summary.patch). 이번 준비에서 적용하지 않음 |
 
 과거 [B 인계](../history-b-android/README.md)의 미적용·미푸시·좌석 연결 필요 설명은 해당 시점 기록이다. 현재 브랜치에 이미 반영된 작업을 다시 적용하지 않는다. 최근 UI 실패의 빈 좌석 문구 패치는 `682e8bc`에 적용했고 [원격 verify/UI](https://github.com/kako-labs/motion-care/actions/runs/42613567634)가 성공했다.
 
@@ -44,6 +44,8 @@ adb shell am start -S -n dev.motioncare.scaffold/dev.motioncare.feature.history.
 3. 상세의 과거 환경 이력 주입 책임·상태 처리. 출발 current와 혼동하지 않는다.
 4. Android 이전 최대2회와 HTML 이전 최대3회 비교 상한의 최종 정책. 이번 준비에서는 그대로 유지한다.
 5. Pleos 최종 APK에서 주행 제한·실제 내비 위 카드·백그라운드 기록·권한을 확인할 담당과 기기.
+
+종료 요약의 과거 패치는 현재 MainHost의 import 문맥이 달라 `git apply --check`에 실패했다. 위 새 패치는 현재 코드로 다시 만들었고 적용 가능 검사에 통과했다. 기존 종료 콜백·정책을 유지하며 FinishedContent 대신 데이터가 연결된 FinishedRoute를 호출하는 검토안이다. **실제 app에는 미적용**이며, 적용을 선택하면 홈 외곽 안 배치와 전체 UI 흐름을 다시 검증해야 한다. 과거 문서의 패치를 그대로 적용하지 않는다.
 
 앱명·대표 타깃·MAU/사업 모델 가정·심사용 링크의 계정정보 노출·합성 표시·시연 영상은 [기획서 제출 전 표](../proposal.md#제출-전-확인)를 함께 검토한다. 이 문서는 제품 방향이나 의료 효과를 새로 확정하지 않는다.
 
