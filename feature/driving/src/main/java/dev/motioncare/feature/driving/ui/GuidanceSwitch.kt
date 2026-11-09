@@ -3,6 +3,7 @@ package dev.motioncare.feature.driving.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -14,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -24,7 +26,7 @@ import dev.motioncare.feature.driving.guidance.guidanceCardsAllowed
 /**
  * [cardsBlocked] means the system drops the card even though guidance is on. The notice says so next to the switch,
  * as the Android permission guide asks of a feature that a denied permission turns off, and offers to turn
- * notifications on.
+ * notifications on. The sound plays only with a card, so its choice waits until cards can show.
  */
 @Composable
 fun GuidanceSwitch(
@@ -35,20 +37,18 @@ fun GuidanceSwitch(
     onSound: (GuidanceSound) -> Unit,
     onTurnOnNotifications: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("주행 중 안내")
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("주행 중 안내", Modifier.weight(1f))
             Switch(checked = enabled, onCheckedChange = onChange)
         }
         if (enabled && cardsBlocked) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("알림이 꺼져 있어 주행 중 안내 카드가 뜨지 않아요", color = MaterialTheme.colorScheme.error)
-                TextButton(onClick = onTurnOnNotifications) { Text("알림 켜기") }
-            }
+            Text("알림이 꺼져 있어 주행 중 안내 카드가 뜨지 않아요", color = MaterialTheme.colorScheme.error)
+            TextButton(onClick = onTurnOnNotifications) { Text("알림 켜기") }
         }
-        if (enabled) {
+        if (enabled && !cardsBlocked) {
+            Text("안내 소리")
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("안내 소리")
                 FilterChip(
                     selected = sound == GuidanceSound.CHIME,
                     onClick = { onSound(GuidanceSound.CHIME) },
