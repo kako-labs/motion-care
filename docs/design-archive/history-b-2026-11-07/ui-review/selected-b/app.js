@@ -3,7 +3,7 @@ const demo = {
   people: {
     driver: { id: 'driver', avatar: 'assets/avatar-minjun.png', name: '민준', emoji: '🧑🏻', role: '운전자', kind: '성인', sensitivity: '낮음', triggers: ['출발·정차'], trips: 12, summary: '정차 직전 급감속 주의' },
     passenger: { id: 'passenger', avatar: 'assets/avatar-seoa.png', name: '서아', emoji: '👧🏻', role: '동승자', kind: '어린이', sensitivity: '높음', triggers: ['출발·정차', '반복 가감속', '커브'], temp: '22°C', rest: '20분', summary: '출발·정차 구간에 민감해요' },
-    jiyoung: { id: 'jiyoung', avatar: 'assets/avatar-jiyoung.png', name: '지영', emoji: '👩🏻', role: '동승자', kind: '성인', sensitivity: '보통', triggers: ['급커브'], temp: '23°C', rest: '40분', summary: '급커브 상황 주의' },
+    jiyoung: { id: 'jiyoung', avatar: 'assets/avatar-jiyoung.png', name: '지영', emoji: '👩🏻', role: '운전자', kind: '성인', sensitivity: '보통', triggers: ['급커브'], temp: '23°C', rest: '40분', summary: '급커브 상황 주의' },
     doyun: { id: 'doyun', avatar: 'assets/avatar-doyun.png', name: '도윤', emoji: '👦🏻', role: '동승자', kind: '어린이', sensitivity: '보통', triggers: ['반복 가감속'], temp: '22°C', rest: '30분', summary: '반복 가감속 상황 주의' }
   },
   trips: [
@@ -30,13 +30,13 @@ const defaultSeats = { 'rear-left': null, 'rear-center': null, 'rear-right': 'pa
 let seatAssignments = { ...defaultSeats };
 try {
   const savedSeats = JSON.parse(localStorage.getItem('motion-care-demo-seats'));
-  if (localStorage.getItem('motion-care-demo-scenario')==='populated-v2' && savedSeats && Object.keys(defaultSeats).every(key => key in savedSeats) && demo.people[savedSeats.driver]?.kind==='성인') seatAssignments = savedSeats;
+  if (localStorage.getItem('motion-care-demo-scenario')==='populated-v2' && savedSeats && Object.keys(defaultSeats).every(key => key in savedSeats) && demo.people[savedSeats.driver]?.role==='운전자') seatAssignments = savedSeats;
   else {localStorage.setItem('motion-care-demo-seats',JSON.stringify(defaultSeats));localStorage.setItem('motion-care-demo-scenario','populated-v2');}
 } catch (_) {}
 
 // Apply the requested demo driver before any screen renders, including restored seats.
 const requestedDriver=typeof location!=='undefined'?new URLSearchParams(location.search).get('driver'):null;
-if(demo.people[requestedDriver]?.kind==='성인')assignPerson(requestedDriver,'driver');
+if(demo.people[requestedDriver]?.role==='운전자')assignPerson(requestedDriver,'driver');
 
 function driverTrips(){
   const driverName=demo.people[seatAssignments.driver]?.name;
@@ -83,7 +83,7 @@ function renderSeats() {
 }
 
 function canSit(person, seatId) {
-  return seatId !== 'driver' || person.kind === '성인';
+  return seatId !== 'driver' || person.role === '운전자';
 }
 
 function renderDrawer() {
@@ -148,11 +148,12 @@ function renderSelector() {
 }
 
 function renderProfile() {
-  const p = demo.people[selectedPerson], personTrips=demo.trips.filter(t=>t.driver===p.name), driver=p.kind==='성인'&&personTrips.length>0;
+  const p = demo.people[selectedPerson], personTrips=demo.trips.filter(t=>t.driver===p.name), driver=p.role==='운전자';
   const profilePrevious=Object.fromEntries(Object.keys(labels).map(k=>[k,personTrips.slice(1).reduce((sum,t)=>sum+t.rates[k],0)/Math.max(1,personTrips.length-1)]));
   document.querySelector('#profileSummary').classList.toggle('driver-summary',driver);
   document.querySelector('#profileTitle').textContent = `${p.name}의 프로필`;
-  document.querySelector('#profileSummary').innerHTML = `<div class="portrait-halo"><img src="${p.avatar}" alt="${p.name}의 프로필 이미지"></div><span class="tag">${p.kind} · ${driver?'운전자':p.role}</span><h2>${p.name}</h2><div class="profile-highlight"><small>최근 이동에서</small><strong>${driver?'최근 운행 '+personTrips.length+'건':p.summary}</strong></div>`;
+  document.querySelector('#profileSummary').innerHTML = `<div class="portrait-halo"><img src="${p.avatar}" alt="${p.name}의 프로필 이미지"></div><span class="tag">${p.role}</span><h2>${p.name}</h2><div class="profile-highlight"><small>최근 이동에서</small><strong>${driver?'최근 운행 '+personTrips.length+'건':p.summary}</strong></div>`;
+  if(driver&&!personTrips.length){document.querySelector('#profileMain').innerHTML=`<div class="profile-section-heading"><span class="kicker">DRIVING JOURNAL</span><h2>아직 저장된 운행이 없어요.</h2><p class="desc">이 프로필로 운전하면 차량에서 받은 기록이 자동으로 연결됩니다.</p></div>`;return;}
   const t=personTrips[0]||demo.trips[0];
   if (driver) {
     document.querySelector('#profileMain').innerHTML = `<div class="profile-section-heading"><span class="kicker">DRIVING JOURNAL</span><h2>운전 기록</h2><p class="desc">같은 운전자의 운행 기록을 시간순으로 비교해요.</p></div><div class="preference-grid"><div class="preference"><span>저장된 운행</span><strong>${personTrips.length}<small>회</small></strong></div><div class="preference"><span>정차 직전 변화</span><strong>${t.rates.stop}<small>회 / 10분</small></strong></div><div class="preference"><span>최근 동승자 평가</span><strong>${t.feedback===null?'미응답':t.feedback+'<small>/ 5</small>'}</strong></div></div><div class="panel driver-patterns"><div class="section-label"><span>최근 운전 경향</span><small>이번 운행 · 10분당 관찰 빈도</small></div>${Object.keys(labels).map(k=>`<div class="driver-pattern-row"><span>${labels[k]}</span><div class="pattern-track"><i style="width:${Math.min(t.rates[k]/3*100,100)}%"></i></div><b>${t.rates[k].toFixed(1)}</b><small>이전 ${profilePrevious[k].toFixed(1)}</small></div>`).join('')}</div>`;
