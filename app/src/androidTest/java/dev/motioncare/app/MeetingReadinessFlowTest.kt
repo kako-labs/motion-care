@@ -139,6 +139,10 @@ class MeetingReadinessFlowTest {
         click("샘플 주행 종료")
         click("이동 평가")
         awaitText("이동 평가")
+        // The title renders before the repository-backed passenger state is ready.
+        compose.waitUntil(20_000) {
+            compose.onAllNodesWithContentDescription("4점").fetchSemanticsNodes().size == 1
+        }
         val rating = compose.onNodeWithContentDescription("4점")
         if (!rating.isDisplayed()) rating.performScrollTo()
         rating.performClick()

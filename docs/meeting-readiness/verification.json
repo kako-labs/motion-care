@@ -70,5 +70,20 @@
   ],
   "storage": "UUID namespace; actual public repositories reopened; normal DB SHA256 unchanged",
   "htmlRegressionFiles": 4,
-  "productionChanges": false
+  "productionChanges": false,
+  "additionalRun": {
+    "viewport": "411x731, 160dpi",
+    "uiTests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "readiness": "waits for actual rating controls after passenger load"
+  },
+  "requiredVerify": {
+    "passed": true,
+    "unitTests": 280,
+    "suites": 33,
+    "failures": 0,
+    "errors": 0
+  }
 }
