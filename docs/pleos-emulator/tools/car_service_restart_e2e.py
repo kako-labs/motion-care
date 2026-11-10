@@ -111,10 +111,14 @@ def main():
     print("steering after the unavailable mark:",
           [(s["elapsed"], s["degrees"]) for s in steering if marker is not None and s["elapsed"] > marker])
     outside = []
-    if trips:
+    # The values at the end are stored after the outdoor air request, which waits out its timeout offline.
+    waited = time.time()
+    while trips and len(outside) < 2 and time.time() - waited < 30:
         outside = env.pull("motion-care-environment.db",
                            f"SELECT captured_at, outside_value, outside_state, outside_reason FROM snapshots "
                            f"WHERE trip_id = '{trips[0]['id']}' ORDER BY captured_at, id")
+        if len(outside) < 2:
+            time.sleep(2)
     print("outside temperature snapshots:", [(o["outside_value"], o["outside_state"], o["outside_reason"]) for o in outside])
 
     checks = [

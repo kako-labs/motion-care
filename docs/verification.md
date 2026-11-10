@@ -272,6 +272,19 @@ python3 scripts/dev.py verify --clean-home
 
 출발 조언의 10분당 비교 칩은 같은 운전자의 분석 가능한 운행이 4건 이상이어야 보여서 이번에는 확인하지 못했습니다. 세로형 창과 실차는 확인하지 못했습니다.
 
+## 운행 자동 기록 검증
+
+2026-11-10, macOS ARM64 / JDK 17 / Android SDK 35에서 확인했습니다.
+
+| 검사 | 결과 |
+| --- | --- |
+| 전체 모듈 host 테스트 | 347개, 실패·오류 0. 기어 정책 13개, 감시기 6개, 설정 2개, 저장소의 끝 시각 처리 1개, 컨트롤러 2개, 종료 감지 2개 추가. 각 테스트는 구현 전에 컴파일 실패나 단언 실패를 먼저 확인 |
+| 전체 Android 모듈 lint | 통과 |
+| Gradle Managed Device UI 테스트 | 25개 통과. 시작 버튼 없는 하단 탭 시험 추가. 처음 실행에서 `MeetingReadinessFlowTest`가 사람 추가 창(#28)의 버튼을 누르지 못해 실패했고, 창을 스크롤되게 고친 뒤 통과 |
+| Pleos 에뮬레이터 | `auto_record_e2e.py` 두 번(대기 60초, 30분): 켜기, 대기, D 1.1초 뒤 시작, P 약 186초 뒤 종료, 끝 시각 처리, 재부팅 다섯 번 중 네 번 자동 시작, 앱 업데이트 뒤 재시작, 끄기. 바꾼 시험 중 `speed_permission_e2e.py` 12개, `driving_screen_e2e.py` 5개, `car_service_restart_e2e.py` 7개 통과, `recording_e2e.py` 끝까지 진행. [결과](pleos-emulator/README.md#운행-자동-기록) |
+
+`driving_screen_e2e.py`의 종료 확인 문구와 `car_service_restart_e2e.py`의 종료 환경 값 대기를 함께 고쳤습니다. 앞의 것은 종료 카드 문구가 이전 PR에서 바뀐 뒤로 맞지 않았고, 뒤의 것은 시작 때 환경 값이 두 번 저장되던 것에 기대어 통과하고 있었습니다. 인터넷·소리 측정 앱·2시간 주행이 필요한 `environment_e2e.py`, `environment_card_e2e.py`, `sound_e2e.py`, `restart_location_voice_e2e.py`, `long_drive_card_e2e.py`는 바꾼 뒤 실행하지 않았습니다. 실차 전원, App Market 심사, Android 15 동작은 확인하지 못했습니다.
+
 ## 아직 별도 검증이 필요한 환경
 
 Windows/Linux 개인 컴퓨터에서의 설치·실행은 별도 확인이 필요합니다. Linux 검증은 위 GitHub-hosted Ubuntu 실행 결과입니다. 실제 Pleos 시스템·Vehicle SDK·차량 주행 제한은 샘플 테스트로 검증하지 않습니다. Pleos 에뮬레이터에서 별도로 측정한 결과는 [측정 기록](pleos-emulator/README.md)에 있고, 실차는 아직 확인하지 못했습니다.

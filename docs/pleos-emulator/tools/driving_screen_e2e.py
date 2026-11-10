@@ -6,8 +6,9 @@ Build the debug APK and start the emulator first, then run:
     python3 docs/pleos-emulator/tools/driving_screen_e2e.py     # about 1 minute
 
 MainActivity declares distractionOptimized, so the system should not cover it with its "주행 중에는 사용할 수
-없습니다" screen. The run grants the permissions by adb, starts a recording while parked, drives at 40 km/h with the
-app in front, and checks that the app keeps the screen and the recording, then parks and finishes. It also prints the
+없습니다" screen. The run grants the permissions by adb, turns automatic recording on while parked, drives at 40 km/h
+with the app in front so the gear starts a trip, and checks that the app keeps the screen and the recording, then
+parks and finishes. It also prints the
 car's driving restrictions. Set ANDROID_SERIAL when more than one device is attached. This script clears the app's
 data, so it must never run against an emulator that belongs to other work.
 """
@@ -56,7 +57,8 @@ def main():
     e2e.http("PUT", "/vehicle/controls?speed=0&accelerator=0&brake=30&steering=0")
     e2e.app_screen()
 
-    print("auto record:", e2e.auto_record_on())
+    auto = e2e.auto_record_on()
+    print("auto record:", auto)
     parked = step("driving_screen_parked")
     print("parked:", focused(), [t for t in parked if "운행" in t])
     print("restrictions parked:", restrictions())
@@ -76,15 +78,15 @@ def main():
     time.sleep(4)
     print("tap finish:", e2e.tap("운행 기록 종료"))
     finished = step("driving_screen_finished")
-    print("finished:", [t for t in finished if "저장" in t])
+    print("finished:", [t for t in finished if "마쳤" in t])
     stop.set()
 
     checks = [
-        ("recording starts while parked", "운행 기록 중" in parked),
+        ("automatic recording is on and waits in park", auto == "on" and "운행 기록 중" not in parked),
         ("the app keeps the screen at 40 km/h", e2e.PKG in focus_driving and "운행 기록 중" in driving),
         ("no blocking screen at 40 km/h", BLOCKED not in driving),
         ("the recording runs while driving", "running=True" in service_driving),
-        ("the recording finishes after parking", "주행 저장 완료" in finished),
+        ("the recording finishes after parking", "운행을 마쳤어요" in finished),
     ]
     print("\n===== summary =====")
     for name, ok in checks:
