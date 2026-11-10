@@ -167,6 +167,7 @@
 - **주행 상세:** 폭 1280dp 이상에서 7:5 두 열로 나눕니다. 왼쪽은 요약·속도 그래프·관찰된 움직임·응답, 오른쪽은 탑승자·차 안 환경·다음 출발입니다. 관찰된 움직임 다섯 칸은 3열 격자로 둘째 줄도 같은 열에 맞춥니다.
 - **짧은 화면:** 이동 평가의 별 칸은 96, 이유는 3열 76 칩입니다. 프로필 위쪽 두 카드는 높이를 맞추고 버튼을 아래에 붙입니다. 좌석 사람 선택 창은 폭 600, 행 96입니다.
 - **출처:** 위 수치 가운데 AAOS 값은 Google의 Android Automotive 참조 디자인이고 Pleos의 요구 사항은 아닙니다. Pleos 레이아웃 문서에는 여백·행 높이 수치가 없습니다.
+- **캡처(2026-11-11, 영상용 데이터):** [홈 종료 직후](pleos-emulator/shots/116_car_scale_home.jpg), [기록 목록](pleos-emulator/shots/117_car_scale_records.jpg), [주행 상세](pleos-emulator/shots/118_car_scale_detail.jpg), [이동 평가](pleos-emulator/shots/119_car_scale_feedback.jpg)
 
 ### 색
 
