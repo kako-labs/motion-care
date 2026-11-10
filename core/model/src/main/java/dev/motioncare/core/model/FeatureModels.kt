@@ -12,9 +12,12 @@ data class PersonProfile(
     val motionTriggers: Set<MotionTrigger> = emptySet(),
     val preferredRestMinutes: Int? = null,
     val preferredTemperatureCelsius: Double? = null,
+    /** The character picked for this person, as a key of the app's character set. Null shows a face by [kind]. */
+    val avatar: String? = null,
 ) {
     init {
         require(displayName.isNotBlank())
+        require(avatar == null || avatar.isNotBlank())
         require(preferredRestMinutes == null || preferredRestMinutes > 0)
         require(preferredTemperatureCelsius == null || preferredTemperatureCelsius in 16.0..30.0)
     }

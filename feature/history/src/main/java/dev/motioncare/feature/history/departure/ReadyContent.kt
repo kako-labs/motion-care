@@ -105,7 +105,7 @@ private fun DepartureContent(
     state: DepartureUiState,
     onPlace: (PersonId, SeatPosition) -> Unit,
     onClear: (SeatPosition) -> Unit,
-    onAdd: (String, PersonKind, SeatPosition?) -> Unit,
+    onAdd: (String, PersonKind, SeatPosition?, String?) -> Unit,
     onToggleGuidance: () -> Unit,
     onBack: () -> Unit,
     onProfile: (PersonId) -> Unit,
@@ -147,7 +147,7 @@ private fun DepartureContent(
             onProfile = { person -> openSeat = null; onProfile(person) },
             onAdd = { addSeat = openSeat; openSeat = null; addDialog = true })
     }
-    if (addDialog) AddPersonDialog(addSeat, { addDialog = false }, { name, kind -> onAdd(name, kind, addSeat); addDialog = false })
+    if (addDialog) AddPersonDialog(addSeat, { addDialog = false }, { name, kind, avatar -> onAdd(name, kind, addSeat, avatar); addDialog = false })
 }
 
 @Composable private fun AdviceCard(
@@ -607,9 +607,11 @@ private fun SeatPicker(
     }
 }
 
-@Composable private fun AddPersonDialog(seat: SeatPosition?, onDismiss: () -> Unit, onAdd: (String, PersonKind) -> Unit) {
+@Composable private fun AddPersonDialog(seat: SeatPosition?, onDismiss: () -> Unit, onAdd: (String, PersonKind, String) -> Unit) {
     var name by remember { mutableStateOf("") }
     var kind by remember { mutableStateOf(PersonKind.ADULT) }
+    // Starts on a random character so a new person never looks like the last one; any other can be picked.
+    var avatar by remember { mutableStateOf(randomCharacter()) }
     val childAllowed = seat != SeatPosition.DRIVER
     Dialog(onDismissRequest = onDismiss) {
         MotionCareTheme {
@@ -623,17 +625,24 @@ private fun SeatPicker(
                         Text(it.label(), color = MotionCyan, fontSize = motionType.section, fontWeight = FontWeight.Medium)
                     }
                 }
-                OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth().heightIn(min = 76.dp), singleLine = true,
-                    textStyle = MaterialTheme.typography.headlineSmall, placeholder = { Text("이름", fontSize = motionType.section) },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { if (name.isNotBlank()) onAdd(name.trim(), kind) }))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                    characterDrawable(avatar)?.let { drawable ->
+                        Image(painterResource(drawable), "고른 캐릭터", Modifier.size(96.dp).clip(CircleShape).border(2.dp, MotionCyan, CircleShape),
+                            contentScale = ContentScale.Crop)
+                    }
+                    OutlinedTextField(name, { name = it }, Modifier.weight(1f).heightIn(min = 76.dp), singleLine = true,
+                        textStyle = MaterialTheme.typography.headlineSmall, placeholder = { Text("이름", fontSize = motionType.section) },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { if (name.isNotBlank()) onAdd(name.trim(), kind, avatar) }))
+                }
+                CharacterPicker(avatar, { avatar = it }, size = 60.dp)
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     KindTile("성인", kind == PersonKind.ADULT, true, Modifier.weight(1f)) { kind = PersonKind.ADULT }
                     KindTile("어린이", kind == PersonKind.CHILD, childAllowed, Modifier.weight(1f)) { kind = PersonKind.CHILD }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     SecondaryAction("취소", onDismiss, Modifier.weight(1f))
-                    PrimaryAction(if (seat != null) "추가하고 앉히기" else "추가", { onAdd(name.trim(), kind) }, Modifier.weight(1f), enabled = name.isNotBlank())
+                    PrimaryAction(if (seat != null) "추가하고 앉히기" else "추가", { onAdd(name.trim(), kind, avatar) }, Modifier.weight(1f), enabled = name.isNotBlank())
                 }
             }
         }

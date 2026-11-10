@@ -58,8 +58,9 @@ class DepartureViewModel(
     }
     fun clear(seat: SeatPosition) = launchAction { profiles.clearSeat(seat) }
     /** Adds a person and, when the drawer was opened from a seat, seats them there right away. */
-    fun addPerson(name: String, kind: PersonKind, seat: SeatPosition? = null) = launchAction {
-        val person = profiles.addPerson(name, kind)
+    fun addPerson(name: String, kind: PersonKind, seat: SeatPosition? = null, avatar: String? = null) = launchAction {
+        val added = profiles.addPerson(name, kind)
+        val person = if (avatar != null) added.copy(avatar = avatar).also { profiles.updatePerson(it) } else added
         if (seat != null) (profiles.placePerson(person.id, seat) as? SeatingResult.Rejected)
             ?.let { rejected -> mutable.update { it.copy(error = rejected.reason) } }
     }

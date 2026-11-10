@@ -222,14 +222,16 @@ private fun PersonDetailContent(
 @Composable private fun PreferenceDialog(person: PersonProfile, onDismiss: () -> Unit, onSave: (PersonProfile) -> Unit) {
     var sensitivity by remember { mutableStateOf(person.motionSensitivity) }
     var triggers by remember { mutableStateOf(person.motionTriggers) }
-    MotionCareTheme { AlertDialog(onDismissRequest = onDismiss, title = { Text("이동 선호 수정", fontSize = motionType.headline, fontWeight = FontWeight.Medium) }, text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    var avatar by remember { mutableStateOf(person.avatar) }
+    MotionCareTheme { AlertDialog(onDismissRequest = onDismiss, title = { Text("프로필 수정", fontSize = motionType.headline, fontWeight = FontWeight.Medium) }, text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        CharacterPicker(avatar, { avatar = it }, size = 56.dp)
         Text("멀미 민감도", fontWeight = FontWeight.Medium)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { MotionSensitivity.entries.filter { it != MotionSensitivity.UNSPECIFIED }.forEach { item -> FilterChip(sensitivity == item, { sensitivity = item }, { Text(item.label(), fontSize = motionType.body) }, Modifier.heightIn(min = 56.dp)) } }
         Text("불편한 상황", fontWeight = FontWeight.Medium)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             MotionTrigger.entries.forEach { item -> FilterChip(item in triggers, { triggers = if (item in triggers) triggers - item else triggers + item }, { Text(item.label(), fontSize = motionType.body) }, Modifier.heightIn(min = 56.dp)) }
         }
-    } }, confirmButton = { TextButton(onClick = { onSave(person.copy(motionSensitivity = sensitivity, motionTriggers = triggers)) }) { Text("저장", fontSize = motionType.body, fontWeight = FontWeight.Medium) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("취소", fontSize = motionType.body) } },
+    } }, confirmButton = { TextButton(onClick = { onSave(person.copy(motionSensitivity = sensitivity, motionTriggers = triggers, avatar = avatar)) }) { Text("저장", fontSize = motionType.body, fontWeight = FontWeight.Medium) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("취소", fontSize = motionType.body) } },
         modifier = Modifier.width(620.dp), properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false))
 } }
 
