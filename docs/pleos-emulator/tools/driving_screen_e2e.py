@@ -56,7 +56,7 @@ def main():
     e2e.http("PUT", "/vehicle/controls?speed=0&accelerator=0&brake=30&steering=0")
     e2e.app_screen()
 
-    print("tap start:", e2e.tap("운행 시작"))
+    print("auto record:", e2e.auto_record_on())
     parked = step("driving_screen_parked")
     print("parked:", focused(), [t for t in parked if "운행" in t])
     print("restrictions parked:", restrictions())

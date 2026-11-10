@@ -19,6 +19,8 @@
 
 같은 파일의 `VehicleRecorder`는 `app`의 `TripRecordingService`만 사용합니다. `record(presenter, environment)`는 기록 중인 주행이 끝나거나 호출자가 취소할 때까지 차량 속도를 저장하고, 카드를 띄울 때 `GuidancePresenter`를 호출합니다. `environment`는 `EnvironmentSnapshot` 흐름이며 환경 카드에만 쓰입니다. 앱은 `EnvironmentRepository.current`를 넘기고, 흐름이 실패해도 기록은 계속됩니다. 소리는 `GuidanceAudio.play(문구)`로 냅니다. 재생하지 못해도 예외를 던지지 않으며, 알림음과 음성 중 무엇을 낼지는 `GuidanceSettings.sound`가 정합니다.
 
+`VehicleTripData`의 `autoRecord`(`AutoRecordSettings`)는 운행 자동 기록 스위치이며 기본 꺼짐입니다. `drives`(`DriveWatcher`)의 `startedTrips()`는 모으는 동안 기어를 보며 P에서 D·R로 바뀌면 주행을 시작하고 P에서 3분이면 끝내며, 시작한 주행의 `TripId`를 내보냅니다. 이렇게 끝난 주행의 종료 시각은 P로 바꾼 때이고, 그 뒤에 저장된 샘플·관찰·안내 결과는 지웁니다. `app`의 `TripRecordingService`만 사용합니다. 규칙은 [운행 자동 기록](auto-record.md)에 있습니다.
+
 조립부는 자동차 기기에서 `createVehicleTripData(context)`, 그 외 기기에서 `createSampleTripRepository(context)`를 호출합니다. 실제 기록은 `motion-care-trips.db`에 저장해 합성 샘플과 섞이지 않습니다.
 
 ### 프로필 · `data/profile/src/main/java/dev/motioncare/data/profile/ProfileRepository.kt`

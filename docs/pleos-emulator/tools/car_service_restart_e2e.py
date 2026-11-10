@@ -68,7 +68,7 @@ def main():
     e2e.http("PUT", "/vehicle/gear?gear=Park")
     control(0, accelerator=0)
     e2e.app_screen()
-    print("tap start:", e2e.tap("운행 시작"))
+    print("auto record:", e2e.auto_record_on())
     time.sleep(3)
     print("service:", e2e.service_state())
     e2e.shell(f"am start --user 10 -n {env.NAVIGATION} >/dev/null 2>&1")
