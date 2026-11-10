@@ -46,7 +46,12 @@ sealed interface FeedbackAnswer {
     data class Rating(val value: Int, val scaleVersion: String) : FeedbackAnswer
     data object Skipped : FeedbackAnswer
 }
-enum class FeedbackReason { START_STOP, REPEATED_SPEED_CHANGE, CURVE, CABIN_ENVIRONMENT, UNKNOWN }
+/**
+ * Why a passenger felt uncomfortable. [FELT_HOT] and [STUFFY_AIR] record a feeling, not a cause: nausea itself can
+ * make people feel warm (docs/environment.md). [CABIN_ENVIRONMENT] is kept for answers saved before those two
+ * replaced it and is no longer offered.
+ */
+enum class FeedbackReason { START_STOP, REPEATED_SPEED_CHANGE, CURVE, CABIN_ENVIRONMENT, FELT_HOT, STUFFY_AIR, UNKNOWN }
 enum class FeedbackRespondent { SELF, GUARDIAN }
 data class TripFeedback(
     val tripId: TripId,

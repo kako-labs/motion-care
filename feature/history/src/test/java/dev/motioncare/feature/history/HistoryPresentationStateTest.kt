@@ -113,6 +113,30 @@ class HistoryPresentationStateTest {
         } finally { model.viewModelScope.cancel() }
     }
 
+    @Test fun tripDetailShowsOnlyTheValuesStoredForThatTrip() = runTest(dispatcher) {
+        val profiles = Profiles(driver, rider, emptyList())
+        val asked = mutableListOf<TripId>()
+        val model = TripExperienceViewModel(TripId("one"), Trips(listOf(trip("one"))), profiles,
+            tripEnvironment = { id -> asked += id; listOf(environment(5_000)) })
+        try {
+            advanceUntilIdle()
+            assertEquals(listOf(TripId("one")), asked)
+            assertEquals(listOf(5_000L), model.uiState.value.environment.map { it.capturedAtEpochMs })
+        } finally { model.viewModelScope.cancel() }
+    }
+
+    @Test fun unreadableTripEnvironmentShowsNothingAndKeepsTheTrip() = runTest(dispatcher) {
+        val profiles = Profiles(driver, rider, emptyList())
+        val model = TripExperienceViewModel(TripId("one"), Trips(listOf(trip("one"))), profiles,
+            tripEnvironment = { error("database closed") })
+        try {
+            advanceUntilIdle()
+            assertNull(model.uiState.value.error)
+            assertNotNull(model.uiState.value.insight)
+            assertTrue(model.uiState.value.environment.isEmpty())
+        } finally { model.viewModelScope.cancel() }
+    }
+
     @Test fun missingStartSnapshotRemainsMissingInsteadOfUsingCurrentSeating() = runTest(dispatcher) {
         val profiles = Profiles(driver, rider, emptyList())
         val model = TripExperienceViewModel(TripId("one"), Trips(listOf(trip("one"))), profiles)

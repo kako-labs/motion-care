@@ -96,7 +96,7 @@ internal fun FeedbackRoute(
                     }
                     BFeedbackPanel(
                         name = person.displayName, rating = current.rating.takeIf { it in 1..5 },
-                        reasons = FeedbackReason.entries.map { BReason(it.name, it.label()) },
+                        reasons = offeredReasons(current.reasons).map { BReason(it.name, it.label()) },
                         selectedReasons = current.reasons.map { it.name }.toSet(), saving = state.savingFeedback,
                         onRating = { drafts[person.id] = current.copy(rating = it, handled = false) },
                         onReason = { drafts[person.id] = current.copy(reasons = toggleReason(current.reasons, FeedbackReason.valueOf(it)), handled = false) },
@@ -137,8 +137,3 @@ private fun ratingLabel(value: Int) = when (value) { 1 -> "많이 불편했어�
     }
 }
 
-private fun FeedbackReason.icon() = when (this) {
-    FeedbackReason.START_STOP -> "⇥"; FeedbackReason.REPEATED_SPEED_CHANGE -> "∿"; FeedbackReason.CURVE -> "↪"
-    FeedbackReason.CABIN_ENVIRONMENT -> "◌"; FeedbackReason.UNKNOWN -> "?"
-}
-private fun FeedbackReason.label() = when (this) { FeedbackReason.START_STOP -> "출발·정차"; FeedbackReason.REPEATED_SPEED_CHANGE -> "반복 가감속"; FeedbackReason.CURVE -> "커브"; FeedbackReason.CABIN_ENVIRONMENT -> "차 안 환경"; FeedbackReason.UNKNOWN -> "잘 모르겠어요" }

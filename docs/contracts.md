@@ -40,7 +40,7 @@
 | capture(tripId) | refresh 후 그 결과를 주행에 저장 |
 | history(tripId) | 주행에 저장된 값 목록. 저장 순서 |
 
-조립부는 자동차 기기에서 `createVehicleEnvironmentRepository(context)`, 그 외 기기에서 `createUnsupportedEnvironmentRepository()`를 호출합니다. 후자는 모든 값이 `UNSUPPORTED`이고 아무것도 저장하지 않습니다. `app`의 `TripRecordingService`가 주행 시작, 1시간마다, 종료 때 `capture`를 부르고, `MainHost`가 홈을 열 때와 권한 응답 뒤에 `refresh`를 부릅니다. 이 모듈을 화면에서 읽으려면 해당 feature를 `allowedEdges`에 추가합니다.
+조립부는 자동차 기기에서 `createVehicleEnvironmentRepository(context)`, 그 외 기기에서 `createUnsupportedEnvironmentRepository()`를 호출합니다. 후자는 모든 값이 `UNSUPPORTED`이고 아무것도 저장하지 않습니다. `app`의 `TripRecordingService`가 주행 시작, 1시간마다, 종료 때 `capture`를 부르고, `MainHost`가 홈을 열 때와 권한 응답 뒤에 `refresh`를 부릅니다. 이 모듈을 화면에서 읽으려면 해당 feature를 `allowedEdges`에 추가합니다. feature:history는 이 모듈에 의존하지 않고, `MainHost`가 `historyGraph(environment = current, tripEnvironment = history)`로 값과 함수만 넘깁니다.
 
 ## 데이터 의미
 

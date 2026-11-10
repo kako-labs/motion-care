@@ -78,7 +78,7 @@ private fun PersonDetailContent(
             if (tab == ProfileTab.DRIVER) DriverProfile(person, state.driverTrips, state.advice, onAdvice)
             else BPassengerProfilePanel(
                 name = person.displayName, role = if (person.kind == PersonKind.CHILD) "동승자 · 어린이" else "동승자",
-                preferences = listOf(BMetric("민감도", person.motionSensitivity.label()), BMetric("휴식 간격", person.preferredRestMinutes?.let { "${it}분" }), BMetric("선호 온도", person.preferredTemperatureCelsius?.let { "${it}℃" })),
+                preferences = listOf(BMetric("민감도", person.motionSensitivity.label()), BMetric("휴식 간격", person.preferredRestMinutes?.let { "${it}분" })),
                 moments = person.motionTriggers.map { BMoment(it.label(), "등록한 이동 선호") } + state.passengerFeedback.sortedByDescending { it.createdAtEpochMs }.take(5).map { BMoment(tripDate(it.createdAtEpochMs), (it.answer as? FeedbackAnswer.Rating)?.let { rating -> "편안함 ${rating.value}/5" } ?: "미응답") },
                 portrait = { PersonAvatar(person, Modifier.size(100.dp)) }, onEdit = { editing = true }, showIdentity = false)
         }
@@ -177,7 +177,8 @@ private fun PersonDetailContent(
         ValueRow("멀미 민감도", person.motionSensitivity.label())
         ValueRow("불편한 상황", person.motionTriggers.joinToString(" · ") { it.label() }.ifBlank { "미설정" })
         ValueRow("휴식 간격", person.preferredRestMinutes?.let { "${it}분" } ?: "미설정")
-        ValueRow("선호 온도", person.preferredTemperatureCelsius?.let { "${"%.1f".format(it)}℃" } ?: "미설정")
+        // No preferred temperature: people rarely know theirs as a number, and the set point differs from the cabin
+        // (docs/environment.md). The stored column stays so older rows keep loading.
     }
 }
 @Composable private fun ValueRow(label: String, value: String) { Row(Modifier.fillMaxWidth().heightIn(min = 62.dp), verticalAlignment = Alignment.CenterVertically) { Text(label, color = MotionSubtle, modifier = Modifier.weight(1f)); Text(value, fontWeight = FontWeight.Medium) } }

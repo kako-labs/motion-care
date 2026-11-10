@@ -36,6 +36,8 @@ fun NavGraphBuilder.historyGraph(
     trips: TripRepository,
     profiles: ProfileRepository,
     environment: Flow<EnvironmentSnapshot?> = flowOf(null),
+    /** Values stored for one trip, shown on its detail screen. */
+    tripEnvironment: suspend (TripId) -> List<EnvironmentSnapshot> = { emptyList() },
     onBackToHome: () -> Unit,
 ) {
     composable(HistoryRoutes.PROFILES) {
@@ -61,7 +63,8 @@ fun NavGraphBuilder.historyGraph(
     composable("trip/{$TRIP_ID}?event={event}", arguments = listOf(navArgument("event") { type = NavType.IntType; defaultValue = 0 })) { entry ->
         val id = TripId(requireNotNull(entry.arguments?.getString(TRIP_ID)))
         TripDetailRoute(id, trips, profiles, onBack = { navigation.popBackStack() }, onBackToHome = onBackToHome,
-            onFeedback = { navigation.navigate(HistoryRoutes.feedback(id)) }, initialEvent = entry.arguments?.getInt("event") ?: 0)
+            onFeedback = { navigation.navigate(HistoryRoutes.feedback(id)) }, initialEvent = entry.arguments?.getInt("event") ?: 0,
+            tripEnvironment = tripEnvironment)
     }
     composable("feedback/{$TRIP_ID}") { entry ->
         val id = TripId(requireNotNull(entry.arguments?.getString(TRIP_ID)))
