@@ -1,0 +1,95 @@
+# 2026-11-10 run 1, IDLE_SECONDS=60, APK before the parked finish trimmed the trip
+device: emulator-5600 avd: pleos
+install: Success
+powertrain granted at install: ['true']
+
+--- home before turning it on
+status: ['자동 기록 꺼짐', '운행 자동 기록']
+switch: (False, (2455, 820))
+service: {'running': False, 'foreground': False}
+
+--- turn it on
+ allowed via: 허용
+ allowed via: 허용
+ allowed via: 허용
+switch: (True, (2455, 820)) status: ['자동 기록 켜짐', '운행 자동 기록']
+service: {'running': True, 'foreground': True} notification: None
+
+--- parked behind navigation for 60s
+idle survived: True after 60 s; {'running': True, 'foreground': True} 운행 자동 기록 켜짐
+
+--- leave park
+recording notification after 1.1369640827178955 s
+trips: [('6de77f2d-6931-4636-9b85-d731281e3031', 'RECORDING', None, 233)]
+
+--- park
+finished after 195.6412169933319 s in park; trips: [('6de77f2d-6931-4636-9b85-d731281e3031', 'COMPLETED', 222393, 1411)]
+home: ['자동 기록 켜짐', '이동 평가', '주행 상세', '운행 자동 기록', '주행 중 안내']
+
+--- reboot without opening the app
+booted after 18 s
+service in foreground 12.207775831222534 s after unlock; {'running': True, 'foreground': True} None
+recording after reboot: 2.4358251094818115 s
+finished after reboot: 196.06617093086243 s; trips: [('6ade6960-a096-4da3-a34c-1131bbf2782d', 'COMPLETED', 222035, 1391)]
+
+--- update the app
+install: Success
+service after update: 2.1437361240386963 s; {'running': True, 'foreground': True}
+
+--- turn it off
+switch: (False, (2455, 776)) service: {'running': False, 'foreground': False} notification: None
+all trips: [('6de77f2d-6931-4636-9b85-d731281e3031', 'COMPLETED', 222393, 1411), ('6ade6960-a096-4da3-a34c-1131bbf2782d', 'COMPLETED', 222035, 1391)]
+
+# 2026-11-10 run 2, IDLE_SECONDS=1800, final APK
+device: emulator-5600 avd: pleos
+install: Success
+powertrain granted at install: ['true']
+
+--- home before turning it on
+status: ['자동 기록 꺼짐', '운행 자동 기록']
+switch: (False, (2455, 780))
+service: {'running': False, 'foreground': False}
+
+--- turn it on
+ allowed via: 허용
+ allowed via: 허용
+ allowed via: 허용
+switch: (True, (2455, 780)) status: ['자동 기록 켜짐', '운행 자동 기록']
+service: {'running': True, 'foreground': True} notification: None
+
+--- parked behind navigation for 1800s
+idle survived: True after 1804 s; {'running': True, 'foreground': True} 운행 자동 기록 켜짐
+
+--- leave park
+recording notification after 1.086535930633545 s
+trips: [('310c58ed-c570-44ee-9f5c-1b74f4f1b035', 'RECORDING', None, 235)]
+
+--- park
+finished after 196.38966703414917 s in park; trips: [('310c58ed-c570-44ee-9f5c-1b74f4f1b035', 'COMPLETED', 37562, 240)]
+home: ['자동 기록 켜짐', '이동 평가', '주행 상세', '운행 자동 기록', '주행 중 안내']
+
+--- reboot without opening the app
+booted after 18 s
+service in foreground None s after unlock; {'running': False, 'foreground': False} None
+recording after reboot: None s
+finished after reboot: None s; trips: []
+
+--- update the app
+install: Success
+service after update: 2.071906805038452 s; {'running': True, 'foreground': True}
+
+--- turn it off
+switch: (False, (2455, 736)) service: {'running': False, 'foreground': False} notification: None
+all trips: [('310c58ed-c570-44ee-9f5c-1b74f4f1b035', 'COMPLETED', 37562, 240)]
+
+# 2026-11-10 run 2 boot: the app process was killed before attaching
+11-10 22:49:39.427 I am_proc_start: [10,5330,1010176,dev.motioncare.scaffold,broadcast,{dev.motioncare.scaffold/dev.motioncare.app.BootReceiver}]
+11-10 22:49:49.428 I am_kill : [10,5330,dev.motioncare.scaffold,-10000,start timeout]
+
+# 2026-11-10 three more reboots with the switch on (scratch boot_check.py)
+reboot 1: service in foreground 15 s after sys.boot_completed
+reboot 2: service in foreground 19 s after sys.boot_completed
+reboot 3: service in foreground 15 s after sys.boot_completed
+
+# 2026-11-10 service started at boot, app never opened, one drive: stored air reason
+snapshot: (captured_at 1794319215159, air UNAVAILABLE, reason NETWORK, outside AVAILABLE)  # NETWORK comes after a position was found

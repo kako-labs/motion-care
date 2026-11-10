@@ -91,6 +91,53 @@ def tap(*wanted):
     return None
 
 
+AUTO_RECORD = "운행 자동 기록"
+ALLOW_IDS = ("com.android.permissioncontroller:id/permission_allow_button",
+             "com.android.permissioncontroller:id/permission_allow_foreground_only_button",
+             "허용", "앱 사용 중에만 허용", "Allow")
+
+
+def switch_next_to(label):
+    """The switch in the same row as the label, as (checked, (x, y)), or None."""
+    found = nodes()
+    rows = [n for n in found if n.get("text") == label]
+    if not rows:
+        return None
+    _, y1, _, y2 = map(int, re.findall(r"\d+", rows[0].get("bounds")))
+    middle = (y1 + y2) // 2
+    for node in found:
+        if node.get("checkable") == "true":
+            x1, top, x2, bottom = map(int, re.findall(r"\d+", node.get("bounds")))
+            if top <= middle <= bottom:
+                return node.get("checked") == "true", ((x1 + x2) // 2, (top + bottom) // 2)
+    return None
+
+
+def tap_switch(label=AUTO_RECORD):
+    """Taps the switch next to the label and returns whether it was on before."""
+    found = switch_next_to(label)
+    if found is None:
+        return None
+    checked, (x, y) = found
+    shell(f"input tap {x} {y}")
+    return checked
+
+
+def auto_record_on():
+    """In the car the gear starts trips: turns automatic recording on, answering the permission prompts, so the
+    next drive gear starts a trip."""
+    if tap_switch() is not False:
+        return "already on or missing"
+    time.sleep(3)
+    for _ in range(3):
+        if not tap(*ALLOW_IDS):
+            break
+        time.sleep(2)
+    time.sleep(1)
+    found = switch_next_to(AUTO_RECORD)
+    return "on" if found and found[0] else "off"
+
+
 def app_screen():
     shell(f"am start --user 10 -n {PKG}/dev.motioncare.app.MainActivity >/dev/null 2>&1")
     time.sleep(4)
@@ -142,7 +189,7 @@ def main():
     print("ready screen:", [t for t in texts() if "운행" in t or "개발" in t or "샘플" in t or "안내" in t])
 
     print("\n--- deny")
-    print("tap start:", tap("운행 시작"))
+    print("tap switch:", tap_switch())
     time.sleep(3)
     shot("81_permission")
     print("dialog:", texts()[:8])
@@ -158,21 +205,18 @@ def main():
     print("trips db exists:", "motion-care-trips.db" in shell(f"run-as {PKG} --user 10 ls databases 2>&1"))
 
     print("\n--- allow")
-    print("tap start:", tap("운행 시작"))
+    print("tap switch:", tap_switch())
     time.sleep(3)
     print("dialog:", texts()[:8])
-    allow_ids = ("com.android.permissioncontroller:id/permission_allow_button",
-                 "com.android.permissioncontroller:id/permission_allow_foreground_only_button",
-                 "허용", "앱 사용 중에만 허용", "Allow")
     for _ in range(3):
-        hit = tap(*allow_ids)
+        hit = tap(*ALLOW_IDS)
         print(" allowed via:", hit)
         time.sleep(2)
         if not hit:
             break
     time.sleep(2)
     shot("83_recording")
-    print("recording screen:", [t for t in texts() if "운행" in t])
+    print("switch:", switch_next_to(AUTO_RECORD), [t for t in texts() if "자동 기록" in t])
     print("service:", service_state())
     print("grants:", re.findall(r"(android\.car\.permission\.CAR_SPEED|android\.permission\.POST_NOTIFICATIONS): granted=(\w+)", shell(f"dumpsys package {PKG}")))
 

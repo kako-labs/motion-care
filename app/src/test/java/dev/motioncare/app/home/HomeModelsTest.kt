@@ -235,7 +235,7 @@ class HomeModelsTest {
     @Test fun departureAdviceTurnedOffSaysSoInsteadOfAdvising() {
         val hero = homeAdvice(advice(previous = 2.4, recent = 1.4), MINJUN.id, enabled = false)
         assertEquals("출발 안내가 꺼져 있어요.", hero.headline)
-        assertEquals("아래 안내 카드에서 다시 켤 수 있어요.", hero.context)
+        assertEquals("아래 설정 카드에서 다시 켤 수 있어요.", hero.context)
         assertNull(hero.comparison)
         assertEquals(HeroAction.NONE, hero.action)
     }

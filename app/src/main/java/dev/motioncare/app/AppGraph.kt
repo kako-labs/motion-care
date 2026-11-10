@@ -7,6 +7,8 @@ import dev.motioncare.data.environment.createUnsupportedEnvironmentRepository
 import dev.motioncare.data.environment.createVehicleEnvironmentRepository
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.profile.createProfileRepository
+import dev.motioncare.data.trip.AutoRecordSettings
+import dev.motioncare.data.trip.DriveWatcher
 import dev.motioncare.data.trip.GuidanceAudio
 import dev.motioncare.data.trip.GuidanceSettings
 import dev.motioncare.data.trip.TripRepository
@@ -21,7 +23,10 @@ class AppGraph(context: Context) {
     val recorder: VehicleRecorder? = vehicle?.recorder
     val guidance: GuidanceSettings? = vehicle?.guidance
     val guidanceAudio: GuidanceAudio? = vehicle?.audio
+    val autoRecord: AutoRecordSettings? = vehicle?.autoRecord
+    val drives: DriveWatcher? = vehicle?.drives
     val profiles: ProfileRepository = createProfileRepository(context)
     val environment: EnvironmentRepository =
         if (vehicleConnected) createVehicleEnvironmentRepository(context) else createUnsupportedEnvironmentRepository()
+    val preparation = TripPreparation(profiles, environment)
 }

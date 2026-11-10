@@ -66,11 +66,11 @@ import dev.motioncare.feature.history.ui.PersonAvatar
  */
 @Composable
 internal fun HomeScreen(
-    vehicleConnected: Boolean,
+    status: String,
     people: PeopleSummary,
     environment: EnvironmentCard,
     recent: List<RecentTripItem>,
-    start: StartButton,
+    start: StartButton?,
     links: HomeLinks,
     notice: (@Composable () -> Unit)?,
     guidance: @Composable () -> Unit,
@@ -80,14 +80,15 @@ internal fun HomeScreen(
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 1100.dp && maxHeight >= 820.dp
         val sizes = if (wide) WideSizes else CompactSizes
-        val header = @Composable { HomeHeader(vehicleConnected, sizes) }
+        val header = @Composable { HomeHeader(status, sizes) }
         val noticeStrip = notice?.let { content -> @Composable { NoticeStrip(sizes, content) } }
         if (wide) {
             Column(Modifier.fillMaxSize().padding(sizes.outer), verticalArrangement = Arrangement.spacedBy(sizes.gap)) {
                 header()
                 noticeStrip?.invoke()
                 HeroCard(sizes, Modifier.weight(1f).fillMaxWidth(), showCar = true) { hero(sizes) }
-                Row(Modifier.fillMaxWidth().height(300.dp), horizontalArrangement = Arrangement.spacedBy(sizes.gap)) {
+                // Tall enough for the settings card's three switches and sound choice without scrolling.
+                Row(Modifier.fillMaxWidth().height(340.dp), horizontalArrangement = Arrangement.spacedBy(sizes.gap)) {
                     PeopleCard(people, onPeople, sizes, Modifier.width(480.dp).fillMaxHeight())
                     EnvironmentPanel(environment, sizes, Modifier.weight(1f).fillMaxHeight())
                     GuidanceCard(sizes, Modifier.width(400.dp).fillMaxHeight(), scrolls = true, guidance)
@@ -115,8 +116,20 @@ internal fun HomeScreen(
     }
 }
 
-/** The raised round button in the bottom bar. */
+/** The raised round button in the bottom bar. Devices without a car start sample trips with it. */
 internal data class StartButton(val label: String, val enabled: Boolean, val onClick: () -> Unit)
+
+/** Turns automatic recording on and off. In the car, trips start and finish with the gear instead of a button. */
+@Composable
+internal fun AutoRecordSwitch(enabled: Boolean, onChange: (Boolean) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("운행 자동 기록", Modifier.weight(1f))
+            Switch(checked = enabled, onCheckedChange = onChange)
+        }
+        Text("P에서 출발하면 기록을 시작해요", color = MotionPalette.TextSecondary, fontWeight = FontWeight.Normal)
+    }
+}
 
 /** Turns the departure advice on and off. The setting lives in the profile store of the history feature. */
 @Composable
@@ -172,7 +185,7 @@ internal fun AdviceHero(advice: HomeAdvice, sizes: HomeSizes, onExplain: () -> U
 }
 
 @Composable
-private fun HomeHeader(vehicleConnected: Boolean, sizes: HomeSizes) {
+private fun HomeHeader(status: String, sizes: HomeSizes) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Image(
             painterResource(R.drawable.home_logo), contentDescription = null, contentScale = ContentScale.Crop,
@@ -184,7 +197,7 @@ private fun HomeHeader(vehicleConnected: Boolean, sizes: HomeSizes) {
             Text("함께 타는 사람까지 편안한 운전", fontSize = sizes.subtitle, color = MotionPalette.TextSecondary,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        StatusPill(if (vehicleConnected) "차량 속도 기록" else "합성 샘플 전용", sizes)
+        StatusPill(status, sizes)
     }
 }
 
@@ -355,7 +368,7 @@ private fun GuidanceCard(sizes: HomeSizes, modifier: Modifier, scrolls: Boolean,
         if (scrolls) card.verticalScroll(rememberScrollState()) else card,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("안내", fontSize = sizes.section, fontWeight = FontWeight.ExtraBold)
+        Text("설정", fontSize = sizes.section, fontWeight = FontWeight.ExtraBold)
         MaterialTheme(typography = heroTypography(sizes).copy(labelLarge = TextStyle(fontSize = sizes.small, fontWeight = FontWeight.Bold))) {
             ProvideTextStyle(TextStyle(fontSize = sizes.small, fontWeight = FontWeight.SemiBold)) { content() }
         }
@@ -408,9 +421,9 @@ private fun TripCard(item: RecentTripItem, onTrip: (TripId) -> Unit, sizes: Home
 }
 
 @Composable
-private fun BottomNav(start: StartButton, links: HomeLinks, sizes: HomeSizes) {
+private fun BottomNav(start: StartButton?, links: HomeLinks, sizes: HomeSizes) {
     val barHeight = sizes.navButton * 0.82f
-    Box(Modifier.fillMaxWidth().height(sizes.navButton + 4.dp)) {
+    Box(Modifier.fillMaxWidth().height(if (start != null) sizes.navButton + 4.dp else barHeight)) {
         Row(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(barHeight)
                 .clip(RoundedCornerShape(30.dp))
@@ -420,12 +433,12 @@ private fun BottomNav(start: StartButton, links: HomeLinks, sizes: HomeSizes) {
         ) {
             NavItem(MotionIcons.Home, "홈", active = true, sizes = sizes, onClick = {}, modifier = Modifier.weight(1f))
             NavItem(MotionIcons.Clock, "기록", active = false, sizes = sizes, onClick = links.onRecords, modifier = Modifier.weight(1f))
-            Spacer(Modifier.width(sizes.navButton * 1.8f))
+            if (start != null) Spacer(Modifier.width(sizes.navButton * 1.8f))
             NavItem(MotionIcons.Person, "프로필", active = false, sizes = sizes, onClick = links.onProfile, modifier = Modifier.weight(1f))
             // Home2's last tab is the vehicle screen, which does not exist yet; the seats take its place.
             NavItem(MotionIcons.Car, "좌석", active = false, sizes = sizes, onClick = links.onSeats, modifier = Modifier.weight(1f))
         }
-        StartCircle(start, sizes, Modifier.align(Alignment.TopCenter))
+        start?.let { StartCircle(it, sizes, Modifier.align(Alignment.TopCenter)) }
     }
 }
 

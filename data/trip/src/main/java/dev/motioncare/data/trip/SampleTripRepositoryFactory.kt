@@ -5,6 +5,9 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import dev.motioncare.core.model.*
+import dev.motioncare.data.trip.drive.AutoTrips
+import dev.motioncare.data.trip.drive.GearDriveWatcher
+import dev.motioncare.data.trip.drive.StoredAutoRecordSettings
 import dev.motioncare.data.trip.guidance.AndroidSoundOutput
 import dev.motioncare.data.trip.guidance.GuidanceSoundPlayer
 import dev.motioncare.data.trip.guidance.StoredGuidanceSettings
@@ -13,6 +16,7 @@ import dev.motioncare.data.trip.local.MotionCareDatabase
 import dev.motioncare.data.trip.sample.SampleVehicleDataSource
 import dev.motioncare.data.trip.session.TripSessionController
 import dev.motioncare.data.trip.storage.SqliteTripStore
+import dev.motioncare.data.trip.vehicle.CarGearSource
 import dev.motioncare.data.trip.vehicle.CarSpeedSource
 import dev.motioncare.data.trip.vehicle.SdkSteeringSource
 import dev.motioncare.data.trip.vehicle.UnavailableVehicleDataSource
@@ -43,6 +47,8 @@ fun createVehicleTripData(context: Context): VehicleTripData {
         },
         guidance,
         GuidanceAudio { message -> main.post { sound.play(message) } },
+        StoredAutoRecordSettings(app),
+        GearDriveWatcher(CarGearSource(app), repository, SystemClock::elapsedRealtime),
     )
 }
 
@@ -56,7 +62,7 @@ private fun controller(store: SqliteTripStore, source: VehicleDataSource) = Trip
 internal class DefaultTripRepository(
     private val store: SqliteTripStore,
     private val controller: TripSessionController,
-) : TripRepository {
+) : TripRepository, AutoTrips {
     override val records = store.records
     private val mutex = Mutex()
     private var initialized = false
@@ -73,6 +79,10 @@ internal class DefaultTripRepository(
     }
     override suspend fun captureSample(): CommandResult { initialize(); return controller.captureSample() }
     override suspend fun finish(): CommandResult { initialize(); return controller.finish() }
+    // The watcher's clock is SystemClock.elapsedRealtime, the base of the controller's monotonic clock.
+    override suspend fun finishParked(parkedAtMs: Long): CommandResult {
+        initialize(); return controller.finishParked(parkedAtMs * 1_000_000)
+    }
 }
 
 internal class DefaultVehicleRecorder(

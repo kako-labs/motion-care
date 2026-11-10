@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="pleos.car.permission.CAR_DRIVE" />
+    <!-- The gear for automatic recording. -->
+    <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
     <uses-permission android:name="pleos.car.permission.TTS_SERVICE" />
 </manifest>

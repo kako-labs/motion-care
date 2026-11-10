@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.*
 import dev.motioncare.app.home.HomeScreen
 import dev.motioncare.app.home.AdviceHero
+import dev.motioncare.app.home.AutoRecordSwitch
 import dev.motioncare.app.home.DepartureGuidanceSwitch
 import dev.motioncare.app.home.HomeLinks
 import dev.motioncare.app.home.homeAdvice
@@ -37,6 +38,7 @@ import dev.motioncare.app.home.peopleSummary
 import dev.motioncare.app.home.recentTripItems
 import dev.motioncare.data.environment.EnvironmentRepository
 import dev.motioncare.data.profile.ProfileRepository
+import dev.motioncare.data.trip.AutoRecordSettings
 import dev.motioncare.data.trip.GuidanceSettings
 import dev.motioncare.data.trip.TripRepository
 import dev.motioncare.feature.driving.DrivingViewModel
@@ -50,10 +52,9 @@ import dev.motioncare.feature.history.report.FinishedContent
 import dev.motioncare.core.model.TripStatus
 import java.util.TimeZone
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
 
 private const val HOME_ROUTE = "home"
 // Outdoor air needs the car's position. Recording goes on without it.
@@ -72,7 +73,9 @@ fun MainHost(
     environment: EnvironmentRepository,
     vehicleConnected: Boolean,
     guidance: GuidanceSettings?,
-    onRecordingStarted: () -> Unit,
+    startRecordingService: () -> Unit,
+    autoRecord: AutoRecordSettings? = null,
+    preparation: TripPreparation = remember(profiles, environment) { TripPreparation(profiles, environment) },
 ) {
     val navigation = rememberNavController()
     val driving: DrivingViewModel = viewModel(factory = viewModelFactory {
@@ -88,9 +91,13 @@ fun MainHost(
         val speedGranted = results[CAR_SPEED_PERMISSION] == true
         speedNotice = speedPermissionNotice(speedGranted, speedRationaleBefore, speedRationale(activity))
         permissionsAnswered += 1
-        if (speedGranted) driving.start()
+        // Only the automatic recording switch asks. It turns on once trips can be recorded.
+        if (speedGranted) {
+            autoRecord?.setEnabled(true)
+            startRecordingService()
+        }
     }
-    // Back from settings with the permission granted, the notice goes. Recording waits for the driver to start it.
+    // Back from settings with the permission granted, the notice goes. The switch waits for the driver to turn it on.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (speedNotice != SpeedPermissionNotice.NONE && speedPermissionGranted(context)) {
             speedNotice = SpeedPermissionNotice.NONE
@@ -104,20 +111,11 @@ fun MainHost(
     })
     val departureState by departure.uiState.collectAsStateWithLifecycle()
     val activeId = drivingState.active?.id
-    // A new trip keeps who sat where at its start and the environment at that moment, then starts recording.
+    // A new trip keeps who sat where at its start and the environment at that moment, then starts recording. The
+    // recording service does the same for trips the gear starts; the preparation keeps it to once.
     LaunchedEffect(activeId) {
         if (activeId != null) {
-            withContext(NonCancellable) {
-                runCatching {
-                    profiles.initialize()
-                    if (profiles.participants.value.none { it.tripId == activeId }) {
-                        profiles.assignCurrentSeating(activeId)
-                    }
-                }
-                runCatching {
-                    if (environment.history(activeId).isEmpty()) environment.capture(activeId)
-                }
-            }
+            preparation.prepare(activeId)
             currentCoroutineContext().ensureActive()
             val stillRecording = try {
                 trips.get(activeId)?.trip?.status == TripStatus.RECORDING
@@ -127,18 +125,21 @@ fun MainHost(
                 false
             }
             currentCoroutineContext().ensureActive()
-            if (vehicleConnected && stillRecording) onRecordingStarted()
+            if (vehicleConnected && stillRecording) startRecordingService()
         }
     }
     val records by trips.records.collectAsStateWithLifecycle()
     val participants by profiles.participants.collectAsStateWithLifecycle()
     val snapshot by environment.current.collectAsStateWithLifecycle()
     val zone = remember { TimeZone.getDefault() }
-    val startTrip = {
-        if (vehicleConnected) {
+    val autoRecordState = remember(autoRecord) { autoRecord?.enabled ?: MutableStateFlow(false) }
+    val autoRecordOn by autoRecordState.collectAsStateWithLifecycle()
+    // Turning it on asks for the recording permissions first; turning it off lets the service stop between trips.
+    val onAutoRecord: (Boolean) -> Unit = { on ->
+        if (on) {
             speedRationaleBefore = speedRationale(activity)
             permissions.launch(recordingPermissions())
-        } else driving.start()
+        } else autoRecord?.setEnabled(false)
     }
     Surface(Modifier.fillMaxSize().motionBackground(), color = Color.Transparent, contentColor = MotionPalette.Text) {
         BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 20.dp, vertical = 16.dp)) {
@@ -157,20 +158,21 @@ fun MainHost(
                     val finished = drivingState.finishedId
                     val error = drivingState.error
                     HomeScreen(
-                        vehicleConnected = vehicleConnected,
+                        status = when {
+                            !vehicleConnected -> "합성 샘플 전용"
+                            autoRecordOn -> "자동 기록 켜짐"
+                            else -> "자동 기록 꺼짐"
+                        },
                         people = peopleSummary(departureState.people, departureState.seating),
                         environment = environmentCard(snapshot, zone),
                         recent = remember(records, participants, departureState.people) {
                             recentTripItems(records, zone, participants = participants, people = departureState.people)
                         },
-                        start = StartButton(
-                            label = when {
-                                active != null -> "기록 중"
-                                vehicleConnected -> "운행 시작"
-                                else -> "샘플 시작"
-                            },
+                        // In the car the gear starts trips (docs/auto-record.md); other devices start samples here.
+                        start = if (vehicleConnected) null else StartButton(
+                            label = if (active != null) "기록 중" else "샘플 시작",
                             enabled = active == null && finished == null && !drivingState.busy,
-                            onClick = startTrip,
+                            onClick = driving::start,
                         ),
                         links = HomeLinks(
                             onSeats = { navigation.navigate(HistoryRoutes.PROFILES) },
@@ -188,6 +190,7 @@ fun MainHost(
                             }
                         } else null,
                         guidance = {
+                            autoRecord?.let { AutoRecordSwitch(autoRecordOn, onAutoRecord) }
                             DepartureGuidanceSwitch(departureState.guidanceEnabled, onChange = { departure.toggleGuidance() })
                             // In-drive cards need the car; devices without one show the departure switch only.
                             guidance?.let { settings ->

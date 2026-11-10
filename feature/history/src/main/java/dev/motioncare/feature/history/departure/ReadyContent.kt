@@ -615,8 +615,10 @@ private fun SeatPicker(
     val childAllowed = seat != SeatPosition.DRIVER
     Dialog(onDismissRequest = onDismiss) {
         MotionCareTheme {
+            // Scrolls so a short window, or one with the keyboard up, still reaches the buttons below the characters.
             Column(Modifier.width(620.dp).background(Brush.verticalGradient(listOf(Color(0xFF123A63), Color(0xFF071A30))), RoundedCornerShape(28.dp))
-                .border(1.dp, MotionLine, RoundedCornerShape(28.dp)).padding(28.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                .border(1.dp, MotionLine, RoundedCornerShape(28.dp)).verticalScroll(rememberScrollState()).padding(28.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("사람 추가", Modifier.weight(1f), fontSize = motionType.headline, fontWeight = FontWeight.Medium)
                     seat?.let {

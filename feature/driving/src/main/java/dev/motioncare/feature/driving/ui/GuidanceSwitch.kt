@@ -47,8 +47,8 @@ fun GuidanceSwitch(
             TextButton(onClick = onTurnOnNotifications) { Text("알림 켜기") }
         }
         if (enabled && !cardsBlocked) {
-            Text("안내 소리")
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("안내 소리", Modifier.weight(1f))
                 FilterChip(
                     selected = sound == GuidanceSound.CHIME,
                     onClick = { onSound(GuidanceSound.CHIME) },

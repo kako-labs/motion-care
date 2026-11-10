@@ -70,9 +70,12 @@ def describe(row):
 
 def drive(deny_location, between=None):
     e2e.shell(f"pm clear --user 10 {e2e.PKG}")
+    e2e.http("PUT", "/vehicle/gear?gear=Park")
     e2e.app_screen()
-    print("tap start:", e2e.tap("운행 시작"))
+    print("tap switch:", e2e.tap_switch())
     print("dialogs:", answer_permissions(deny_location))
+    # The drive gear starts the trip.
+    e2e.http("PUT", "/vehicle/gear?gear=Drive")
     time.sleep(10)
     print("service:", e2e.service_state())
     if between:
@@ -80,6 +83,7 @@ def drive(deny_location, between=None):
         time.sleep(4)
     print("tap finish:", e2e.tap("운행 기록 종료"))
     time.sleep(6)
+    e2e.http("PUT", "/vehicle/gear?gear=Park")
     rows = pull_database()
     for row in rows:
         print("snapshot:", describe(row))

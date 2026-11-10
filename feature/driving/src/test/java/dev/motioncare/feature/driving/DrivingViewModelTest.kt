@@ -52,4 +52,35 @@ class DrivingViewModelTest {
             assertEquals("지원하지 않는 입력", model.uiState.value.error)
         } finally { model.viewModelScope.cancel() }
     }
+
+    // Automatic recording finishes a trip from the recording service, not from this screen.
+    @Test fun `a trip finished elsewhere shows as finished`() = runTest(dispatcher) {
+        val repository = FakeRepository()
+        val model = DrivingViewModel(repository)
+        try {
+            runCurrent()
+            val trip = TripRecord(TripId("auto"), startedAtEpochMs = 1_000, origin = DataOrigin.VEHICLE)
+            repository.records.value = listOf(trip)
+            runCurrent()
+            assertEquals(trip.id, model.uiState.value.active?.id)
+            repository.records.value = listOf(trip.copy(status = TripStatus.COMPLETED, endedAtEpochMs = 2_000))
+            runCurrent()
+            assertNull(model.uiState.value.active)
+            assertEquals(trip.id, model.uiState.value.finishedId)
+        } finally { model.viewModelScope.cancel() }
+    }
+
+    @Test fun `an interrupted trip does not show as finished`() = runTest(dispatcher) {
+        val repository = FakeRepository()
+        val model = DrivingViewModel(repository)
+        try {
+            runCurrent()
+            val trip = TripRecord(TripId("auto"), startedAtEpochMs = 1_000, origin = DataOrigin.VEHICLE)
+            repository.records.value = listOf(trip)
+            runCurrent()
+            repository.records.value = listOf(trip.copy(status = TripStatus.INTERRUPTED, endedAtEpochMs = 2_000))
+            runCurrent()
+            assertNull(model.uiState.value.finishedId)
+        } finally { model.viewModelScope.cancel() }
+    }
 }

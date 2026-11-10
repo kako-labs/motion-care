@@ -5,10 +5,11 @@ Build the debug APK and start the emulator first, then run:
 
     python3 docs/pleos-emulator/tools/speed_permission_e2e.py     # about 1.5 minutes
 
-Location and notifications are granted by adb so that only the speed prompt appears. The run taps "운행 시작"
-three times: the first prompt is denied, the second is answered "허용하지 않고 다시 묻지 않음", and the third shows no
-prompt, so the screen must say where to allow it and offer "설정 열기". It then opens settings from the app, allows
-권한 > 위치 there, checks that the notice is gone back in the app, and starts and finishes a recording. It also
+Location and notifications are granted by adb so that only the speed prompt appears. The run turns on the
+"운행 자동 기록" switch three times: the first prompt is denied, the second is answered "허용하지 않고 다시 묻지 않음",
+and the third shows no prompt, so the screen must say where to allow it and offer "설정 열기". The switch stays off
+each time. It then opens settings from the app, allows 권한 > 위치 there, checks that the notice is gone back in the
+app, turns the switch on, and lets the drive gear start a recording that it then finishes. It also
 records where ACTION_APPLICATION_DETAILS_SETTINGS goes, which is why the app does not use it. Set ANDROID_SERIAL
 when more than one device is attached. This script clears the app's data, so it must never run against an
 emulator that belongs to other work.
@@ -20,7 +21,6 @@ import time
 import recording_e2e as e2e
 
 SPEED = "android.car.permission.CAR_SPEED"
-START = "운행 시작"
 FINISH = "운행 기록 종료"
 DENIED = "차량 속도 권한이 있어야 운행을 기록할 수 있습니다."
 WHERE = "설정 > 권한 > 위치에서 허용하면 기록할 수 있어요"
@@ -69,10 +69,13 @@ def main():
     e2e.shell(f"pm clear-permission-flags --user 10 {e2e.PKG} {SPEED} user-set user-fixed")
     for granted in ("pleos.car.permission.FUSED_LOCATION", "android.permission.POST_NOTIFICATIONS"):
         e2e.shell(f"pm grant --user 10 {e2e.PKG} {granted}")
+    stop = e2e.threading.Event()
+    e2e.threading.Thread(target=e2e.heartbeat, args=(stop,), daemon=True).start()
+    e2e.http("PUT", "/vehicle/gear?gear=Park")
     e2e.app_screen()
     print("first open:", permission())
 
-    print("tap 1:", e2e.tap(START))
+    print("tap 1:", e2e.tap_switch())
     prompt_1 = step("speed_prompt")
     print("prompt 1:", prompt_1)
     print("deny:", e2e.tap(DENY))
@@ -80,7 +83,7 @@ def main():
     focus_1 = focused()
     print("after first deny:", permission(), "focus:", focus_1, after_1)
 
-    print("tap 2:", e2e.tap(START))
+    print("tap 2:", e2e.tap_switch())
     prompt_2 = step("speed_prompt_again")
     print("prompt 2:", prompt_2)
     print("deny for good:", e2e.tap(DENY_FOR_GOOD))
@@ -89,8 +92,9 @@ def main():
     fixed = permission()
     print("after deny for good:", fixed, "focus:", focus_2, after_2)
 
-    print("tap 3:", e2e.tap(START))
+    print("tap 3:", e2e.tap_switch())
     after_3 = step("96_speed_permission_notice")
+    still_off = e2e.switch_next_to(e2e.AUTO_RECORD)
     focus_3 = focused()
     print("after tap 3:", permission(), "focus:", focus_3, after_3)
 
@@ -112,11 +116,15 @@ def main():
     e2e.app_screen()
     back = step("speed_notice_gone")
     print("back in the app:", back)
-    print("tap start:", e2e.tap(START))
-    recording = step("speed_recording", 4)
-    print("recording:", e2e.service_state(), recording)
+    print("tap switch:", e2e.tap_switch())
+    time.sleep(3)
+    turned_on = e2e.switch_next_to(e2e.AUTO_RECORD)
+    e2e.http("PUT", "/vehicle/gear?gear=Drive")
+    recording = step("speed_recording", 6)
+    print("recording:", e2e.service_state(), turned_on, recording)
     print("finish:", e2e.tap(FINISH))
     finished = step("speed_finished", 4)
+    e2e.http("PUT", "/vehicle/gear?gear=Park")
     print("finished:", finished)
 
     # Why the app does not use the documented app details action on Pleos.
@@ -135,12 +143,14 @@ def main():
          "USER_FIXED" in fixed and e2e.PKG in focus_2 and DENIED in after_2 and OPEN not in after_2),
         ("the third tap shows no prompt and says where to allow it",
          e2e.PKG in focus_3 and PROMPT not in after_3 and DENIED in after_3 and WHERE in after_3 and OPEN in after_3),
+        ("the switch stays off without the permission", still_off is not None and not still_off[0]),
         ("설정 열기 opens the app's page in Car Settings",
          CAR_SETTINGS in focus_4 and "Motion Care" in app_page and "권한" in app_page),
         ("권한 > 위치 > 허용 grants the speed permission",
          allowed.startswith("granted=true") and "USER_FIXED" not in allowed),
-        ("the notice is gone back in the app", DENIED not in back and OPEN not in back and START in back),
-        ("the next tap starts recording", FINISH in recording and DENIED not in recording),
+        ("the notice is gone back in the app", DENIED not in back and OPEN not in back and e2e.AUTO_RECORD in back),
+        ("the switch turns on and the drive gear starts recording",
+         turned_on is not None and turned_on[0] and FINISH in recording and DENIED not in recording),
         ("the recording finishes", FINISH not in finished),
         ("the app details action opens the vehicle settings app without a location entry",
          VEHICLE_SETTINGS in focus_5 and "위치" not in details),
@@ -149,6 +159,7 @@ def main():
     for name, ok in checks:
         print("PASS" if ok else "FAIL", name)
     print("files:", e2e.OUT)
+    stop.set()
     e2e.adb("forward", "--remove", f"tcp:{e2e.PORT}")
     sys.exit(0 if all(ok for _, ok in checks) else 1)
 
