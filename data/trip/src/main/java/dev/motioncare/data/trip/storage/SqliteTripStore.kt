@@ -73,6 +73,21 @@ internal class SqliteTripStore(
         }
     }
 
+    override suspend fun finishAt(trip: TripRecord, keepUntilMs: Long) = withContext(io) {
+        mutex.withLock {
+            val db = database.writableDatabase
+            db.transaction {
+                writeTrip(db, trip)
+                val after = arrayOf(trip.id.value, keepUntilMs.toString())
+                db.delete("speed_samples", "trip_id = ? AND elapsed > ?", after)
+                db.delete("steering_samples", "trip_id = ? AND elapsed > ?", after)
+                db.delete("observations", "trip_id = ? AND start_ms > ?", after)
+                db.delete("guidance_events", "trip_id = ? AND elapsed > ?", after)
+            }
+            refresh()
+        }
+    }
+
     override suspend fun get(id: TripId): TripSnapshot? = withContext(io) {
         mutex.withLock {
             val db = database.readableDatabase

@@ -47,6 +47,14 @@ class TripSessionControllerTest {
                 saved?.observations.orEmpty() + observations, saved?.steering.orEmpty() + steering, saved?.guidance.orEmpty() + guidance)
             publish()
         }
+        override suspend fun finishAt(trip: TripRecord, keepUntilMs: Long) {
+            check(!failWrites) { "Storage failed" }
+            val saved = requireNotNull(snapshots[trip.id])
+            snapshots[trip.id] = TripSnapshot(trip, saved.samples.filter { it.elapsedMs <= keepUntilMs },
+                saved.observations.filter { it.startMs <= keepUntilMs }, saved.steering.filter { it.elapsedMs <= keepUntilMs },
+                saved.guidance.filter { it.elapsedMs <= keepUntilMs })
+            publish()
+        }
         private fun publish() { records.value = snapshots.values.map { it.trip } }
     }
     private val store = MemoryStore()
@@ -182,6 +190,35 @@ class TripSessionControllerTest {
         assertEquals(listOf(100L, 200L), saved.samples.map { it.elapsedMs })
         assertEquals(TripStatus.COMPLETED, saved.trip.status)
         assertTrue(trip.job.isCompleted)
+    }
+
+    @Test fun `a parked finish ends the trip when the car went into park`() = runTest {
+        val controller = controller()
+        val trip = startRecording(controller)
+        for (ms in 500L..3_000L step 500) trip.readings.emit(reading(ms))
+        // Still waiting to be written when the trip ends.
+        trip.readings.emit(reading(3_200))
+        runCurrent()
+        // Parked 2 s after the start; the policy notices minutes later.
+        now += 180_000
+        controller.finishParked(parkedAtNanos = nanos + 2_000_000_000)
+        runCurrent()
+        val saved = store.get(trip.id)!!
+        assertEquals(listOf(500L, 1_000L, 1_500L, 2_000L), saved.samples.map { it.elapsedMs })
+        assertEquals(TripStatus.COMPLETED, saved.trip.status)
+        assertEquals(saved.trip.startedAtEpochMs + 2_000, saved.trip.endedAtEpochMs)
+        assertTrue(trip.job.isCompleted)
+    }
+
+    @Test fun `a park before the start keeps the trip empty`() = runTest {
+        val controller = controller()
+        val trip = startRecording(controller)
+        trip.readings.emit(reading(500))
+        runCurrent()
+        controller.finishParked(parkedAtNanos = nanos - 1_000_000_000)
+        val saved = store.get(trip.id)!!
+        assertEquals(emptyList<SpeedSample>(), saved.samples)
+        assertEquals(saved.trip.startedAtEpochMs, saved.trip.endedAtEpochMs)
     }
 
     @Test fun `readings are written together about once a second`() = runTest {
