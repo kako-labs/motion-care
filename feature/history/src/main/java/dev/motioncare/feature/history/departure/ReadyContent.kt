@@ -132,9 +132,9 @@ private fun DepartureContent(
                 state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
                 if (wide) Row(Modifier.fillMaxWidth().height(panelHeight), horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-                    SeatingPanel(state, openSeat, { openSeat = it }, Modifier.weight(1.15f).fillMaxHeight(), panelHeight)
+                    SeatingPanel(state, openSeat, { openSeat = it }, Modifier.weight(1f).fillMaxHeight(), panelHeight)
                     DepartureConsole(state, { openSeat = it }, onAdvice, onTrip, onToggleGuidance,
-                        Modifier.weight(.9f).fillMaxHeight(), compact)
+                        Modifier.weight(1f).fillMaxHeight(), compact)
                 } else Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
                     SeatingPanel(state, openSeat, { openSeat = it })
                     DepartureConsole(state, { openSeat = it }, onAdvice, onTrip, onToggleGuidance)
@@ -319,7 +319,8 @@ private val adviceSteps = listOf(MotionIcons.Person to "자리", MotionIcons.Pla
     maxCarHeight: Dp = 860.dp,
 ) {
     Box(modifier.heightIn(min = 500.dp).padding(horizontal = 8.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
-        CarInterior(state, openSeat, onSeat, maxCarHeight)
+        // The padding comes out of the height the car may take.
+        CarInterior(state, openSeat, onSeat, maxCarHeight - 24.dp)
     }
 }
 
@@ -375,17 +376,17 @@ private fun DepartureOverview(
                         color = MotionPanel,
                         shape = RoundedCornerShape(16.dp),
                         border = BorderStroke(1.dp, MotionLine),
-                        modifier = Modifier.weight(1f).heightIn(min = if (compact) 58.dp else 72.dp),
+                        modifier = Modifier.weight(1f).heightIn(min = if (compact) 64.dp else 88.dp),
                     ) {
                         Row(
                             Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(9.dp),
                         ) {
-                            PersonAvatar(person, Modifier.size(if (compact) 34.dp else 42.dp))
+                            PersonAvatar(person, Modifier.size(if (compact) 40.dp else 56.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(person.displayName, fontSize = motionType.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(if (seat == SeatPosition.DRIVER) "운전자" else seat.shortLabel(), color = MotionMuted, fontSize = motionType.caption, maxLines = 1)
+                                Text(person.displayName, fontSize = motionType.body, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(if (seat == SeatPosition.DRIVER) "운전자" else seat.shortLabel(), color = MotionSubtle, fontSize = motionType.label, maxLines = 1)
                             }
                         }
                     }
@@ -462,8 +463,9 @@ private fun Availability.shortStatus() = when (this) {
 
 // Top-down view with the front of the car at the top; the driver sits front-left.
 @Composable private fun CarInterior(state: DepartureUiState, openSeat: SeatPosition?, onSeat: (SeatPosition) -> Unit, maxCarHeight: Dp) {
-    BoxWithConstraints(Modifier.fillMaxWidth().heightIn(max = 860.dp), contentAlignment = Alignment.Center) {
-        val width = minOf(maxWidth, 570.dp, maxCarHeight / 1.5f)
+    BoxWithConstraints(Modifier.fillMaxWidth().heightIn(max = maxCarHeight), contentAlignment = Alignment.Center) {
+        // The cabin drawing is 1 : 1.5. It grows to the panel's height so the seats read from the driver's seat.
+        val width = minOf(maxWidth, maxCarHeight / 1.5f)
         val height = width * 1.5f
         Box(Modifier.size(width, height)) {
             Image(painterResource(R.drawable.mc_cabin_b), "차량 좌석", Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
@@ -471,7 +473,7 @@ private fun Availability.shortStatus() = when (this) {
                 Triple(SeatPosition.DRIVER, .34f, .50f), Triple(SeatPosition.FRONT_PASSENGER, .675f, .50f),
                 Triple(SeatPosition.REAR_LEFT, .305f, .735f), Triple(SeatPosition.REAR_CENTER, .502f, .735f), Triple(SeatPosition.REAR_RIGHT, .70f, .735f))
             positions.forEach { (seat, x, y) ->
-                val size = (width * .165f).coerceIn(48.dp, 64.dp)
+                val size = (width * .165f).coerceIn(48.dp, 96.dp)
                 Box(Modifier.offset(width * x - size / 2, height * y - size / 2)) {
                     SeatCircle(seat, size, state, openSeat, onSeat)
                 }
@@ -505,10 +507,10 @@ private fun Availability.shortStatus() = when (this) {
         border = if (selected || person != null) BorderStroke(1.dp, if (selected) MotionCyan.copy(.7f) else MotionCyan.copy(.22f)) else null,
         modifier = Modifier.size(size, size + 12.dp).semantics { contentDescription = "${seat.label()} · ${person?.displayName ?: "빈 자리"}" }) {
         Column(Modifier.padding(4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
-            if (person == null) Box(Modifier.size(32.dp).background(Color(0x800A1724), RoundedCornerShape(10.dp)).border(1.dp, MotionCyan.copy(.22f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                Icon(MotionIcons.Plus, contentDescription = null, tint = MotionSubtle, modifier = Modifier.size(20.dp))
-            } else PersonAvatar(person, Modifier.size((size * .52f).coerceAtLeast(28.dp)))
-            if (person != null) Text(person.displayName, fontSize = motionType.caption, fontWeight = FontWeight.Medium, color = MotionText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (person == null) Box(Modifier.size(size * .5f).background(Color(0x800A1724), RoundedCornerShape(12.dp)).border(1.dp, MotionCyan.copy(.22f), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+                Icon(MotionIcons.Plus, contentDescription = null, tint = MotionSubtle, modifier = Modifier.size(size * .3f))
+            } else PersonAvatar(person, Modifier.size((size * .55f).coerceAtLeast(28.dp)))
+            if (person != null) Text(person.displayName, fontSize = motionType.label, fontWeight = FontWeight.Bold, color = MotionText, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

@@ -98,6 +98,7 @@
     - 아이콘은 `core:ui`의 `MotionIcons` 한 벌입니다. 홈의 시안 아이콘(`HomeIcons`)을 옮겨 합쳤고, 기록 화면의 글자 아이콘(⇡ ⇣ ∿ ↻ ⇄ ◷ → › ✓ ↗ ◉ ▶ ★ ✦ ＋)을 같은 선 굵기의 벡터로 바꿨습니다. 버튼은 `icon`·`leadingIcon`으로 아이콘을 붙입니다. 별점의 ★·☆와 문장 속 화살표("출발 19.1°C → 종료 …")는 글자로 둡니다.
     - 주 버튼과 보조 버튼은 `core:ui`의 `MotionPrimaryButton`·`MotionSecondaryButton` 하나입니다. 홈의 `HeroButton`, 기록 화면의 `PrimaryAction`, 운행 중 카드의 Material 기본 버튼(작은 청록 알약) 세 가지였던 것을 합쳤습니다. 목록 줄, 패턴 선택 줄, 문장 속 링크("설정 열기", "알림 켜기")는 버튼 모양을 쓰지 않습니다.
     - 패턴 이름은 [탐지 기준](detection-thresholds.md)과 같은 다섯 개로 맞췄습니다: 빠른 출발, 정차 직전 큰 감속, 반복 가감속, 빠른 회전, 반복 좌우 움직임. 같은 패턴이 화면에 따라 "출발 직후 속도 증가", "빠른 가속", "정차 전 큰 감속" 등으로 달랐습니다.
+    - 좌석 화면은 차 그림 폭을 570dp로 묶던 것을 풀어 패널 높이만큼 키우고(그림 비율 1 : 1.5), 좌석 표시를 64dp에서 최대 96dp로, 오른쪽 탑승자 칸의 얼굴과 이름을 키웠습니다. 좌우 칸은 같은 폭입니다. 주변 빈 공간이 많다는 검토 의견을 따른 제품 판단입니다.
     - 에뮬레이터 23개 화면을 바꾸기 전후로 캡처해 확인했습니다. 대표 화면: [출발 전 안내](pleos-emulator/shots/109_unified_departure.jpg), [운행 상세](pleos-emulator/shots/110_unified_trip_detail.jpg), [운행 기록 중](pleos-emulator/shots/111_unified_driving.jpg).
 
 ## 스타일 기준
