@@ -53,10 +53,12 @@ import dev.motioncare.core.model.TripStatus
 import java.util.TimeZone
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 
 private const val HOME_ROUTE = "home"
+private const val CABIN_REREAD_MS = 10_000L
 // Outdoor air needs the car's position. Recording goes on without it.
 private const val LOCATION_PERMISSION = "pleos.car.permission.FUSED_LOCATION"
 
@@ -104,7 +106,15 @@ fun MainHost(
         }
     }
     // Read once on opening and again after the permission answer, which may allow outdoor air.
-    LaunchedEffect(permissionsAnswered) { environment.refresh() }
+    LaunchedEffect(permissionsAnswered) {
+        environment.refresh()
+        // Right after the app starts the vehicle SDK can leave its first answer out; the home reads once more so the
+        // cabin temperature does not stay empty until the next trip. An implementation judgement.
+        if (vehicleConnected && environment.current.value.cabinTemperature.value == null) {
+            delay(CABIN_REREAD_MS)
+            environment.refresh()
+        }
+    }
     // Seats, people and departure advice come from the history feature, as on its own departure screen.
     val departure: DepartureViewModel = viewModel(factory = viewModelFactory {
         initializer { DepartureViewModel(trips, profiles, environment.current) }
