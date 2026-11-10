@@ -354,6 +354,7 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | [tools/notification_off_e2e.py](tools/notification_off_e2e.py) | 알림 꺼짐 안내 자동 시험. "알림 켜기"로 요청 창 거부, "다시 묻지 않음", 설정 화면 열기와 켜기를 차례로 확인. 약 1분 |
 | [tools/driving_screen_e2e.py](tools/driving_screen_e2e.py) | 주행 중 앱 화면 자동 시험. 주차 중 운행 자동 기록을 켜고, 앱을 앞에 둔 채 40km/h 주행에서 시스템 차단 화면 없이 앱이 보이고 기록이 계속되는지, 주차 후 종료까지 확인. 주행 제한값도 출력. 약 1분 |
 | [tools/speed_permission_e2e.py](tools/speed_permission_e2e.py) | 속도 권한 거부 안내 자동 시험. "운행 자동 기록" 스위치로 요청 창 거부, "다시 묻지 않음", "설정 열기"로 Car Settings에서 위치 허용, 돌아와 스위치를 켜고 D로 기록 시작까지 확인. 약 1분 30초 |
+| [tools/demo_data.py](tools/demo_data.py) | 영상 촬영용 데이터 준비. 앱 데이터를 지우고 가상 차량으로 일곱 번 주행해 앱이 직접 기록하게 함(민준 운전 1번, 지영 운전 6번: 거친 주행 3번 뒤 부드러운 주행 3번). 에뮬레이터 키보드로 한글을 칠 수 없어 사람 넷·좌석·동승자 평가만 프로필 DB에 넣고, 마지막 운행의 평가는 촬영 중 입력하도록 비워 둠. 약 25분 |
 | [tools/auto_record_e2e.py](tools/auto_record_e2e.py) | 운행 자동 기록 자동 시험. 스위치 켜기, 내비 뒤 대기(`IDLE_SECONDS`, 기본 600), D로 시작, P 3분으로 종료, 재부팅과 앱 업데이트 뒤 서비스 재시작, 끄기까지 확인. 에뮬레이터를 다시 부팅함. 대기 10분이면 약 20분 |
 
 저장소에 넣지 않은 것:
