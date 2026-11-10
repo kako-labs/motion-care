@@ -29,7 +29,7 @@ export type Segment = {
 export const FPS = 30;
 
 /** 맨 앞 브랜드 소개, 맨 뒤 브랜드 마무리 길이(초) */
-export const BRAND_INTRO_SEC = 12;
+export const BRAND_INTRO_SEC = 6.5;
 export const BRAND_OUTRO_SEC = 9;
 
 export const CHAPTERS = [

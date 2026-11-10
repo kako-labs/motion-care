@@ -9,15 +9,18 @@ export const CROP = {
   cardlog: {x: 784, y: 946, w: 1064, h: 110}, // '내비 위 카드' 기록 상자
 } satisfies Record<string, Rect>;
 
-const TOP_Y = 100;
-const TOP_H = 610;
-const LEFT_X = 50;
+const TOP_Y = 128;
+const TOP_H = 592;
+const LEFT_X = 80;
 const GAP = 26;
-const CONSOLE_W = Math.round((TOP_H * CROP.console.w) / CROP.console.h); // 700
-const PLEOS_W = Math.round((TOP_H * CROP.pleos.w) / CROP.pleos.h); // 1085
+const CONSOLE_W = Math.round((TOP_H * CROP.console.w) / CROP.console.h); // 679
+const PLEOS_W = Math.round((TOP_H * CROP.pleos.w) / CROP.pleos.h); // 1053
 const RIGHT_X = LEFT_X + CONSOLE_W + GAP;
 const BOTTOM_Y = TOP_Y + TOP_H + 14;
-const BOTTOM_H = Math.round((CONSOLE_W * CROP.data.h) / CROP.data.w); // 334
+const BOTTOM_H = Math.round((CONSOLE_W * CROP.data.h) / CROP.data.w); // 324
+
+/** 맨 위 한 줄(지금 하는 일)의 위치와 글자 크기 */
+export const CAPTION = {top: 22, height: 70, fontSize: 46, chipSize: 23};
 
 /** 4분할이 완성됐을 때 각 화면의 자리 */
 export const HOME = {
@@ -29,23 +32,23 @@ export const HOME = {
 
 /** 화면 소개 때 크게 보여줄 위치(x, y)와 배율 */
 export const BIG = {
-  console: {x: 90, y: 118, scale: 1.5},
-  pleos: {x: 626, y: 350, scale: 1.12},
-  data: {x: 50, y: 548, scale: 1.5},
+  console: {x: 100, y: 140, scale: 1.5},
+  pleos: {x: 660, y: 372, scale: 1.12},
+  data: {x: 80, y: 566, scale: 1.5},
 };
 
 /** timeline.ts 에서 full 로 지정한 구간에 한 화면만 크게 보여줄 위치와 배율 */
 export const FULL = {
   console: {x: 395, y: 74, scale: 1.63},
-  pleos: {x: 76, y: 74, scale: 1.63},
+  pleos: {x: 96, y: 100, scale: 1.64},
   data: {x: 50, y: 300, scale: 2.6},
 };
 
 /** 화면 소개: 어느 구간에서 어느 화면이 등장하는지, 설명 글 위치 */
 export const INTRO_STAGES = [
-  {pane: 'console', seg: 'intro-console', note: {x: 1230, y: 380, w: 620}},
-  {pane: 'pleos', seg: 'intro-pleos', note: {x: 60, y: 790, w: 520}},
-  {pane: 'data', seg: 'intro-data', note: {x: 1170, y: 800, w: 700}},
+  {pane: 'console', seg: 'intro-console', note: {x: 1210, y: 400, w: 640}},
+  {pane: 'pleos', seg: 'intro-pleos', note: {x: 90, y: 800, w: 520}},
+  {pane: 'data', seg: 'intro-data', note: {x: 1180, y: 810, w: 680}},
   {pane: 'analysis', seg: 'intro-caption', note: null},
 ] as const;
 

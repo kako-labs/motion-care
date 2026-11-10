@@ -1,6 +1,6 @@
-# 모션케어 데모 영상 (약 3분 35초)
+# 모션케어 데모 영상 (약 3분 30초)
 
-실제 녹화본으로 다시 만들려면 `docs/HANDOFF.md`부터 읽으세요. 장면표는 `docs/shot-list.md`, 기준 영상은 `reference/motioncare-demo-v3.mp4`입니다.
+실제 녹화본으로 다시 만들려면 `docs/HANDOFF.md`부터 읽으세요. 장면표는 `docs/shot-list.md`, 기준 영상은 `reference/motioncare-demo-reference.mp4`입니다.
 
 기존 6분 시연 영상(`motion-care-driving-demo-share.mp4`)을 기준본으로 삼아 줄인 Remotion 프로젝트입니다.
 원본 영상은 `public/source.mp4`로 복사해서 쓰며, 원본 파일과 앱 코드는 건드리지 않습니다.

@@ -3,7 +3,7 @@ import {AbsoluteFill, Audio, Easing, Sequence, interpolate, staticFile, useCurre
 import {Analysis} from './components/Analysis';
 import {Source} from './components/Source';
 import {COPY} from './config/copy';
-import {BIG, CROP, FULL, HOME, INTRO_STAGES, MOTION} from './config/layout';
+import {BIG, CAPTION, CROP, FULL, HOME, INTRO_STAGES, MOTION} from './config/layout';
 import {THEME} from './config/theme';
 import {
   BRAND_INTRO_SEC, BRAND_OUTRO_SEC, CHAPTERS, FPS, PLACED, QUAD_END_SEC, QUAD_START_SEC, TOTAL_SEC,
@@ -105,11 +105,11 @@ const Quad = ({sec}: {sec: number}) => {
   return (
     <AbsoluteFill>
       {/* 맨 위 한 줄: 지금 무엇을 하는지 */}
-      <div style={{position: 'absolute', left: HOME.console.x, right: 1920 - HOME.pleos.x - HOME.pleos.w, top: 8, height: 58, display: 'flex', alignItems: 'center', opacity: headerIn}}>
-        <span style={{fontSize: 19, fontWeight: 800, padding: '7px 16px', borderRadius: 20, color: '#06203a', background: THEME.accent, whiteSpace: 'nowrap'}}>
+      <div style={{position: 'absolute', left: HOME.console.x, right: 1920 - HOME.pleos.x - HOME.pleos.w, top: CAPTION.top, height: CAPTION.height, display: 'flex', alignItems: 'center', opacity: headerIn}}>
+        <span style={{fontSize: CAPTION.chipSize, fontWeight: 800, padding: '8px 20px', borderRadius: 26, color: '#06203a', background: THEME.accent, whiteSpace: 'nowrap'}}>
           {CHAPTERS[seg.chapter]}
         </span>
-        <span style={{fontSize: 36, fontWeight: 800, color: THEME.text, marginLeft: 18, whiteSpace: 'nowrap', opacity: textIn, transform: `translateY(${(1 - textIn) * 8}px)`}}>
+        <span style={{fontSize: CAPTION.fontSize, fontWeight: 800, color: THEME.text, marginLeft: 22, whiteSpace: 'nowrap', opacity: textIn, transform: `translateY(${(1 - textIn) * 8}px)`}}>
           {seg.title}
         </span>
         <span style={{marginLeft: 'auto', fontSize: 15, color: THEME.muted, whiteSpace: 'nowrap'}}>{COPY.header.note}</span>
@@ -179,13 +179,9 @@ const Quad = ({sec}: {sec: number}) => {
 // ───────── 브랜드 소개 · 마무리 ─────────
 const BrandIntro = ({sec}: {sec: number}) => {
   const c = COPY.brandIntro;
-  const a = Math.min(ramp(sec, 0.5, 1.5), 1 - ramp(sec, 4.6, 5.3));
-  const b = Math.min(ramp(sec, 5.5, 6.5), 1 - ramp(sec, BRAND_INTRO_SEC - 0.8, BRAND_INTRO_SEC - 0.1));
+  const b = Math.min(ramp(sec, 0.4, 1.3), 1 - ramp(sec, BRAND_INTRO_SEC - 0.8, BRAND_INTRO_SEC - 0.1));
   return (
     <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', textAlign: 'center'}}>
-      <div style={{position: 'absolute', opacity: a, transform: `translateY(${(1 - a) * 14}px)`, fontSize: 56, fontWeight: 700, color: THEME.text, wordBreak: 'keep-all', maxWidth: 1500}}>
-        {c.line1}
-      </div>
       <div style={{position: 'absolute', opacity: b, transform: `translateY(${(1 - b) * 14}px)`}}>
         <div style={{fontSize: 104, fontWeight: 900, color: THEME.text, letterSpacing: -2}}>{c.name}</div>
         <div style={{width: 64, height: 4, borderRadius: 2, background: THEME.accent, margin: '18px auto 30px'}} />
