@@ -55,6 +55,9 @@ import dev.motioncare.core.ui.MotionBrushes
 import dev.motioncare.core.ui.MotionIcons
 import dev.motioncare.core.ui.MotionPrimaryButton
 import dev.motioncare.core.ui.MotionPalette
+import dev.motioncare.core.ui.MotionSpace
+import dev.motioncare.core.ui.MotionSwitchRow
+import dev.motioncare.core.ui.motionType
 import dev.motioncare.core.ui.glass
 import dev.motioncare.feature.history.ui.PersonAvatar
 
@@ -86,12 +89,16 @@ internal fun HomeScreen(
             Column(Modifier.fillMaxSize().padding(sizes.outer), verticalArrangement = Arrangement.spacedBy(sizes.gap)) {
                 header()
                 noticeStrip?.invoke()
-                HeroCard(sizes, Modifier.weight(1f).fillMaxWidth(), showCar = true) { hero(sizes) }
-                // Tall enough for the settings card's three switches and sound choice without scrolling.
-                Row(Modifier.fillMaxWidth().height(340.dp), horizontalArrangement = Arrangement.spacedBy(sizes.gap)) {
-                    PeopleCard(people, onPeople, sizes, Modifier.width(480.dp).fillMaxHeight())
-                    EnvironmentPanel(environment, sizes, Modifier.weight(1f).fillMaxHeight())
-                    GuidanceCard(sizes, Modifier.width(400.dp).fillMaxHeight(), scrolls = true, guidance)
+                // The settings take a column of their own: at car size its switches need more height than a card row.
+                Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(sizes.gap)) {
+                    Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(sizes.gap)) {
+                        HeroCard(sizes, Modifier.weight(1f).fillMaxWidth(), showCar = true) { hero(sizes) }
+                        Row(Modifier.fillMaxWidth().height(sizes.infoRow), horizontalArrangement = Arrangement.spacedBy(sizes.gap)) {
+                            PeopleCard(people, onPeople, sizes, Modifier.width(sizes.peopleWidth).fillMaxHeight())
+                            EnvironmentPanel(environment, sizes, Modifier.weight(1f).fillMaxHeight())
+                        }
+                    }
+                    GuidanceCard(sizes, Modifier.width(sizes.settingsWidth).fillMaxHeight(), scrolls = true, guidance)
                 }
                 RecentTrips(recent, links, sizes, columns = 3)
                 BottomNav(start, links, sizes)
@@ -122,22 +129,13 @@ internal data class StartButton(val label: String, val enabled: Boolean, val onC
 /** Turns automatic recording on and off. In the car, trips start and finish with the gear instead of a button. */
 @Composable
 internal fun AutoRecordSwitch(enabled: Boolean, onChange: (Boolean) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("운행 자동 기록", Modifier.weight(1f))
-            Switch(checked = enabled, onCheckedChange = onChange)
-        }
-        Text("P에서 출발하면 기록을 시작해요", color = MotionPalette.TextSecondary, fontWeight = FontWeight.Normal)
-    }
+    MotionSwitchRow("운행 자동 기록", enabled, onChange, description = "P에서 출발하면 기록을 시작해요")
 }
 
 /** Turns the departure advice on and off. The setting lives in the profile store of the history feature. */
 @Composable
 internal fun DepartureGuidanceSwitch(enabled: Boolean, onChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text("출발 안내", Modifier.weight(1f))
-        Switch(checked = enabled, onCheckedChange = onChange)
-    }
+    MotionSwitchRow("출발 안내", enabled, onChange)
 }
 
 /** Where the home screen's links lead. */
@@ -154,9 +152,8 @@ internal data class HomeLinks(
  */
 @Composable
 internal fun AdviceHero(advice: HomeAdvice, sizes: HomeSizes, onExplain: () -> Unit, onChooseSeats: () -> Unit) {
+    // At car size the advice itself is the heading, so Home2's "오늘의 편안한 운전" chip above it is left out.
     Column {
-        Chip("오늘의 편안한 운전", sizes)
-        Spacer(Modifier.height(16.dp))
         Text(
             advice.headline,
             fontSize = sizes.hero, lineHeight = sizes.hero * 1.16f, fontWeight = FontWeight.ExtraBold, color = Color.White,
@@ -168,15 +165,16 @@ internal fun AdviceHero(advice: HomeAdvice, sizes: HomeSizes, onExplain: () -> U
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             when (advice.action) {
-                HeroAction.EXPLAIN -> MotionPrimaryButton("왜 이런 조언을 받았나요?", onExplain)
+                // Named like the screen it opens, and short enough to share the line with the comparison.
+                HeroAction.EXPLAIN -> MotionPrimaryButton("왜 이 조언인가요?", onExplain)
                 HeroAction.CHOOSE_SEATS -> MotionPrimaryButton("좌석에서 운전자 고르기", onChooseSeats)
                 HeroAction.NONE -> Unit
             }
             if (advice.comparison != null && advice.comparisonLabel != null) {
                 Column(
-                    Modifier.glass(RoundedCornerShape(22.dp)).padding(horizontal = 22.dp, vertical = 10.dp),
+                    Modifier.glass(RoundedCornerShape(22.dp)).padding(horizontal = 20.dp, vertical = 10.dp),
                 ) {
-                    Text(advice.comparisonLabel, fontSize = sizes.small, color = MotionPalette.TextSecondary)
+                    Text(advice.comparisonLabel, fontSize = motionType.caption, color = MotionPalette.TextSecondary)
                     Text(advice.comparison, fontSize = sizes.body, fontWeight = FontWeight.ExtraBold, color = MotionPalette.TextStrong)
                 }
             }
@@ -214,20 +212,6 @@ private fun StatusPill(text: String, sizes: HomeSizes) {
 }
 
 @Composable
-private fun Chip(text: String, sizes: HomeSizes) {
-    Row(
-        Modifier.clip(RoundedCornerShape(50)).background(Color(0x3300AAD2))
-            .border(1.5.dp, Color(0x8C5AD2F0), RoundedCornerShape(50))
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(MotionIcons.Sparkle, contentDescription = null, tint = Color(0xFF7FE6FB), modifier = Modifier.size(20.dp))
-        Text(text, fontSize = sizes.small, fontWeight = FontWeight.Bold, color = MotionPalette.ChipText)
-    }
-}
-
-@Composable
 private fun NoticeStrip(sizes: HomeSizes, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxWidth().glass(RoundedCornerShape(20.dp)).padding(horizontal = 22.dp, vertical = 12.dp)) {
         MaterialTheme(typography = heroTypography(sizes)) {
@@ -252,10 +236,10 @@ private fun HeroCard(sizes: HomeSizes, modifier: Modifier, showCar: Boolean, con
         }
         // On a wide screen the card takes what is left of the height, so its content scrolls rather than clips.
         // A phone scrolls the whole home column instead, and nested vertical scrolling is not allowed.
-        val column = Modifier.fillMaxWidth(if (showCar) 0.58f else 1f)
+        val column = Modifier.fillMaxWidth(if (showCar) 0.66f else 1f)
         Column(
             (if (showCar) column.fillMaxHeight().verticalScroll(rememberScrollState()) else column)
-                .padding(horizontal = if (showCar) 40.dp else 20.dp, vertical = if (showCar) 30.dp else 20.dp),
+                .padding(horizontal = if (showCar) MotionSpace.XLarge else 20.dp, vertical = if (showCar) MotionSpace.Large else 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             MaterialTheme(typography = heroTypography(sizes)) {
@@ -281,28 +265,24 @@ private fun CardTitle(text: String, sizes: HomeSizes, action: String? = null, on
 
 @Composable
 private fun PeopleCard(people: PeopleSummary, onPeople: () -> Unit, sizes: HomeSizes, modifier: Modifier) {
-    Column(modifier.glass().padding(horizontal = 24.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        CardTitle("오늘 함께 타는 사람", sizes, action = "변경", onAction = onPeople)
+    Column(modifier.glass().padding(horizontal = MotionSpace.Large, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
+        CardTitle("함께 타는 사람", sizes, action = "변경", onAction = onPeople)
         if (people.shown.isEmpty()) {
             Text(
                 if (people.registered == 0) "아직 등록한 사람이 없어요. \"변경\"에서 좌석을 눌러 추가해요." else "좌석에 앉은 사람이 없어요.",
                 fontSize = sizes.body, color = MotionPalette.TextSecondary,
             )
         } else {
-            Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                people.shown.forEach { seated ->
-                    Row(Modifier.weight(1f, fill = false), verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        PersonAvatar(seated.person, Modifier.size(sizes.logo * 0.85f).border(2.dp, Color(0xB378DCFA), CircleShape))
-                        Column {
-                            Text(seated.person.displayName, fontSize = sizes.value, fontWeight = FontWeight.ExtraBold,
-                                maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(seated.role, fontSize = sizes.small, color = MotionPalette.TextSecondary, maxLines = 2)
-                        }
-                    }
+            // One person per line in seat order, so up to three fit the card at car size.
+            people.shown.forEach { seated ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MotionSpace.Base)) {
+                    PersonAvatar(seated.person, Modifier.size(sizes.avatar).border(2.dp, Color(0xB378DCFA), CircleShape))
+                    Text(seated.person.displayName, fontSize = sizes.body, fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    Text(seated.role, fontSize = sizes.small, color = MotionPalette.TextSecondary, maxLines = 1)
                 }
-                if (people.more > 0) Text("외 ${people.more}명", fontSize = sizes.body, color = MotionPalette.TextSecondary)
             }
+            if (people.more > 0) Text("외 ${people.more}명", fontSize = sizes.small, color = MotionPalette.TextSecondary)
         }
     }
 }
@@ -311,7 +291,7 @@ private val environmentIcons = listOf(MotionIcons.Air, MotionIcons.Cloud, Motion
 
 @Composable
 private fun EnvironmentPanel(card: EnvironmentCard, sizes: HomeSizes, modifier: Modifier) {
-    Column(modifier.glass().padding(horizontal = 24.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(modifier.glass().padding(horizontal = MotionSpace.Large, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("지금 차 안팎 환경", fontSize = sizes.section, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
             card.updatedAt?.let { Text(it, fontSize = sizes.small, color = MotionPalette.TextTertiary) }
@@ -323,12 +303,13 @@ private fun EnvironmentPanel(card: EnvironmentCard, sizes: HomeSizes, modifier: 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             card.items.forEachIndexed { index, item ->
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    IconBubble(environmentIcons[index], warm = item.warning, size = sizes.logo * 0.8f)
+                    verticalArrangement = Arrangement.spacedBy(MotionSpace.Tiny)) {
+                    IconBubble(environmentIcons[index], warm = item.warning, size = sizes.iconBubble)
                     Text(item.label, fontSize = sizes.small, color = MotionPalette.TextSecondary, textAlign = TextAlign.Center)
                     Text(
                         item.value,
-                        fontSize = if (item.hasValue) sizes.value else sizes.body,
+                        // A missing value says why in words, which wrap; the label size keeps them to two lines.
+                        fontSize = if (item.hasValue) sizes.value else sizes.small,
                         fontWeight = if (item.hasValue) FontWeight.ExtraBold else FontWeight.SemiBold,
                         color = if (item.warning) MotionPalette.Caution else if (item.hasValue) MotionPalette.Text else MotionPalette.TextTertiary,
                         textAlign = TextAlign.Center,
@@ -363,10 +344,10 @@ private fun IconBubble(icon: ImageVector, warm: Boolean, size: Dp) {
 @Composable
 private fun GuidanceCard(sizes: HomeSizes, modifier: Modifier, scrolls: Boolean, content: @Composable () -> Unit) {
     // Only the fixed-height card on a wide screen scrolls; a phone already scrolls the whole home column.
-    val card = modifier.glass().padding(horizontal = 22.dp, vertical = 20.dp)
+    val card = modifier.glass().padding(horizontal = MotionSpace.Large, vertical = 20.dp)
     Column(
         if (scrolls) card.verticalScroll(rememberScrollState()) else card,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(MotionSpace.Base),
     ) {
         Text("설정", fontSize = sizes.section, fontWeight = FontWeight.ExtraBold)
         MaterialTheme(typography = heroTypography(sizes).copy(labelLarge = TextStyle(fontSize = sizes.small, fontWeight = FontWeight.Bold))) {
@@ -386,7 +367,7 @@ private fun RecentTrips(recent: List<RecentTripItem>, links: HomeLinks, sizes: H
             }
         } else if (columns > 1) {
             Row(horizontalArrangement = Arrangement.spacedBy(sizes.gap)) {
-                recent.forEach { TripCard(it, onTrip, sizes, Modifier.weight(1f).height(112.dp)) }
+                recent.forEach { TripCard(it, onTrip, sizes, Modifier.weight(1f).height(120.dp)) }
                 repeat(columns - recent.size) { Spacer(Modifier.weight(1f)) }
             }
         } else {
@@ -399,7 +380,7 @@ private fun RecentTrips(recent: List<RecentTripItem>, links: HomeLinks, sizes: H
 private fun TripCard(item: RecentTripItem, onTrip: (TripId) -> Unit, sizes: HomeSizes, modifier: Modifier) {
     Row(
         modifier.glass(RoundedCornerShape(24.dp)).clickable(role = Role.Button) { onTrip(item.id) }
-            .padding(start = 22.dp, end = 16.dp, top = 14.dp, bottom = 14.dp),
+            .padding(start = MotionSpace.Large, end = MotionSpace.Base, top = MotionSpace.Base, bottom = MotionSpace.Base),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -416,7 +397,7 @@ private fun TripCard(item: RecentTripItem, onTrip: (TripId) -> Unit, sizes: Home
                 }
             }
         }
-        Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionPalette.NavIdle, modifier = Modifier.size(22.dp))
+        Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionPalette.NavIdle, modifier = Modifier.size(MotionSpace.IconMedium))
     }
 }
 
