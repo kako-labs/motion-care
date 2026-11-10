@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import dev.motioncare.core.ui.CompactType
 import dev.motioncare.core.ui.MotionType
 import dev.motioncare.core.ui.WideType
+import dev.motioncare.core.ui.WordLineBreak
 
 // Colors, surfaces, the theme and the type scale are shared with the history screens in core:ui.
 
@@ -42,9 +43,10 @@ internal val CompactSizes = sizes(CompactType, outer = 0.dp, gap = 12.dp, logo =
 
 /** The trip controls inside the hero card read at the hero's scale. */
 internal fun heroTypography(sizes: HomeSizes) = Typography(
-    headlineMedium = TextStyle(fontSize = sizes.hero * 0.8f, fontWeight = FontWeight.ExtraBold, lineHeight = sizes.hero),
-    titleMedium = TextStyle(fontSize = sizes.section, fontWeight = FontWeight.ExtraBold),
-    bodyLarge = TextStyle(fontSize = sizes.heroBody, lineHeight = sizes.heroBody * 1.45f),
-    bodyMedium = TextStyle(fontSize = sizes.body),
-    labelLarge = TextStyle(fontSize = sizes.body, fontWeight = FontWeight.Bold),
+    headlineMedium = TextStyle(fontSize = sizes.hero * 0.8f, fontWeight = FontWeight.ExtraBold, lineHeight = sizes.hero,
+        lineBreak = WordLineBreak),
+    titleMedium = TextStyle(fontSize = sizes.section, fontWeight = FontWeight.ExtraBold, lineBreak = WordLineBreak),
+    bodyLarge = TextStyle(fontSize = sizes.heroBody, lineHeight = sizes.heroBody * 1.45f, lineBreak = WordLineBreak),
+    bodyMedium = TextStyle(fontSize = sizes.body, lineBreak = WordLineBreak),
+    labelLarge = TextStyle(fontSize = sizes.body, fontWeight = FontWeight.Bold, lineBreak = WordLineBreak),
 )
