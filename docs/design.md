@@ -136,6 +136,8 @@
 
 넓은 단계는 시안의 px를 160dpi에서 같은 sp로 옮긴 값이고(큰 제목 68→54, 앱 이름 50→44, 본문 26~28→23은 창 크기에 맞춘 제품 판단), 가장 작은 글자가 Pleos 권장 18px 아래로 내려가지 않게 했습니다. 좁은 단계는 기록 화면이 휴대폰에서 쓰던 크기입니다.
 
+- **줄바꿈:** 모든 글꼴 단계가 어절 사이에서만 줄을 바꿉니다(`WordLineBreak`, `LineBreak.WordBreak.Phrase`). 기본값은 한글 글자 사이 어디서나 끊어 "네트워크 연결 필/요"처럼 보였습니다. Android 문서는 이 설정이 로캘이 지원할 때만 적용된다고 하고 API 35의 자동 설정이 한국어에 이 방식을 쓴다고만 적어, Pleos(API 34) 에뮬레이터에서 한국어에 적용되는 것을 확인했습니다("네트워크 연결 / 필요"). [LineBreakConfig](https://developer.android.com/reference/android/graphics/text/LineBreakConfig)
+
 ### 색
 
 | 이름 | 값 |

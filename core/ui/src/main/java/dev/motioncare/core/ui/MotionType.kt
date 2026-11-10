@@ -7,6 +7,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -55,11 +56,18 @@ val motionType: MotionType
     @Composable @ReadOnlyComposable get() = LocalMotionType.current
 
 /**
+ * Korean wraps between words, as it is read, instead of between any two letters. Android applies phrase breaking where
+ * the locale supports it and ignores it elsewhere.
+ */
+val WordLineBreak = LineBreak.Simple.copy(wordBreak = LineBreak.WordBreak.Phrase)
+
+/**
  * Material styles mapped onto the scale so components without an explicit size still match. Line heights are left to
  * the font so a larger size never overlaps the line below.
  */
 fun motionTypography(type: MotionType): Typography {
-    fun style(size: TextUnit, weight: FontWeight = FontWeight.Normal) = TextStyle(fontSize = size, fontWeight = weight)
+    fun style(size: TextUnit, weight: FontWeight = FontWeight.Normal) =
+        TextStyle(fontSize = size, fontWeight = weight, lineBreak = WordLineBreak)
     return Typography(
         displayLarge = style(type.display, FontWeight.ExtraBold),
         displayMedium = style(type.display, FontWeight.ExtraBold),
