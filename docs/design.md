@@ -187,6 +187,15 @@ Codex CLI로 생성한 이미지입니다. 시안 안에서는 `/_blob/<ID>`로 
 | 예시 프로필 지영 | `avatar_woman_s.jpg` | `b9b9803b95f883f521b56d7ead990c8f` |
 | 예시 프로필 도윤 | `avatar_boy_t.jpg` | `fb413833e6479ba6e3b7d29344a17f81` |
 
+#### 고를 수 있는 캐릭터
+
+사람을 추가하거나 프로필을 고칠 때 고르는 캐릭터 24개입니다(`feature/history/src/main/res/drawable-nodpi/mc_character_01~24.png`, 256×256). 추가 창은 무작위 캐릭터로 시작하고, "다른 캐릭터"는 지금과 다른 캐릭터를 무작위로 고릅니다. 고른 캐릭터는 사람마다 `PersonProfile.avatar`(`character_01` 등)로 저장되고, 고르지 않은 사람은 지금처럼 성인·어린이 얼굴이 보입니다.
+
+- **출처와 라이선스:** [DiceBear](https://www.dicebear.com/) 9.4.3의 "Adventurer" 스타일(그림 Lisa Wischofsky, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))로 그려 PNG로 넣었습니다. CC BY는 저작자 표시가 필요해 캐릭터를 고르는 화면 아래에 "캐릭터 그림: Adventurer, Lisa Wischofsky (CC BY 4.0)"를 적었습니다. 그림 자체는 고치지 않았습니다. 저작자 표시가 필요 없는 CC0 스타일(Lorelei, Open Peeps 등)도 비교했지만, 아이 동승자에게 어울리는 표정과 색은 Adventurer가 낫다고 판단했습니다(제품 판단).
+- **고른 기준:** 무작위로 두면 화난 얼굴, 혀 내민 얼굴, 선글라스가 섞여 입 9종·눈 18종·눈썹 10종으로 제한하고, 투명 안경만 남겼습니다. 후보 40명 가운데 피부색, 머리색, 나이대가 고르게 섞이게 24명을 골랐습니다(제품 판단).
+- **바꾸지 말 것:** 키(`character_01`~`24`)는 저장된 값이라 순서와 이름을 바꾸지 않습니다. 새 캐릭터는 뒤에 추가합니다.
+- **화면:** [사람 추가 창](pleos-emulator/shots/112_add_person_character.jpg)
+
 ## 시안에 아직 반영되지 않은 Pleos 제약
 
 2026-11-03에 Pleos Connect 에뮬레이터 v2.1.0(API 34)에서 시험 앱으로 측정한 결과입니다. 실차와 App Market 심사에서는 확인하지 못했고, 권한은 adb로 강제로 부여했습니다. 측정 방법과 캡처는 [측정 기록](pleos-emulator/README.md)에 있습니다.
