@@ -1,5 +1,6 @@
 package dev.motioncare.feature.history.departure
 
+import dev.motioncare.core.ui.MotionSpace
 import dev.motioncare.core.ui.motionType
 import androidx.compose.foundation.Image
 import androidx.compose.material3.Icon
@@ -536,16 +537,16 @@ private fun SeatPicker(
             Column(
                 // The width cap comes first: after fillMaxWidth the cap could not narrow the popup any more.
                 // The surface is opaque so the screen behind does not show through the list.
-                Modifier.widthIn(max = 420.dp).fillMaxWidth().heightIn(max = 620.dp)
+                Modifier.widthIn(max = 600.dp).fillMaxWidth().heightIn(max = 900.dp)
                     .background(Brush.verticalGradient(listOf(Color(0xFF0E2A4F), Color(0xFF071A33))), RoundedCornerShape(24.dp))
                     .border(1.5.dp, MotionLine, RoundedCornerShape(24.dp))
-                    .padding(20.dp).verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                    .padding(MotionSpace.Large).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(MotionSpace.Medium),
             ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(current.label(), fontSize = motionType.section, fontWeight = FontWeight.Medium)
-                        Text("앉을 사람을 선택해 주세요.", color = MotionMuted, fontSize = motionType.caption)
+                        Text("앉을 사람을 선택해 주세요.", color = MotionMuted, fontSize = motionType.label)
                     }
                     RoundIconButton("✕", onDismiss)
                 }
@@ -556,12 +557,12 @@ private fun SeatPicker(
                         border = BorderStroke(1.dp, MotionCyan.copy(.42f)),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                PersonAvatar(person, Modifier.size(46.dp))
+                        Column(Modifier.padding(MotionSpace.Base), verticalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MotionSpace.Base)) {
+                                PersonAvatar(person, Modifier.size(MotionSpace.AvatarSmall))
                                 Text(person.displayName, Modifier.weight(1f), fontSize = motionType.body, fontWeight = FontWeight.Medium)
                             }
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
                                 SecondaryAction("프로필", { onProfile(person.id) }, Modifier.weight(1f))
                                 SecondaryAction("자리 비우기", { onClear(current) }, Modifier.weight(1f))
                             }
@@ -576,16 +577,16 @@ private fun SeatPicker(
                         enabled = !blocked,
                         color = Color.Transparent,
                         shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 62.dp).alpha(if (blocked) .38f else 1f),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = MotionSpace.RowSingle).alpha(if (blocked) .38f else 1f),
                     ) {
                         Row(
-                            Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                            Modifier.padding(horizontal = MotionSpace.Small, vertical = MotionSpace.Small),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(11.dp),
+                            horizontalArrangement = Arrangement.spacedBy(MotionSpace.Base),
                         ) {
-                            PersonAvatar(person, Modifier.size(42.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(person.displayName, fontSize = motionType.label, fontWeight = FontWeight.Medium)
+                            PersonAvatar(person, Modifier.size(MotionSpace.AvatarSmall))
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MotionSpace.Tiny)) {
+                                Text(person.displayName, fontSize = motionType.body, fontWeight = FontWeight.Medium)
                                 Text(
                                     when {
                                         blocked -> "어린이는 운전석을 선택할 수 없어요."
@@ -594,10 +595,10 @@ private fun SeatPicker(
                                         else -> "성인"
                                     },
                                     color = if (elsewhere != null) MotionCyan else MotionMuted,
-                                    fontSize = motionType.caption,
+                                    fontSize = motionType.label,
                                 )
                             }
-                            Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(24.dp))
+                            Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(MotionSpace.IconMedium))
                         }
                     }
                 }

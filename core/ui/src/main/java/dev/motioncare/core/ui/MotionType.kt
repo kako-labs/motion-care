@@ -14,9 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * One type scale for every screen. The wide set is Home2's sizes on the car window (its px become sp at 160 dpi) and
- * never goes below 18, the smallest pixel height the Pleos font guide recommends. The compact set is for phones.
- * See docs/design.md.
+ * One type scale for every screen. The wide set is for the car window: reading text at Google's 32 dp primary size for
+ * car screens and nothing below its 24 dp secondary size, so text held at arm's length meets ISO 15008's acceptable
+ * angle on a 17-inch screen. The compact set is for phones. See docs/design.md.
  */
 @Immutable
 data class MotionType(
@@ -39,7 +39,7 @@ data class MotionType(
 )
 
 val WideType = MotionType(
-    display = 54.sp, title = 44.sp, headline = 30.sp, section = 26.sp, lead = 26.sp, body = 23.sp, label = 20.sp, caption = 18.sp,
+    display = 60.sp, title = 48.sp, headline = 40.sp, section = 36.sp, lead = 32.sp, body = 32.sp, label = 28.sp, caption = 24.sp,
 )
 
 val CompactType = MotionType(

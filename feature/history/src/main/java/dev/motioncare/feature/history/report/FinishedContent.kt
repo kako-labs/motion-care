@@ -1,5 +1,6 @@
 package dev.motioncare.feature.history.report
 
+import dev.motioncare.core.ui.MotionSpace
 import dev.motioncare.core.ui.motionType
 import dev.motioncare.feature.history.presentation.BActionRibbon
 import androidx.compose.foundation.layout.*
@@ -105,7 +106,7 @@ fun FinishedRoute(
         passengerIds.forEach { id ->
             val person = state.people.firstOrNull { it.id == id } ?: return@forEach
             val saved = state.feedback.firstOrNull { it.targetPersonId == id }
-            OutlinedButton(onClick = onFeedback, modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)) {
+            OutlinedButton(onClick = onFeedback, modifier = Modifier.fillMaxWidth().heightIn(min = MotionSpace.Touch)) {
                 PersonAvatar(person, Modifier.size(44.dp)); Spacer(Modifier.width(10.dp)); Text(person.displayName, Modifier.weight(1f))
                 val score = (saved?.answer as? FeedbackAnswer.Rating)?.value
                 Text(score?.let { "★".repeat(it) } ?: "평가하기", color = MotionCyan)

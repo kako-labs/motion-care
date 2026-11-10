@@ -102,7 +102,7 @@ internal fun CabinPanel(summary: CabinSummary, modifier: Modifier = Modifier) {
         if (summary.values.isEmpty()) {
             Text("이 운행에 저장된 환경 기록이 없어요.", color = MotionSubtle)
         } else summary.values.forEach { item ->
-            Row(Modifier.fillMaxWidth().heightIn(min = 44.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().heightIn(min = 64.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(item.label, Modifier.weight(1f), color = MotionSubtle)
                 Text(item.end?.let { "출발 ${item.start} → 종료 $it" } ?: item.start, color = MotionText)
             }

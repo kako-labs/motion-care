@@ -2,6 +2,8 @@ package dev.motioncare.feature.history.presentation
 
 import dev.motioncare.core.ui.motionType
 import dev.motioncare.core.ui.MotionSecondaryButton
+import dev.motioncare.core.ui.MotionChip
+import dev.motioncare.core.ui.MotionSpace
 import dev.motioncare.feature.history.ui.SectionTitle
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Icon
@@ -26,8 +28,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -103,15 +103,17 @@ internal fun BActionRibbon(label: String, title: String, enabled: Boolean = true
     }
 }
 
+/** One row of a grid; [columns] keeps a short last row in the same columns as the rows above it. */
 @Composable
-private fun BMetrics(metrics: List<BMetric>, modifier: Modifier = Modifier) {
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+private fun BMetrics(metrics: List<BMetric>, modifier: Modifier = Modifier, columns: Int = metrics.size) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MotionSpace.Large)) {
         metrics.forEach { metric ->
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MotionSpace.Small)) {
                 Text(metric.label, color = BSubtle, fontSize = motionType.label)
                 Text(metric.value ?: "기록 없음", color = BText, fontSize = motionType.headline, fontWeight = FontWeight.Bold)
             }
         }
+        repeat(columns - metrics.size) { Spacer(Modifier.weight(1f)) }
     }
 }
 
@@ -141,10 +143,10 @@ internal fun BReportPanel(state: BReportUi, onFeedback: () -> Unit, modifier: Mo
             }
         }
         SectionTitle("관찰된 움직임")
-        state.movements.chunked(3).forEach { BMetrics(it) }
+        state.movements.chunked(3).forEach { BMetrics(it, columns = 3) }
         HorizontalDivider(color = BLine)
         BoxWithConstraints {
-            if (maxWidth >= 680.dp) Row(horizontalArrangement = Arrangement.spacedBy(30.dp)) {
+            if (maxWidth >= 680.dp) Row(horizontalArrangement = Arrangement.spacedBy(MotionSpace.XLarge)) {
                 BReportResponse(state.feedback, onFeedback, Modifier.weight(1f))
                 BReportGuidance(state.guidance, Modifier.weight(1f))
             } else Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
@@ -188,7 +190,7 @@ internal fun BPassengerProfilePanel(
             MotionSecondaryButton("프로필 편집", onEdit)
         }
         Text("${name}에게 편안한 이동을.", color = BText, fontSize = motionType.headline)
-        preferences.chunked(3).forEach { BMetrics(it) }
+        preferences.chunked(3).forEach { BMetrics(it, columns = 3) }
         BGlass(Modifier.fillMaxWidth()) {
             SectionTitle("조금 더 신경 쓸 순간")
             if (moments.isEmpty()) Text("아직 등록하거나 응답한 정보가 없어요.", color = BSubtle, fontSize = motionType.label)
@@ -224,24 +226,26 @@ internal fun BFeedbackPanel(
                     val selected = rating != null && score <= rating
                     Surface(onClick = { onRating(score) }, enabled = !saving, shape = RoundedCornerShape(14.dp),
                         color = if (selected) MotionSelected else Color(0x06FFFFFF), border = BorderStroke(1.dp, if (selected) BCyan.copy(.45f) else BLine),
-                        modifier = Modifier.width(starWidth).heightIn(min = 72.dp).semantics { contentDescription = "${score}점" }) {
-                        Box(Modifier.padding(10.dp), contentAlignment = Alignment.Center) { Text(if (selected) "★" else "☆", color = if (selected) BCyan else BSubtle, fontSize = motionType.headline) }
+                        modifier = Modifier.width(starWidth).heightIn(min = 96.dp).semantics { contentDescription = "${score}점" }) {
+                        Box(Modifier.padding(10.dp), contentAlignment = Alignment.Center) { Text(if (selected) "★" else "☆", color = if (selected) BCyan else BSubtle, fontSize = motionType.title) }
                     }
                 }
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("많이 불편했어요", color = BSubtle, fontSize = motionType.caption)
-            Text("아주 편안했어요", color = BSubtle, fontSize = motionType.caption)
+            Text("많이 불편했어요", color = BSubtle, fontSize = motionType.label)
+            Text("아주 편안했어요", color = BSubtle, fontSize = motionType.label)
         }
         HorizontalDivider(color = BLine)
         SectionTitle("불편했던 순간이 있었나요?")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                reasons.forEach { reason -> FilterChip(selected = reason.id in selectedReasons, onClick = { onReason(reason.id) }, enabled = !saving,
-                    colors = FilterChipDefaults.filterChipColors(containerColor = Color(0x06FFFFFF), labelColor = BSubtle,
-                        selectedContainerColor = MotionSelected, selectedLabelColor = BText),
-                    border = BorderStroke(1.dp, if (reason.id in selectedReasons) BCyan.copy(.45f) else BLine),
-                    label = { Text(reason.label) }, modifier = Modifier.heightIn(min = 56.dp)) }
+        // Three car-size choices to a row across the panel's width.
+        reasons.chunked(3).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
+                row.forEach { reason ->
+                    MotionChip(reason.label, reason.id in selectedReasons, { onReason(reason.id) }, Modifier.weight(1f), enabled = !saving)
+                }
+                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
         }
         BActionRibbon("이번 이동의 기록에", if (saving) "저장 중이에요" else "나의 응답 남기기", enabled = rating in 1..5 && !saving, onClick = onSave)
         MotionSecondaryButton("건너뛰기", onSkip, Modifier.fillMaxWidth(), enabled = !saving)

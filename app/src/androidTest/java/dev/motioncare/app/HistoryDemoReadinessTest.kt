@@ -98,7 +98,9 @@ class HistoryDemoReadinessTest {
         compose.runOnUiThread { compose.activity.intent.removeExtra("empty"); compose.activity.intent.putExtra("interrupted", true) }
         compose.activityRule.scenario.recreate()
         click("운행 기록")
-        click("11월 4일", substring = true)
+        // The date heads its day's group; the row itself shows the time and the status.
+        compose.onNodeWithText("11월 4일", substring = true).assertExists()
+        click("중단됨")
         compose.onNodeWithText("중단된 운행").assertExists()
     }
 

@@ -184,12 +184,20 @@ def drive(label, steps, hvac):
     console("/vehicle/gear?gear=Park")
     time.sleep(2)
     e2e.app_screen()
-    finished = e2e.tap("운행 기록 종료")
+    # The home may still be reading the saved trips when it comes to the front, so the button is looked for again.
+    finished = None
+    for _ in range(8):
+        finished = e2e.tap("운행 기록 종료")
+        if finished:
+            break
+        time.sleep(2)
+    if not finished:
+        sys.exit(f"{label}: the finish button did not appear")
     time.sleep(4)
     # The finish card stays on the home screen until dismissed; the next trip should start from the advice.
     e2e.tap("완료")
     time.sleep(2)
-    print(f"{label}: {len(steps)} s, finish tapped: {bool(finished)}", flush=True)
+    print(f"{label}: {len(steps)} s, finished", flush=True)
 
 
 def finished_trips():

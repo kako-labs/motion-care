@@ -28,18 +28,30 @@ internal data class HomeSizes(
     val value: TextUnit,
     val tripDate: TextUnit,
     val navButton: Dp,
+    /** Height of the people and environment cards under the hero; the settings column beside them is as tall. */
+    val infoRow: Dp,
+    val peopleWidth: Dp,
+    val settingsWidth: Dp,
+    val avatar: Dp,
+    val iconBubble: Dp,
 )
 
 // Text sizes come from the shared scale so the home and every other screen read alike.
-private fun sizes(type: MotionType, outer: Dp, gap: Dp, logo: Dp, navButton: Dp) = HomeSizes(
+private fun sizes(type: MotionType, outer: Dp, gap: Dp, logo: Dp, navButton: Dp, infoRow: Dp, peopleWidth: Dp,
+    settingsWidth: Dp, avatar: Dp, iconBubble: Dp) = HomeSizes(
     outer = outer, gap = gap, title = type.title, subtitle = type.label, logo = logo, hero = type.display,
     heroBody = type.lead, section = type.section, body = type.body, small = type.label, value = type.headline,
-    tripDate = type.section, navButton = navButton,
+    tripDate = type.section, navButton = navButton, infoRow = infoRow, peopleWidth = peopleWidth,
+    settingsWidth = settingsWidth, avatar = avatar, iconBubble = iconBubble,
 )
 
-internal val WideSizes = sizes(WideType, outer = 12.dp, gap = 14.dp, logo = 76.dp, navButton = 118.dp)
+// The wide set fills the 1682 x 1210 car window without scrolling: header 96, hero about 420, cards 312, recent trips
+// 168 and the tab bar 88. See docs/design.md#앱에-구현한-홈-화면.
+internal val WideSizes = sizes(WideType, outer = 12.dp, gap = 16.dp, logo = 76.dp, navButton = 108.dp, infoRow = 312.dp,
+    peopleWidth = 430.dp, settingsWidth = 440.dp, avatar = 56.dp, iconBubble = 64.dp)
 
-internal val CompactSizes = sizes(CompactType, outer = 0.dp, gap = 12.dp, logo = 48.dp, navButton = 84.dp)
+internal val CompactSizes = sizes(CompactType, outer = 0.dp, gap = 12.dp, logo = 48.dp, navButton = 84.dp, infoRow = 0.dp,
+    peopleWidth = 0.dp, settingsWidth = 0.dp, avatar = 48.dp, iconBubble = 40.dp)
 
 /** The trip controls inside the hero card read at the hero's scale. */
 internal fun heroTypography(sizes: HomeSizes) = Typography(

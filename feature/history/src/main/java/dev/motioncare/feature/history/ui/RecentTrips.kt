@@ -2,6 +2,11 @@ package dev.motioncare.feature.history.ui
 
 import dev.motioncare.core.ui.motionType
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
+import dev.motioncare.core.ui.MotionSpace
+import dev.motioncare.core.ui.glass
 import androidx.compose.material3.Icon
 import dev.motioncare.core.ui.MotionIcons
 import androidx.compose.foundation.horizontalScroll
@@ -50,13 +55,14 @@ import dev.motioncare.feature.history.HistoryViewModel
     // Only this head unit's own records exist; say so, with the span they cover.
     val period = state.records.minOfOrNull { it.startedAtEpochMs }?.let { "이 기기 기록 · ${tripDate(it)}부터 · ${state.records.size}건" }
     MotionCareBackground {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(22.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(MotionSpace.Medium),
+            verticalArrangement = Arrangement.spacedBy(MotionSpace.Large)) {
             ScreenTitle("전체 운행 기록", period ?: "이 기기 기록", onBack)
-            if (people.isNotEmpty()) Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (people.isNotEmpty()) Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
                 FilterTile(filter == null, { filter = null }) { Text("전체", fontSize = motionType.body, fontWeight = FontWeight.Bold) }
                 people.forEach { person ->
                     FilterTile(filter == person.id, { filter = if (filter == person.id) null else person.id }) {
-                        PersonAvatar(person, Modifier.size(48.dp)); Spacer(Modifier.width(10.dp))
+                        PersonAvatar(person, Modifier.size(MotionSpace.AvatarSmall)); Spacer(Modifier.width(MotionSpace.Medium))
                         Text(person.displayName, fontSize = motionType.body, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -68,35 +74,59 @@ import dev.motioncare.feature.history.HistoryViewModel
 
 @Composable private fun FilterTile(selected: Boolean, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
     Surface(onClick = onClick, shape = RoundedCornerShape(12.dp), color = if (selected) MotionSelected else Color.Transparent,
-        border = BorderStroke(1.dp, if (selected) MotionCyan.copy(.5f) else MotionLine), modifier = Modifier.heightIn(min = 60.dp)) {
-        Row(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, content = content)
+        border = BorderStroke(1.dp, if (selected) MotionCyan.copy(.5f) else MotionLine), modifier = Modifier.heightIn(min = MotionSpace.Touch)) {
+        Row(Modifier.padding(horizontal = MotionSpace.Large, vertical = MotionSpace.Small), verticalAlignment = Alignment.CenterVertically, content = content)
     }
 }
 
+/**
+ * Trips grouped by day, one panel per day, so a row needs only the time. A row spreads its time, length, riders and
+ * source across the width as columns instead of pushing them to both ends.
+ */
 @Composable fun RecentTrips(records: List<TripRecord>, onSelect: (TripId) -> Unit, riders: (TripId) -> List<PersonProfile> = { emptyList() }) {
-    GlassPanel(Modifier.fillMaxWidth()) {
-        if (records.isEmpty()) Text("아직 기록이 없습니다.", color = MotionSubtle)
-        records.forEach { trip ->
-            TextButton(onClick = { onSelect(trip.id) }, modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp),
-                colors = ButtonDefaults.textButtonColors(contentColor = MotionText)) {
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                    Text(tripTime(trip.startedAtEpochMs), fontSize = motionType.body, fontWeight = FontWeight.Bold)
-                    val minutes = trip.endedAtEpochMs?.let { ((it - trip.startedAtEpochMs) / 60_000).coerceAtLeast(0) }
-                    Text(when (trip.status) {
-                        TripStatus.COMPLETED -> minutes?.let { "${it}분" } ?: "완료"
-                        TripStatus.RECORDING -> "● 기록 중"
-                        TripStatus.INTERRUPTED -> "중단됨"
-                    }, color = MotionSubtle, fontSize = motionType.label)
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy((-10).dp)) {
-                    riders(trip.id).forEach { PersonAvatar(it, Modifier.size(44.dp)) }
-                }
-                Spacer(Modifier.width(20.dp))
-                Text(if (trip.origin == DataOrigin.VEHICLE) "차량 기록" else "합성 주행", color = MotionCyan)
-                Spacer(Modifier.width(12.dp))
-                Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionSubtle, modifier = Modifier.size(24.dp))
+    if (records.isEmpty()) {
+        GlassPanel(Modifier.fillMaxWidth()) { Text("아직 기록이 없습니다.", color = MotionSubtle) }
+        return
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(MotionSpace.Large)) {
+        records.groupBy { tripDate(it.startedAtEpochMs) }.forEach { (day, trips) ->
+            Column(Modifier.fillMaxWidth().glass(RoundedCornerShape(28.dp)).padding(vertical = MotionSpace.Base)) {
+                SectionTitle(day, Modifier.padding(horizontal = MotionSpace.Large, vertical = MotionSpace.Small))
+                trips.forEachIndexed { index, trip -> TripRow(trip, riders(trip.id), onSelect, divider = index < trips.lastIndex) }
             }
-            HorizontalDivider(color = MotionLine)
         }
+    }
+}
+
+@Composable private fun TripRow(trip: TripRecord, people: List<PersonProfile>, onSelect: (TripId) -> Unit, divider: Boolean) {
+    val minutes = trip.endedAtEpochMs?.let { ((it - trip.startedAtEpochMs) / 60_000).coerceAtLeast(0) }
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = MotionSpace.RowSingle)
+                .clickable(role = Role.Button) { onSelect(trip.id) }
+                .padding(horizontal = MotionSpace.Large, vertical = MotionSpace.Medium),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(MotionSpace.Large),
+        ) {
+            Text(tripClock(trip.startedAtEpochMs), Modifier.width(200.dp), fontSize = motionType.body, fontWeight = FontWeight.Bold)
+            Text(when (trip.status) {
+                TripStatus.COMPLETED -> minutes?.let { if (it == 0L) "1분 미만" else "${it}분" } ?: "완료"
+                TripStatus.RECORDING -> "● 기록 중"
+                TripStatus.INTERRUPTED -> "중단됨"
+            }, Modifier.width(140.dp), color = MotionSubtle, fontSize = motionType.label)
+            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(MotionSpace.Base)) {
+                if (people.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy((-14).dp)) {
+                        people.forEach { PersonAvatar(it, Modifier.size(MotionSpace.AvatarSmall)) }
+                    }
+                    Text(people.joinToString(" · ") { it.displayName }, fontSize = motionType.label, color = MotionText,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                } else Text("탑승자 미지정", fontSize = motionType.label, color = MotionMuted)
+            }
+            Text(if (trip.origin == DataOrigin.VEHICLE) "차량 기록" else "합성 주행", color = MotionCyan, fontSize = motionType.label)
+            Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionSubtle, modifier = Modifier.size(MotionSpace.IconMedium))
+        }
+        if (divider) HorizontalDivider(Modifier.padding(horizontal = MotionSpace.Large), color = MotionLine)
     }
 }

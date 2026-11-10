@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-private val ButtonShape = RoundedCornerShape(18.dp)
+private val ButtonShape = RoundedCornerShape(20.dp)
 
 /** Home2's primary button for every screen: a blue gradient with a light edge and white bold text. */
 @Composable
@@ -36,7 +36,7 @@ fun MotionPrimaryButton(
 ) {
     Button(
         onClick = onClick, enabled = enabled,
-        modifier = modifier.heightIn(min = 64.dp).alpha(if (enabled) 1f else 0.5f)
+        modifier = modifier.heightIn(min = MotionSpace.Touch).alpha(if (enabled) 1f else 0.5f)
             .background(MotionBrushes.Primary, ButtonShape).border(1.5.dp, MotionPalette.ButtonBorder, ButtonShape),
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent, contentColor = Color.White,
@@ -57,7 +57,7 @@ fun MotionSecondaryButton(
     leadingIcon: ImageVector? = null,
 ) {
     OutlinedButton(
-        onClick = onClick, enabled = enabled, modifier = modifier.heightIn(min = 64.dp).glass(ButtonShape),
+        onClick = onClick, enabled = enabled, modifier = modifier.heightIn(min = MotionSpace.Touch).glass(ButtonShape),
         border = BorderStroke(1.5.dp, MotionPalette.CardBorder), shape = ButtonShape,
         colors = ButtonDefaults.outlinedButtonColors(contentColor = MotionPalette.Text),
     ) { ButtonLabel(text, icon, leadingIcon) }
@@ -66,12 +66,12 @@ fun MotionSecondaryButton(
 @Composable
 private fun RowScope.ButtonLabel(text: String, icon: ImageVector?, leadingIcon: ImageVector?) {
     if (leadingIcon != null) {
-        Icon(leadingIcon, contentDescription = null, modifier = Modifier.size(22.dp))
-        Spacer(Modifier.width(10.dp))
+        Icon(leadingIcon, contentDescription = null, modifier = Modifier.size(MotionSpace.IconSmall))
+        Spacer(Modifier.width(MotionSpace.Medium))
     }
     Text(text, fontSize = motionType.body, fontWeight = FontWeight.Bold)
     if (icon != null) {
-        Spacer(Modifier.width(10.dp))
-        Icon(icon, contentDescription = null, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.width(MotionSpace.Medium))
+        Icon(icon, contentDescription = null, modifier = Modifier.size(MotionSpace.IconSmall))
     }
 }

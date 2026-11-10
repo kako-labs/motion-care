@@ -4,22 +4,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import dev.motioncare.core.ui.MotionChip
+import dev.motioncare.core.ui.MotionSecondaryButton
+import dev.motioncare.core.ui.MotionSpace
+import dev.motioncare.core.ui.MotionSwitchRow
+import dev.motioncare.core.ui.motionType
 import dev.motioncare.data.trip.GuidanceSound
 import dev.motioncare.feature.driving.guidance.guidanceCardsAllowed
 
@@ -37,28 +38,19 @@ fun GuidanceSwitch(
     onSound: (GuidanceSound) -> Unit,
     onTurnOnNotifications: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("주행 중 안내", Modifier.weight(1f))
-            Switch(checked = enabled, onCheckedChange = onChange)
-        }
+    Column(verticalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
+        MotionSwitchRow("주행 중 안내", enabled, onChange)
         if (enabled && cardsBlocked) {
-            Text("알림이 꺼져 있어 주행 중 안내 카드가 뜨지 않아요", color = MaterialTheme.colorScheme.error)
-            TextButton(onClick = onTurnOnNotifications) { Text("알림 켜기") }
+            Text("알림이 꺼져 있어 주행 중 안내 카드가 뜨지 않아요", color = MaterialTheme.colorScheme.error,
+                fontSize = motionType.label)
+            MotionSecondaryButton("알림 켜기", onTurnOnNotifications, Modifier.fillMaxWidth())
         }
         if (enabled && !cardsBlocked) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("안내 소리", Modifier.weight(1f))
-                FilterChip(
-                    selected = sound == GuidanceSound.CHIME,
-                    onClick = { onSound(GuidanceSound.CHIME) },
-                    label = { Text("알림음") },
-                )
-                FilterChip(
-                    selected = sound == GuidanceSound.VOICE,
-                    onClick = { onSound(GuidanceSound.VOICE) },
-                    label = { Text("음성") },
-                )
+            // The label sits above the two choices, which take the card's width as car-size touch targets.
+            Text("안내 소리", fontSize = motionType.body, fontWeight = FontWeight.SemiBold)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
+                MotionChip("알림음", sound == GuidanceSound.CHIME, { onSound(GuidanceSound.CHIME) }, Modifier.weight(1f))
+                MotionChip("음성", sound == GuidanceSound.VOICE, { onSound(GuidanceSound.VOICE) }, Modifier.weight(1f))
             }
         }
     }

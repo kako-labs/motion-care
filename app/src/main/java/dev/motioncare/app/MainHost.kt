@@ -163,7 +163,7 @@ fun MainHost(
                             autoRecordOn -> "자동 기록 켜짐"
                             else -> "자동 기록 꺼짐"
                         },
-                        people = peopleSummary(departureState.people, departureState.seating),
+                        people = peopleSummary(departureState.people, departureState.seating, max = 3),
                         environment = environmentCard(snapshot, zone),
                         recent = remember(records, participants, departureState.people) {
                             recentTripItems(records, zone, participants = participants, people = departureState.people)
