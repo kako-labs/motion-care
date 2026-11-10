@@ -1,5 +1,6 @@
 package dev.motioncare.feature.history.ui
 
+import dev.motioncare.core.ui.MotionSpace
 import dev.motioncare.core.ui.motionType
 import androidx.compose.foundation.Canvas
 import dev.motioncare.core.ui.MotionIcons
@@ -46,6 +47,8 @@ import kotlin.math.max
 /** Trip times read the same on every screen, whatever the device locale: "11월 5일 (목) 오후 2:48". */
 fun tripTime(epochMs: Long): String = SimpleDateFormat("M월 d일 (E) a h:mm", Locale.KOREAN).format(Date(epochMs))
 fun tripDate(epochMs: Long): String = SimpleDateFormat("M월 d일 (E)", Locale.KOREAN).format(Date(epochMs))
+/** The time of day alone, for rows already grouped under their date: "오후 2:48". */
+fun tripClock(epochMs: Long): String = SimpleDateFormat("a h:mm", Locale.KOREAN).format(Date(epochMs))
 
 // Shared tokens follow the app-wide Home2 style in core:ui so the home and history screens match. MotionBlue stays
 // the history screens' own chart color.
@@ -103,11 +106,11 @@ val MotionLine = MotionPalette.CardBorder
 @Composable fun RoundIconButton(symbol: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(onClick = onClick, shape = CircleShape, color = Color.Transparent,
         border = androidx.compose.foundation.BorderStroke(1.5.dp, MotionLine),
-        modifier = modifier.size(52.dp).glass(CircleShape)
+        modifier = modifier.size(64.dp).glass(CircleShape)
             .semantics { contentDescription = when (symbol) { "‹" -> "뒤로"; "✕" -> "닫기"; else -> symbol } }) {
         Box(contentAlignment = Alignment.Center) {
             when (symbol) {
-                "‹" -> Icon(MotionIcons.Back, contentDescription = null, tint = MotionText, modifier = Modifier.size(26.dp))
+                "‹" -> Icon(MotionIcons.Back, contentDescription = null, tint = MotionText, modifier = Modifier.size(MotionSpace.IconSmall))
                 "✕" -> Icon(MotionIcons.Close, contentDescription = null, tint = MotionText, modifier = Modifier.size(24.dp))
                 else -> Text(symbol, fontSize = motionType.headline, color = MotionSubtle)
             }
@@ -140,7 +143,7 @@ fun avatarFor(person: PersonProfile): Int {
 
 /** "더 보기" style toggle. No start padding, so its text lines up with the card text above it. */
 @Composable fun ExpandToggle(label: String, expanded: Boolean, onToggle: () -> Unit) {
-    TextButton(onClick = onToggle, modifier = Modifier.heightIn(min = 56.dp),
+    TextButton(onClick = onToggle, modifier = Modifier.heightIn(min = MotionSpace.Touch),
         contentPadding = PaddingValues(start = 0.dp, end = 12.dp, top = 8.dp, bottom = 8.dp)) {
         Text(label, fontSize = motionType.label, fontWeight = FontWeight.Medium, color = MotionCyan)
         Spacer(Modifier.width(6.dp))

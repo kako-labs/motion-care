@@ -2,6 +2,7 @@ package dev.motioncare.feature.history.report
 
 import dev.motioncare.core.ui.motionType
 import dev.motioncare.core.ui.MotionIcons
+import dev.motioncare.core.ui.MotionSpace
 import dev.motioncare.feature.history.presentation.*
 import dev.motioncare.feature.history.insights.adviceFor
 import androidx.compose.ui.text.style.TextAlign
@@ -60,8 +61,8 @@ internal fun TripDetailContent(
 ) {
     MotionCareBackground {
         Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(28.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(MotionSpace.Medium),
+            verticalArrangement = Arrangement.spacedBy(MotionSpace.Large),
         ) {
             ScreenTitle("운행 상세", "저장된 차량 속도 변화와 연결된 탑승 정보", onBack)
             when {
@@ -72,7 +73,7 @@ internal fun TripDetailContent(
                 state.insight == null -> ErrorPanel("운행 기록을 찾을 수 없어요.")
                 else -> DetailBody(state, onFeedback, initialEvent)
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MotionSpace.Large)) {
                 SecondaryAction("홈으로", onHome, Modifier.weight(1f))
                 if (state.insight != null) PrimaryAction("동승자 평가", onFeedback, Modifier.weight(1f))
             }
@@ -90,18 +91,33 @@ internal fun TripDetailContent(
         val value = state.feedback.firstOrNull { it.targetPersonId == id }?.answer as? FeedbackAnswer.Rating
         "${names[id]?.displayName ?: "동승자"} ${value?.let { "${it.value}/5" } ?: "미응답"}"
     }.ifBlank { null }
-    BReportPanel(BReportUi(
-        title = tripTime(insight.trip.startedAtEpochMs), participants = riders,
-        sourceLabel = insight.trip.origin.name,
-        metrics = listOf(BMetric("운행 시간", formatDuration(insight.durationMs)), BMetric("거리", "%.1f km".format(insight.distanceMeters / 1000)), BMetric("유효 분석", "${insight.analyzedDurationMs / 60_000}분")),
-        movements = DrivingPattern.entries.map { BMetric(patternLabel(it), "${insight.count(it)}회") },
-        feedback = response, guidance = guidanceSummary(insight.snapshot),
-    ), onFeedback, speedChart = { BSpeedTrace(insight.snapshot, initialEvent) })
-    ParticipantsPanel(state)
-    cabinSummary(state.environment, state.feedback, names.mapValues { it.value.displayName })?.let { CabinPanel(it) }
-    steeringNote(insight.snapshot)?.let { Text(it, color = MotionSubtle) }
-    val next = adviceFor(state.participants?.driverId, state.recentDriverTrips)
-    BActionRibbon("다음 출발", next.headline, enabled = false, onClick = {})
+    val report = @Composable { modifier: Modifier ->
+        BReportPanel(BReportUi(
+            title = tripTime(insight.trip.startedAtEpochMs), participants = riders,
+            sourceLabel = insight.trip.origin.name,
+            metrics = listOf(BMetric("운행 시간", formatDuration(insight.durationMs)), BMetric("거리", "%.1f km".format(insight.distanceMeters / 1000)), BMetric("유효 분석", "${insight.analyzedDurationMs / 60_000}분")),
+            movements = DrivingPattern.entries.map { BMetric(patternLabel(it), "${insight.count(it)}회") },
+            feedback = response, guidance = guidanceSummary(insight.snapshot),
+        ), onFeedback, modifier, speedChart = { BSpeedTrace(insight.snapshot, initialEvent) })
+    }
+    val context = @Composable {
+        ParticipantsPanel(state, Modifier.fillMaxWidth())
+        cabinSummary(state.environment, state.feedback, names.mapValues { it.value.displayName })?.let { CabinPanel(it) }
+        steeringNote(insight.snapshot)?.let { Text(it, color = MotionSubtle, fontSize = motionType.label) }
+        val next = adviceFor(state.participants?.driverId, state.recentDriverTrips)
+        BActionRibbon("다음 출발", next.headline, enabled = false, onClick = {})
+    }
+    // A wide window reads the trip on the left and who rode and in what cabin on the right, instead of one long
+    // column whose names and values sit at opposite edges.
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        if (maxWidth >= 1280.dp) Row(horizontalArrangement = Arrangement.spacedBy(MotionSpace.Large)) {
+            report(Modifier.weight(7f))
+            Column(Modifier.weight(5f), verticalArrangement = Arrangement.spacedBy(MotionSpace.Large)) { context() }
+        } else Column(verticalArrangement = Arrangement.spacedBy(MotionSpace.Large)) {
+            report(Modifier.fillMaxWidth())
+            context()
+        }
+    }
 }
 
 @Composable private fun PatternTile(pattern: DrivingPattern, count: Int, rate: Double?, recentAverage: Double?, modifier: Modifier) {
@@ -134,10 +150,13 @@ internal fun TripDetailContent(
         if (seats.isEmpty()) Text("연결된 탑승 정보가 없어요.", color = MotionSubtle)
         SeatPosition.entries.forEach { seat ->
             val person = seats[seat]?.let(people::get) ?: return@forEach
-            Row(Modifier.fillMaxWidth().heightIn(min = 62.dp), verticalAlignment = Alignment.CenterVertically) {
-                PersonAvatar(person, Modifier.size(50.dp)); Spacer(Modifier.width(12.dp))
-                Text(person.displayName, Modifier.weight(1f), fontWeight = FontWeight.Medium)
-                Text(seat.label(), color = MotionSubtle)
+            Row(Modifier.fillMaxWidth().heightIn(min = MotionSpace.Touch), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(MotionSpace.Base)) {
+                PersonAvatar(person, Modifier.size(MotionSpace.AvatarSmall))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MotionSpace.Tiny)) {
+                    Text(person.displayName, fontSize = motionType.body, fontWeight = FontWeight.SemiBold)
+                    Text(seat.label(), color = MotionSubtle, fontSize = motionType.label)
+                }
             }
         }
     }
@@ -157,7 +176,7 @@ internal fun TripDetailContent(
                 passengerIds.forEach { id ->
                     val person = people[id] ?: return@forEach
                     val score = byPerson[id]
-                    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically,
+                    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp), verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         PersonAvatar(person, Modifier.size(44.dp))
                         Text(person.displayName, Modifier.weight(1f), fontWeight = FontWeight.Medium)

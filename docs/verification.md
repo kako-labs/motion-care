@@ -285,6 +285,20 @@ python3 scripts/dev.py verify --clean-home
 
 `driving_screen_e2e.py`의 종료 확인 문구와 `car_service_restart_e2e.py`의 종료 환경 값 대기를 함께 고쳤습니다. 앞의 것은 종료 카드 문구가 이전 PR에서 바뀐 뒤로 맞지 않았고, 뒤의 것은 시작 때 환경 값이 두 번 저장되던 것에 기대어 통과하고 있었습니다. 인터넷·소리 측정 앱·2시간 주행이 필요한 `environment_e2e.py`, `environment_card_e2e.py`, `sound_e2e.py`, `restart_location_voice_e2e.py`, `long_drive_card_e2e.py`는 바꾼 뒤 실행하지 않았습니다. 실차 전원, App Market 심사, Android 15 동작은 확인하지 못했습니다.
 
+## 차량 크기 글자·배치 검증
+
+2026-11-11, macOS ARM64 / JDK 17 / Android SDK 35에서 확인했습니다.
+
+| 검사 | 결과 |
+| --- | --- |
+| 전체 모듈 host 테스트 | 통과. 글꼴 단계마다 어절 줄바꿈이 있는지 보는 시험 추가(설정을 빼면 실패하는 것을 먼저 확인) |
+| 전체 Android 모듈 lint | 통과 |
+| Gradle Managed Device UI 테스트 | 25개 통과. 기록 목록이 날짜로 묶여 행을 날짜로 누르던 `HistoryDemoReadinessTest`를 상태 문구로 누르게 고침 |
+| Pleos 에뮬레이터 화면 | 영상용 데이터로 홈(기록 전·주행 중·종료 후), 기록 목록, 주행 상세, 프로필(운전·동승), 조언 근거, 좌석과 사람 선택 창, 사람 추가 창, 이동 평가를 앱 창 1682×1210에서 캡처해 넘침과 잘림이 없는지 확인 |
+| 앱을 다시 띄운 직후 실내 온도 | 고치기 전에는 첫 공조 호출이 오류 없이 시간 초과되어 "값 없음"이 남는 경우가 있었음. 고친 뒤 다시 띄워 19.1°C로 채워지는 것을 확인 |
+
+실차 화면 크기·해상도·눈 거리, 앱 두 개가 나뉜 세로형 창, 휴대폰 크기(좁은 단계는 바꾸지 않음)의 새 배치는 확인하지 못했습니다.
+
 ## 아직 별도 검증이 필요한 환경
 
 Windows/Linux 개인 컴퓨터에서의 설치·실행은 별도 확인이 필요합니다. Linux 검증은 위 GitHub-hosted Ubuntu 실행 결과입니다. 실제 Pleos 시스템·Vehicle SDK·차량 주행 제한은 샘플 테스트로 검증하지 않습니다. Pleos 에뮬레이터에서 별도로 측정한 결과는 [측정 기록](pleos-emulator/README.md)에 있고, 실차는 아직 확인하지 못했습니다.

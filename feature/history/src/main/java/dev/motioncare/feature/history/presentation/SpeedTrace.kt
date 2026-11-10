@@ -1,5 +1,6 @@
 package dev.motioncare.feature.history.presentation
 
+import dev.motioncare.core.ui.MotionSpace
 import dev.motioncare.core.ui.motionType
 import dev.motioncare.feature.history.insights.patternLabel
 import androidx.compose.foundation.Canvas
@@ -102,7 +103,7 @@ internal fun BSpeedTrace(snapshot: TripSnapshot, initialEvent: Int = 0, onOpenDe
                     selected = movement == item,
                     onClick = { movement = item; selected = 0 },
                     label = { Text("${item.tabLabel} ${groups.getValue(item).size}") },
-                    modifier = Modifier.heightIn(min = 56.dp),
+                    modifier = Modifier.heightIn(min = MotionSpace.Touch),
                 )
             }
         }
@@ -112,7 +113,7 @@ internal fun BSpeedTrace(snapshot: TripSnapshot, initialEvent: Int = 0, onOpenDe
                 events.forEachIndexed { index, item ->
                     FilterChip(selected == index, { selected = index },
                         label = { Text("${index + 1} · ${traceClock(snapshot, item.startMs)}") },
-                        modifier = Modifier.heightIn(min = 56.dp))
+                        modifier = Modifier.heightIn(min = MotionSpace.Touch))
                 }
             }
             if (event != null) {
