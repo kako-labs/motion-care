@@ -158,12 +158,15 @@ data class TripExperienceUiState(
     val feedback: List<TripFeedback> = emptyList(),
     val recentDriverTrips: List<TripInsight> = emptyList(),
     val savingFeedback: Boolean = false,
+    /** Values stored for this trip in capture order. Empty when none were stored or they could not be read. */
+    val environment: List<EnvironmentSnapshot> = emptyList(),
 )
 class TripExperienceViewModel(
     private val tripId: TripId,
     private val trips: TripRepository,
     private val profiles: ProfileRepository,
     private val guidance: GuidanceSettings? = null,
+    private val tripEnvironment: suspend (TripId) -> List<EnvironmentSnapshot> = { emptyList() },
 ) : ViewModel() {
     private val fallbackGuidance = MutableStateFlow(true)
     private val mutable = MutableStateFlow(TripExperienceUiState())
@@ -172,13 +175,17 @@ class TripExperienceViewModel(
     private fun observe() = viewModelScope.launch {
         try {
             profiles.initialize(); trips.initialize()
+            // Stored once per capture and never edited, so one read is enough. A failed read shows nothing
+            // rather than another trip's values.
+            val environment = try { tripEnvironment(tripId) } catch (error: CancellationException) { throw error } catch (_: Exception) { emptyList() }
             changes(trips, profiles).collectLatest {
                 val all = loadInsights(trips, profiles)
                 val selected = all.firstOrNull { it.trip.id == tripId }
                 val participants = profiles.participants.value.firstOrNull { it.tripId == tripId }
                 mutable.value = TripExperienceUiState(false, null, selected, participants, profiles.people.value,
                     profiles.feedback.value.filter { it.tripId == tripId },
-                    participants?.driverId?.let { driver -> all.filter { it.participants?.driverId == driver } }.orEmpty())
+                    participants?.driverId?.let { driver -> all.filter { it.participants?.driverId == driver } }.orEmpty(),
+                    environment = environment)
             }
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { mutable.update { it.copy(loading = false, error = "운행 정보를 불러오지 못했습니다.") } }

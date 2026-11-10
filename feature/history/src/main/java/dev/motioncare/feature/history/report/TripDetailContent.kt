@@ -105,6 +105,7 @@ internal fun TripDetailContent(
         feedback = response, guidance = guidanceSummary(insight.snapshot),
     ), onFeedback, speedChart = { BSpeedTrace(insight.snapshot, initialEvent) })
     ParticipantsPanel(state)
+    cabinSummary(state.environment, state.feedback, names.mapValues { it.value.displayName })?.let { CabinPanel(it) }
     steeringNote(insight.snapshot)?.let { Text(it, color = MotionSubtle) }
     val next = adviceFor(state.participants?.driverId, state.recentDriverTrips)
     BActionRibbon("다음 출발", next.headline, enabled = false, onClick = {})

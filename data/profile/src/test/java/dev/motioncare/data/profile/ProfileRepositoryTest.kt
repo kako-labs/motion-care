@@ -122,7 +122,7 @@ class ProfileRepositoryTest {
             tripId = TripId("trip-one"),
             targetPersonId = passenger.id,
             answer = FeedbackAnswer.Rating(4, "COMFORT_5_V1"),
-            reasons = setOf(FeedbackReason.START_STOP),
+            reasons = setOf(FeedbackReason.START_STOP, FeedbackReason.FELT_HOT, FeedbackReason.STUFFY_AIR),
             respondent = FeedbackRespondent.GUARDIAN,
             createdAtEpochMs = 1234,
         )

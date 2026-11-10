@@ -229,6 +229,7 @@ fun MainHost(
                     trips = trips,
                     profiles = profiles,
                     environment = environment.current,
+                    tripEnvironment = environment::history,
                     onBackToHome = { navigation.popBackStack(HOME_ROUTE, inclusive = false) },
                 )
             }
