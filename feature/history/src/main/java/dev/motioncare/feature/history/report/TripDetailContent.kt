@@ -1,8 +1,9 @@
 package dev.motioncare.feature.history.report
 
+import dev.motioncare.core.ui.motionType
+import dev.motioncare.core.ui.MotionIcons
 import dev.motioncare.feature.history.presentation.*
 import dev.motioncare.feature.history.insights.adviceFor
-import dev.motioncare.feature.history.insights.patternIcon
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
@@ -26,17 +27,9 @@ internal fun observationSummary(observations: List<Observation>): String {
     if (observations.isEmpty()) return "관찰된 패턴 없음"
     val counts = observations.groupingBy { it.pattern }.eachCount()
     val parts = DrivingPattern.entries.mapNotNull { pattern ->
-        counts[pattern]?.let { count -> "${legacyLabel(pattern)} ${count}회" }
+        counts[pattern]?.let { count -> "${patternLabel(pattern)} ${count}회" }
     }
     return "관찰된 패턴: " + parts.joinToString(" · ")
-}
-
-private fun legacyLabel(pattern: DrivingPattern) = when (pattern) {
-    DrivingPattern.RAPID_START -> "빠른 출발"
-    DrivingPattern.HARD_STOP -> "정차 직전 큰 감속"
-    DrivingPattern.REPEATED_SPEED_CHANGE -> "반복 가감속"
-    DrivingPattern.FAST_TURN -> "빠른 회전"
-    DrivingPattern.REPEATED_SWAY -> "반복 좌우 움직임"
 }
 
 /** Left and right motion is estimated, and a missing signal must not read as "nothing happened". */
@@ -89,7 +82,7 @@ internal fun TripDetailContent(
 
 @Composable private fun DetailBody(state: TripExperienceUiState, onFeedback: () -> Unit, initialEvent: Int) {
     val insight = requireNotNull(state.insight)
-    Text(when (insight.trip.status) { TripStatus.COMPLETED -> "완료된 운행"; TripStatus.INTERRUPTED -> "중단된 운행"; TripStatus.RECORDING -> "기록 중" }, color = MotionSubtle, fontSize = 18.sp)
+    Text(when (insight.trip.status) { TripStatus.COMPLETED -> "완료된 운행"; TripStatus.INTERRUPTED -> "중단된 운행"; TripStatus.RECORDING -> "기록 중" }, color = MotionSubtle, fontSize = motionType.body)
     val names = state.people.associateBy { it.id }
     val riders = listOfNotNull(state.participants?.driverId).plus(state.participants?.passengerIds.orEmpty())
         .mapNotNull { names[it]?.displayName }.joinToString(" · ").ifBlank { "탑승 정보 없음" }
@@ -117,22 +110,26 @@ internal fun TripDetailContent(
         .background(if (seen) MotionBlue.copy(.28f) else MotionPanel, RoundedCornerShape(20.dp))
         .border(if (seen) 2.dp else 1.dp, if (seen) MotionCyan else MotionLine, RoundedCornerShape(20.dp)).padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(patternIcon(pattern), fontSize = 34.sp, color = if (seen) MotionCyan else MotionMuted)
-        Text("$count", fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.Medium, color = if (seen) MotionText else MotionMuted)
-        Text(patternLabel(pattern), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MotionSubtle, textAlign = TextAlign.Center)
-        val trend = if (rate != null && recentAverage != null) when {
-            rate < recentAverage -> "↓ 평소보다 적음"
-            rate > recentAverage -> "↑ 평소보다 많음"
-            else -> "＝ 평소와 같음"
-        } else rate?.let { "%.1f / 10분".format(it) }
-        trend?.let { Text(it, fontSize = 15.sp, color = if (it.startsWith("↓")) MotionCyan else MotionMuted) }
+        PatternGlyph(pattern, Modifier.size(34.dp), tint = if (seen) MotionCyan else MotionMuted)
+        Text("$count", fontSize = motionType.title, fontWeight = FontWeight.Medium, color = if (seen) MotionText else MotionMuted)
+        Text(patternLabel(pattern), fontSize = motionType.label, fontWeight = FontWeight.Medium, color = MotionSubtle, textAlign = TextAlign.Center)
+        if (rate != null && recentAverage != null) {
+            val fewer = rate < recentAverage
+            val tone = if (fewer) MotionCyan else MotionMuted
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (rate != recentAverage) Icon(if (fewer) MotionIcons.ArrowDown else MotionIcons.ArrowUp, contentDescription = null,
+                    tint = tone, modifier = Modifier.size(20.dp))
+                Text(when { fewer -> "평소보다 적음"; rate > recentAverage -> "평소보다 많음"; else -> "평소와 같음" },
+                    fontSize = motionType.caption, color = tone)
+            }
+        } else rate?.let { Text("%.1f / 10분".format(it), fontSize = motionType.caption, color = MotionMuted) }
     }
 }
 
 @Composable private fun ParticipantsPanel(state: TripExperienceUiState, modifier: Modifier = Modifier) {
     val people = state.people.associateBy { it.id }
     GlassPanel(modifier) {
-        Text("이 운행의 탑승자", fontSize = 22.sp, fontWeight = FontWeight.Medium)
+        SectionTitle("이 운행의 탑승자")
         val seats = state.participants?.seatAssignments.orEmpty()
         if (seats.isEmpty()) Text("연결된 탑승 정보가 없어요.", color = MotionSubtle)
         SeatPosition.entries.forEach { seat ->
@@ -150,7 +147,7 @@ internal fun TripDetailContent(
     val passengerIds = state.participants?.passengerIds.orEmpty()
     val ratings = state.feedback.mapNotNull { feedback -> (feedback.answer as? FeedbackAnswer.Rating)?.value }
     GlassPanel(modifier) {
-        Text("동승자 편안함 평가", fontSize = 22.sp, fontWeight = FontWeight.Medium)
+        SectionTitle("동승자 편안함 평가")
         when {
             passengerIds.isEmpty() -> Text("이 운행에는 등록된 동승자가 없어요.", color = MotionSubtle)
             ratings.isEmpty() -> Text("${passengerIds.size}명의 평가가 아직 없어요.", color = MotionSubtle)
@@ -164,7 +161,7 @@ internal fun TripDetailContent(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         PersonAvatar(person, Modifier.size(44.dp))
                         Text(person.displayName, Modifier.weight(1f), fontWeight = FontWeight.Medium)
-                        Text(score?.let { "★".repeat(it) + "☆".repeat(5 - it) } ?: "— 응답 없음", fontSize = if (score != null) 30.sp else 18.sp,
+                        Text(score?.let { "★".repeat(it) + "☆".repeat(5 - it) } ?: "— 응답 없음", fontSize = motionType.headline,
                             color = if (score != null) MotionCyan else MotionMuted, letterSpacing = 2.sp)
                     }
                 }
@@ -175,7 +172,7 @@ internal fun TripDetailContent(
 }
 
 @Composable private fun ErrorPanel(message: String) = GlassPanel(Modifier.fillMaxWidth()) {
-    Text(message, fontSize = 22.sp, fontWeight = FontWeight.Medium)
+    Text(message, fontSize = motionType.section, fontWeight = FontWeight.Medium)
 }
 
 private fun formatDuration(milliseconds: Long): String {

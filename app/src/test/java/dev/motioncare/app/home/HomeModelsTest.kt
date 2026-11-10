@@ -215,7 +215,7 @@ class HomeModelsTest {
         val hero = homeAdvice(advice(previous = 2.4, recent = 1.4), MINJUN.id)
         assertEquals("정차 시 조금 일찍 감속해 보세요.", hero.headline)
         assertEquals("최근 기록에서 관찰 빈도가 줄었어요.", hero.context)
-        assertEquals("10분당 정차 직전 속도 변화", hero.comparisonLabel)
+        assertEquals("10분당 정차 직전 큰 감속", hero.comparisonLabel)
         assertEquals("2.4회에서 1.4회로", hero.comparison)
         assertEquals(HeroAction.EXPLAIN, hero.action)
     }

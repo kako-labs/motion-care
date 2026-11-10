@@ -27,7 +27,7 @@ class HistoryDemoReadinessTest {
 
     @Test fun selectedObservationOpensTheSameTripAndEvent() {
         click("프로필")
-        click("자세히  ›")
+        click("자세히")
         val thirdEvent = hasText("3 ·", substring = true) and hasClickAction()
         compose.waitUntil(20_000) { compose.onAllNodes(thirdEvent).fetchSemanticsNodes().isNotEmpty() }
         // Scroll the outer page first: the chip's nearest scroll parent only moves horizontally.
@@ -35,7 +35,7 @@ class HistoryDemoReadinessTest {
         val event = compose.onAllNodes(thirdEvent).onFirst()
         event.performScrollTo()
         event.performClick()
-        val selected = hasText("정차 전 큰 감속 3 ·", substring = true)
+        val selected = hasText("정차 직전 큰 감속 3 ·", substring = true)
         assertTrue(compose.onRoot(useUnmergedTree = true).printToString(maxDepth = 80),
             compose.onAllNodes(selected).fetchSemanticsNodes().isNotEmpty())
         compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(selected)
