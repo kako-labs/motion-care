@@ -125,7 +125,7 @@ class MeetingReadinessFlowTest {
         awaitText("분석할 운전 기록이 더 필요해요.")
         capture("02-no-analysis")
         back()
-        click("완료  ✓")
+        click("완료")
         click("샘플 시작")
         for (version in 1..3) {
             click("샘플 신호 추가")
@@ -197,7 +197,7 @@ class MeetingReadinessFlowTest {
         awaitText("아직 기록이 없습니다.")
         capture("05-empty-history")
         back()
-        click("완료  ✓")
+        click("완료")
         click("샘플 시작")
         click("샘플 주행 종료")
         click("이동 평가")

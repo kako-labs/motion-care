@@ -1,5 +1,6 @@
 package dev.motioncare.feature.history.ui
 
+import dev.motioncare.core.ui.motionType
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Icon
 import dev.motioncare.core.ui.MotionIcons
@@ -52,11 +53,11 @@ import dev.motioncare.feature.history.HistoryViewModel
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(22.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             ScreenTitle("전체 운행 기록", period ?: "이 기기 기록", onBack)
             if (people.isNotEmpty()) Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                FilterTile(filter == null, { filter = null }) { Text("전체", fontSize = 21.sp, fontWeight = FontWeight.Bold) }
+                FilterTile(filter == null, { filter = null }) { Text("전체", fontSize = motionType.body, fontWeight = FontWeight.Bold) }
                 people.forEach { person ->
                     FilterTile(filter == person.id, { filter = if (filter == person.id) null else person.id }) {
                         PersonAvatar(person, Modifier.size(48.dp)); Spacer(Modifier.width(10.dp))
-                        Text(person.displayName, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Text(person.displayName, fontSize = motionType.body, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -76,15 +77,16 @@ import dev.motioncare.feature.history.HistoryViewModel
     GlassPanel(Modifier.fillMaxWidth()) {
         if (records.isEmpty()) Text("아직 기록이 없습니다.", color = MotionSubtle)
         records.forEach { trip ->
-            TextButton(onClick = { onSelect(trip.id) }, modifier = Modifier.fillMaxWidth().heightIn(min = 68.dp)) {
+            TextButton(onClick = { onSelect(trip.id) }, modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp),
+                colors = ButtonDefaults.textButtonColors(contentColor = MotionText)) {
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                    Text(tripTime(trip.startedAtEpochMs), fontSize = 19.sp, fontWeight = FontWeight.Medium)
+                    Text(tripTime(trip.startedAtEpochMs), fontSize = motionType.body, fontWeight = FontWeight.Bold)
                     val minutes = trip.endedAtEpochMs?.let { ((it - trip.startedAtEpochMs) / 60_000).coerceAtLeast(0) }
                     Text(when (trip.status) {
                         TripStatus.COMPLETED -> minutes?.let { "${it}분" } ?: "완료"
                         TripStatus.RECORDING -> "● 기록 중"
                         TripStatus.INTERRUPTED -> "중단됨"
-                    }, color = MotionSubtle, fontSize = 17.sp)
+                    }, color = MotionSubtle, fontSize = motionType.label)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy((-10).dp)) {
                     riders(trip.id).forEach { PersonAvatar(it, Modifier.size(44.dp)) }

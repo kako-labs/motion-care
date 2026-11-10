@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.sp
 import dev.motioncare.R
 import dev.motioncare.core.model.TripId
 import dev.motioncare.core.ui.MotionBrushes
+import dev.motioncare.core.ui.MotionIcons
+import dev.motioncare.core.ui.MotionPrimaryButton
 import dev.motioncare.core.ui.MotionPalette
 import dev.motioncare.core.ui.glass
 import dev.motioncare.feature.history.ui.PersonAvatar
@@ -153,8 +155,8 @@ internal fun AdviceHero(advice: HomeAdvice, sizes: HomeSizes, onExplain: () -> U
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             when (advice.action) {
-                HeroAction.EXPLAIN -> HeroButton("왜 이런 조언을 받았나요?", sizes, onExplain)
-                HeroAction.CHOOSE_SEATS -> HeroButton("좌석에서 운전자 고르기", sizes, onChooseSeats)
+                HeroAction.EXPLAIN -> MotionPrimaryButton("왜 이런 조언을 받았나요?", onExplain)
+                HeroAction.CHOOSE_SEATS -> MotionPrimaryButton("좌석에서 운전자 고르기", onChooseSeats)
                 HeroAction.NONE -> Unit
             }
             if (advice.comparison != null && advice.comparisonLabel != null) {
@@ -166,18 +168,6 @@ internal fun AdviceHero(advice: HomeAdvice, sizes: HomeSizes, onExplain: () -> U
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun HeroButton(text: String, sizes: HomeSizes, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(22.dp)
-    Box(
-        Modifier.clip(shape).background(MotionBrushes.Primary, shape).border(1.5.dp, MotionPalette.ButtonBorder, shape)
-            .clickable(role = Role.Button, onClick = onClick).padding(horizontal = 30.dp, vertical = 18.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text, fontSize = sizes.body, fontWeight = FontWeight.ExtraBold, color = Color.White)
     }
 }
 
@@ -219,7 +209,7 @@ private fun Chip(text: String, sizes: HomeSizes) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Icon(HomeIcons.Sparkle, contentDescription = null, tint = Color(0xFF7FE6FB), modifier = Modifier.size(20.dp))
+        Icon(MotionIcons.Sparkle, contentDescription = null, tint = Color(0xFF7FE6FB), modifier = Modifier.size(20.dp))
         Text(text, fontSize = sizes.small, fontWeight = FontWeight.Bold, color = MotionPalette.ChipText)
     }
 }
@@ -304,7 +294,7 @@ private fun PeopleCard(people: PeopleSummary, onPeople: () -> Unit, sizes: HomeS
     }
 }
 
-private val environmentIcons = listOf(HomeIcons.Air, HomeIcons.Cloud, HomeIcons.Thermometer, HomeIcons.Recirculate)
+private val environmentIcons = listOf(MotionIcons.Air, MotionIcons.Cloud, MotionIcons.Thermometer, MotionIcons.Recirculate)
 
 @Composable
 private fun EnvironmentPanel(card: EnvironmentCard, sizes: HomeSizes, modifier: Modifier) {
@@ -413,7 +403,7 @@ private fun TripCard(item: RecentTripItem, onTrip: (TripId) -> Unit, sizes: Home
                 }
             }
         }
-        Icon(HomeIcons.Chevron, contentDescription = null, tint = MotionPalette.NavIdle, modifier = Modifier.size(22.dp))
+        Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionPalette.NavIdle, modifier = Modifier.size(22.dp))
     }
 }
 
@@ -428,12 +418,12 @@ private fun BottomNav(start: StartButton, links: HomeLinks, sizes: HomeSizes) {
                 .border(BorderStroke(1.5.dp, MotionPalette.CardBorder), RoundedCornerShape(30.dp)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            NavItem(HomeIcons.Home, "홈", active = true, sizes = sizes, onClick = {}, modifier = Modifier.weight(1f))
-            NavItem(HomeIcons.Clock, "기록", active = false, sizes = sizes, onClick = links.onRecords, modifier = Modifier.weight(1f))
+            NavItem(MotionIcons.Home, "홈", active = true, sizes = sizes, onClick = {}, modifier = Modifier.weight(1f))
+            NavItem(MotionIcons.Clock, "기록", active = false, sizes = sizes, onClick = links.onRecords, modifier = Modifier.weight(1f))
             Spacer(Modifier.width(sizes.navButton * 1.8f))
-            NavItem(HomeIcons.Person, "프로필", active = false, sizes = sizes, onClick = links.onProfile, modifier = Modifier.weight(1f))
+            NavItem(MotionIcons.Person, "프로필", active = false, sizes = sizes, onClick = links.onProfile, modifier = Modifier.weight(1f))
             // Home2's last tab is the vehicle screen, which does not exist yet; the seats take its place.
-            NavItem(HomeIcons.Car, "좌석", active = false, sizes = sizes, onClick = links.onSeats, modifier = Modifier.weight(1f))
+            NavItem(MotionIcons.Car, "좌석", active = false, sizes = sizes, onClick = links.onSeats, modifier = Modifier.weight(1f))
         }
         StartCircle(start, sizes, Modifier.align(Alignment.TopCenter))
     }
@@ -466,7 +456,7 @@ private fun StartCircle(start: StartButton, sizes: HomeSizes, modifier: Modifier
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(HomeIcons.Play, contentDescription = null, tint = Color.White, modifier = Modifier.size(sizes.navButton * 0.28f))
+        Icon(MotionIcons.Play, contentDescription = null, tint = Color.White, modifier = Modifier.size(sizes.navButton * 0.28f))
         Text(start.label, fontSize = sizes.small, fontWeight = FontWeight.ExtraBold, color = Color.White)
     }
 }

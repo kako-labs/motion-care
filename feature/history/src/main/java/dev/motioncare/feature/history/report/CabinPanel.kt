@@ -1,5 +1,6 @@
 package dev.motioncare.feature.history.report
 
+import dev.motioncare.core.ui.motionType
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +22,7 @@ import dev.motioncare.feature.history.feedback.isCabinFeeling
 import dev.motioncare.feature.history.feedback.label
 import dev.motioncare.feature.history.presentation.environmentField
 import dev.motioncare.feature.history.ui.GlassPanel
+import dev.motioncare.feature.history.ui.SectionTitle
 import dev.motioncare.feature.history.ui.MotionMuted
 import dev.motioncare.feature.history.ui.MotionSubtle
 import dev.motioncare.feature.history.ui.MotionText
@@ -90,7 +92,7 @@ private fun air(value: OutdoorAir): String {
 @Composable
 internal fun CabinPanel(summary: CabinSummary, modifier: Modifier = Modifier) {
     GlassPanel(modifier.fillMaxWidth()) {
-        Text("이 운행의 차 안 환경", fontSize = 22.sp, fontWeight = FontWeight.Medium)
+        SectionTitle("이 운행의 차 안 환경")
         summary.feelings.forEach { feeling ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(feeling.name, fontWeight = FontWeight.Medium)
@@ -105,7 +107,7 @@ internal fun CabinPanel(summary: CabinSummary, modifier: Modifier = Modifier) {
                 Text(item.end?.let { "출발 ${item.start} → 종료 $it" } ?: item.start, color = MotionText)
             }
         }
-        Text("느낌과 그때의 차 값을 나란히 보여 줄 뿐, 무엇 때문인지 판단하지 않아요.", color = MotionMuted, fontSize = 14.sp)
-        if (summary.values.isNotEmpty()) Text("온도·공조: 차량 신호 · 대기질: Open-Meteo, CAMS 예측", color = MotionMuted, fontSize = 14.sp)
+        Text("느낌과 그때의 차 값을 나란히 보여 줄 뿐, 무엇 때문인지 판단하지 않아요.", color = MotionMuted, fontSize = motionType.caption)
+        if (summary.values.isNotEmpty()) Text("온도·공조: 차량 신호 · 대기질: Open-Meteo, CAMS 예측", color = MotionMuted, fontSize = motionType.caption)
     }
 }

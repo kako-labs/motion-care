@@ -1,5 +1,6 @@
 package dev.motioncare.feature.history.feedback
 
+import dev.motioncare.core.ui.motionType
 import dev.motioncare.feature.history.presentation.BFeedbackPanel
 import androidx.compose.material3.Icon
 import dev.motioncare.core.ui.MotionIcons
@@ -66,7 +67,7 @@ internal fun FeedbackRoute(
             if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             if (passengers.isEmpty()) GlassPanel(Modifier.fillMaxWidth()) {
-                Text("평가할 동승자가 없어요.", fontSize = 32.sp, fontWeight = FontWeight.Medium)
+                Text("평가할 동승자가 없어요.", fontSize = motionType.headline, fontWeight = FontWeight.Medium)
                 PrimaryAction("완료", onDone, Modifier.fillMaxWidth())
             } else {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -76,7 +77,7 @@ internal fun FeedbackRoute(
                             color = if (chosen) MotionSelected else MotionPanel, border = BorderStroke(1.dp, if (chosen) MotionCyan.copy(.5f) else MotionLine)) {
                             Row(Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 PersonAvatar(person, Modifier.size(64.dp))
-                                Text(person.displayName, fontSize = 22.sp, fontWeight = FontWeight.Medium)
+                                Text(person.displayName, fontSize = motionType.section, fontWeight = FontWeight.Medium)
                                 if (drafts[person.id]?.handled == true) Icon(MotionIcons.Check, contentDescription = "응답함", tint = MotionCyan, modifier = Modifier.size(24.dp))
                             }
                         }
@@ -129,10 +130,10 @@ private fun ratingLabel(value: Int) = when (value) { 1 -> "많이 불편했어�
         border = BorderStroke(1.dp, if (selected) MotionCyan.copy(.5f) else MotionLine), modifier = modifier.height(if (compact) 72.dp else 104.dp)) {
         if (compact) Row(horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
             face?.invoke()
-            Text(label, fontSize = 21.sp, fontWeight = FontWeight.Medium, color = if (selected) MotionText else MotionSubtle)
+            Text(label, fontSize = motionType.body, fontWeight = FontWeight.Medium, color = if (selected) MotionText else MotionSubtle)
         } else Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)) {
-            Text(icon, fontSize = 42.sp, lineHeight = 44.sp, fontWeight = FontWeight.Medium, color = if (selected) MotionCyan else MotionMuted)
-            Text(label, fontSize = 19.sp, fontWeight = FontWeight.Medium, color = if (selected) MotionText else MotionSubtle)
+            Text(icon, fontSize = motionType.title, fontWeight = FontWeight.Medium, color = if (selected) MotionCyan else MotionMuted)
+            Text(label, fontSize = motionType.body, fontWeight = FontWeight.Medium, color = if (selected) MotionText else MotionSubtle)
         }
     }
 }

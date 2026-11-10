@@ -1,5 +1,6 @@
 package dev.motioncare.feature.history.ui
 
+import dev.motioncare.core.ui.motionType
 import androidx.compose.foundation.Canvas
 import dev.motioncare.core.ui.MotionIcons
 import androidx.compose.foundation.Image
@@ -19,14 +20,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.motioncare.core.model.DrivingPattern
 import dev.motioncare.core.model.PersonKind
+import dev.motioncare.feature.history.insights.patternIcon
 import dev.motioncare.core.model.PersonProfile
 import dev.motioncare.core.ui.MotionBrushes
+import dev.motioncare.core.ui.MotionPrimaryButton
+import dev.motioncare.core.ui.MotionSecondaryButton
 import dev.motioncare.core.ui.MotionPalette
 import dev.motioncare.core.ui.MotionTheme
 import dev.motioncare.core.ui.glass
@@ -84,9 +90,8 @@ val MotionLine = MotionPalette.CardBorder
                 if (onBack != null) RoundIconButton("‹", onBack)
                 leading?.invoke()
                 Column(Modifier.weight(1f)) {
-                    Text(title, fontSize = if (big) 36.sp else 28.sp, lineHeight = if (big) 44.sp else 36.sp,
-                        fontWeight = FontWeight.ExtraBold)
-                    subtitle?.let { Text(it, color = MotionMuted, fontSize = if (big) 20.sp else 16.sp, lineHeight = if (big) 28.sp else 24.sp) }
+                    Text(title, fontSize = motionType.title, fontWeight = FontWeight.ExtraBold)
+                    subtitle?.let { Text(it, color = MotionMuted, fontSize = motionType.label) }
                 }
                 if (!compact) action?.invoke()
             }
@@ -104,7 +109,7 @@ val MotionLine = MotionPalette.CardBorder
             when (symbol) {
                 "‹" -> Icon(MotionIcons.Back, contentDescription = null, tint = MotionText, modifier = Modifier.size(26.dp))
                 "✕" -> Icon(MotionIcons.Close, contentDescription = null, tint = MotionText, modifier = Modifier.size(24.dp))
-                else -> Text(symbol, fontSize = 27.sp, lineHeight = 30.sp, color = MotionSubtle)
+                else -> Text(symbol, fontSize = motionType.headline, color = MotionSubtle)
             }
         }
     }
@@ -136,34 +141,31 @@ fun avatarFor(person: PersonProfile): Int {
 @Composable fun ExpandToggle(label: String, expanded: Boolean, onToggle: () -> Unit) {
     TextButton(onClick = onToggle, modifier = Modifier.heightIn(min = 56.dp),
         contentPadding = PaddingValues(start = 0.dp, end = 12.dp, top = 8.dp, bottom = 8.dp)) {
-        Text(label, fontSize = 17.sp, fontWeight = FontWeight.Medium, color = MotionCyan)
+        Text(label, fontSize = motionType.label, fontWeight = FontWeight.Medium, color = MotionCyan)
         Spacer(Modifier.width(6.dp))
         Icon(if (expanded) MotionIcons.ChevronUp else MotionIcons.ChevronDown, contentDescription = null,
             tint = MotionCyan, modifier = Modifier.size(20.dp))
     }
 }
 
-private val ActionShape = RoundedCornerShape(18.dp)
+/** The app-wide primary button (core:ui), kept under this name for the history screens. */
+@Composable fun PrimaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true,
+    icon: ImageVector? = null, leadingIcon: ImageVector? = null) =
+    MotionPrimaryButton(text, onClick, modifier, enabled, icon, leadingIcon)
 
-/** Home2's primary button: a blue gradient with a light edge and white bold text. */
-@Composable fun PrimaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
-    Button(onClick = onClick, enabled = enabled,
-        modifier = modifier.heightIn(min = 64.dp).alpha(if (enabled) 1f else 0.5f)
-            .background(MotionBrushes.Primary, ActionShape).border(1.5.dp, MotionPalette.ButtonBorder, ActionShape),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = Color.White,
-            disabledContainerColor = Color.Transparent, disabledContentColor = Color.White),
-        shape = ActionShape) {
-        Text(text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-    }
+/** The app-wide secondary button (core:ui), kept under this name for the history screens. */
+@Composable fun SecondaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true,
+    icon: ImageVector? = null, leadingIcon: ImageVector? = null) =
+    MotionSecondaryButton(text, onClick, modifier, enabled, icon, leadingIcon)
+
+/** A card or section title: the same size and weight as the home cards' titles. */
+@Composable fun SectionTitle(text: String, modifier: Modifier = Modifier, color: Color = MotionText) {
+    Text(text, modifier, color = color, fontSize = motionType.section, fontWeight = FontWeight.ExtraBold)
 }
 
-/** The secondary button sits on glass with the card edge. */
-@Composable fun SecondaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
-    OutlinedButton(onClick = onClick, enabled = enabled, modifier = modifier.heightIn(min = 64.dp).glass(ActionShape),
-        border = androidx.compose.foundation.BorderStroke(1.5.dp, MotionLine), shape = ActionShape,
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = MotionText)) {
-        Text(text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-    }
+/** A pattern's icon from the shared set, sized to sit beside text of the same line. */
+@Composable fun PatternGlyph(pattern: DrivingPattern, modifier: Modifier = Modifier, tint: Color = MotionCyan) {
+    Icon(patternIcon(pattern), contentDescription = null, tint = tint, modifier = modifier.size(26.dp))
 }
 
 @Composable fun TrendBars(values: List<Double>, modifier: Modifier = Modifier, highlightLast: Boolean = true) {
@@ -201,7 +203,7 @@ private val ActionShape = RoundedCornerShape(18.dp)
 @Composable fun MetricTile(value: String, label: String, modifier: Modifier = Modifier, highlighted: Boolean = false) {
     Column(modifier.padding(horizontal = 12.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
-        Text(value, color = if (highlighted) MotionCyan else MotionText, fontSize = 30.sp, fontWeight = FontWeight.Medium)
-        Text(label, color = MotionSubtle, fontSize = 15.sp)
+        Text(value, color = if (highlighted) MotionCyan else MotionText, fontSize = motionType.headline, fontWeight = FontWeight.Medium)
+        Text(label, color = MotionSubtle, fontSize = motionType.caption)
     }
 }
