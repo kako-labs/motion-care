@@ -1,0 +1,21 @@
+# Batch 1 (Codex CLI 0.167.0, codex exec -i reference.png, reference = ../avatar_boy.png)
+Use your built-in image generation tool to create the five images below, and save each as a PNG in the current working directory with the exact file name given. Do not write any code and do not edit anything else.
+
+The attached image reference.png is the style reference. Every image must match it exactly: the same stylized 3D character bust in a soft matte clay look with frosted glass highlights, the same luminous cyan (#00AAD2) rim light from behind, the same plain dark navy background (#0A2342), the same framing (head and shoulders, centered, the face filling about the middle 55 percent of the frame, the top of the hair close to the top edge), and the same front-facing camera. Natural warm skin tones like the reference, never blue or gray skin. Korean characters. A calm, friendly, gentle smile; no exaggerated or silly expressions. Simple dark navy or charcoal tops with no prints. Absolutely no text, letters, numbers, logos, badges or watermarks. All images are square, 1024x1024.
+
+1. girl_child.png: a girl of about 7 with a short bob and soft bangs.
+2. boy_child.png: a boy of about 7 with short tousled hair.
+3. girl_teen.png: a teenage girl of about 15 with long straight hair tied in a low ponytail.
+4. boy_teen.png: a teenage boy of about 15 with a neat short haircut.
+5. woman_young.png: a woman of about 28 with shoulder-length wavy hair.
+
+# Batch 2 (same command and reference)
+Use your built-in image generation tool to create the five images below, and save each as a PNG in the current working directory with the exact file name given. Do not write any code and do not edit anything else.
+
+The attached image reference.png is the style reference. Every image must match it exactly: the same stylized 3D character bust in a soft matte clay look with frosted glass highlights, the same luminous cyan (#00AAD2) rim light from behind, the same plain dark navy background (#0A2342), the same framing (head and shoulders, centered, the face filling about the middle 55 percent of the frame, the top of the hair close to the top edge), and the same front-facing camera. Natural warm skin tones like the reference, never blue or gray skin. Korean characters. A calm, friendly, gentle smile; no exaggerated or silly expressions. Simple dark navy or charcoal tops with no prints. Absolutely no text, letters, numbers, logos, badges or watermarks. All images are square, 1024x1024.
+
+1. man_young.png: a man of about 28 with short dark hair swept to the side.
+2. woman_middle.png: a woman of about 48 with a chin-length bob and a few subtle smile lines.
+3. man_middle.png: a man of about 48 with short hair, slightly receding, and thin clear rectangular glasses.
+4. woman_senior.png: a woman of about 70 with short curly gray hair and gentle wrinkles.
+5. man_senior.png: a man of about 70 with short white hair, gentle wrinkles and a warm grandfatherly smile.

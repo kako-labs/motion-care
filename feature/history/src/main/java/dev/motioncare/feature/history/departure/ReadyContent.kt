@@ -638,7 +638,7 @@ private fun SeatPicker(
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { if (name.isNotBlank()) onAdd(name.trim(), kind, avatar) }))
                 }
-                CharacterPicker(avatar, { avatar = it }, size = 60.dp)
+                CharacterPicker(avatar, { avatar = it })
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     KindTile("성인", kind == PersonKind.ADULT, true, Modifier.weight(1f)) { kind = PersonKind.ADULT }
                     KindTile("어린이", kind == PersonKind.CHILD, childAllowed, Modifier.weight(1f)) { kind = PersonKind.CHILD }

@@ -32,10 +32,10 @@ SEOUL = ("126.978", "37.5665")  # emu geo fix takes longitude first
 
 # Fictional people. Character keys are the ones in feature/history's Characters.kt.
 PEOPLE = [
-    ("jiyoung", "지영", "ADULT", "UNSPECIFIED", "", "character_04"),
-    ("minjun", "민준", "ADULT", "HIGH", "START_STOP,REPEATED_SPEED_CHANGE", "character_12"),
-    ("seoa", "서아", "CHILD", "MEDIUM", "CURVE", "character_19"),
-    ("doyun", "도윤", "CHILD", "UNSPECIFIED", "", "character_22"),
+    ("jiyoung", "지영", "ADULT", "UNSPECIFIED", "", "woman_young"),
+    ("minjun", "민준", "ADULT", "HIGH", "START_STOP,REPEATED_SPEED_CHANGE", "man_young"),
+    ("seoa", "서아", "CHILD", "MEDIUM", "CURVE", "girl_child"),
+    ("doyun", "도윤", "CHILD", "UNSPECIFIED", "", "boy_child"),
 ]
 FAMILY_DRIVES = {"DRIVER": "jiyoung", "FRONT_PASSENGER": "minjun", "REAR_RIGHT": "seoa"}
 MINJUN_DRIVES = {"DRIVER": "minjun", "FRONT_PASSENGER": "jiyoung", "REAR_RIGHT": "seoa"}

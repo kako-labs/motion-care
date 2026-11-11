@@ -230,7 +230,7 @@ private fun PersonDetailContent(
     var triggers by remember { mutableStateOf(person.motionTriggers) }
     var avatar by remember { mutableStateOf(person.avatar) }
     MotionCareTheme { AlertDialog(onDismissRequest = onDismiss, title = { Text("프로필 수정", fontSize = motionType.headline, fontWeight = FontWeight.Medium) }, text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        CharacterPicker(avatar, { avatar = it }, size = 56.dp)
+        CharacterPicker(avatar, { avatar = it })
         Text("멀미 민감도", fontWeight = FontWeight.Medium)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { MotionSensitivity.entries.filter { it != MotionSensitivity.UNSPECIFIED }.forEach { item -> FilterChip(sensitivity == item, { sensitivity = item }, { Text(item.label(), fontSize = motionType.body) }, Modifier.heightIn(min = MotionSpace.Touch)) } }
         Text("불편한 상황", fontWeight = FontWeight.Medium)

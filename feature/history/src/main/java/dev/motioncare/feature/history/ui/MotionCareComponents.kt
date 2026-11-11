@@ -118,14 +118,14 @@ val MotionLine = MotionPalette.CardBorder
     }
 }
 
-private val adultFaces = listOf(R.drawable.mc_avatar_adult, R.drawable.mc_avatar_woman)
-private val childFaces = listOf(R.drawable.mc_avatar_child, R.drawable.mc_avatar_boy)
+private val adultFaces = listOf(R.drawable.mc_person_man_young, R.drawable.mc_person_woman_young)
+private val childFaces = listOf(R.drawable.mc_person_girl_child, R.drawable.mc_person_boy_child)
 
 /** A picked character first; otherwise the same face for the same person every time, a child face for children. */
 fun avatarFor(person: PersonProfile): Int {
     person.avatar?.let(::characterDrawable)?.let { return it }
     val faces = if (person.kind == PersonKind.CHILD) childFaces else adultFaces
-    return when (person.id.value) { "driver" -> R.drawable.mc_face_man; "doyun" -> R.drawable.mc_face_boy; "jiyoung" -> R.drawable.mc_face_woman; "seoa" -> R.drawable.mc_face_girl; else -> faces[Math.floorMod(person.id.hashCode(), faces.size)] }
+    return faces[Math.floorMod(person.id.hashCode(), faces.size)]
 }
 
 @Composable fun KindFace(kind: PersonKind, modifier: Modifier = Modifier) {
