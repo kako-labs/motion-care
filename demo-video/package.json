@@ -6,7 +6,9 @@
     "remap": "node tools/build-remap.mjs",
     "studio": "node tools/build-remap.mjs && remotion studio src/index.ts",
     "render": "node tools/build-remap.mjs && remotion render src/index.ts MotionCareDemo out/motioncare-demo-4min.mp4 --crf=18",
-    "still": "remotion still src/index.ts MotionCareDemo"
+    "still": "remotion still src/index.ts MotionCareDemo",
+    "render3": "remotion render src/index.ts MotionCare3Min out/motioncare-demo-3min.mp4 --crf=18",
+    "studio3": "remotion studio src/index.ts"
   },
   "dependencies": {
     "@remotion/cli": "4.0.380",
