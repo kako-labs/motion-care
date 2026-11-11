@@ -60,7 +60,9 @@ python3 scripts/dev.py verify --clean-home
 
 각 모듈 build/reports/tests, build/test-results, build/reports/lint-results-debug.html에 결과가 생깁니다. UI는 app/build/reports/androidTests 아래에 있습니다.
 
-.github/workflows/android.yml은 Ubuntu 24.04에서 같은 스크립트로 host/UI 검사를 실행하고 결과를 artifact로 보존합니다. PR과 `main` push에서 실행하며, `.md`와 `docs/`만 바뀌면 건너뜁니다. 같은 PR에 새로 push하면 이전 실행은 취소됩니다. 최근 실행 결과는 [GitHub Actions](https://github.com/kako-labs/motion-care/actions)에서 확인합니다.
+**CI는 2026-11-12부터 꺼 두었습니다.** 계정의 GitHub Actions 사용 한도를 90% 썼다는 알림을 받았기 때문입니다. 워크플로는 PR마다, `main` push마다 `verify`(5~9분)와 `ui`(약 13분)를 캐시 없이 새로 돌려, PR 하나에 약 40분이 들었습니다. 두 작업은 로컬의 `python3 scripts/dev.py verify`, `python3 scripts/dev.py ui`와 같은 명령이므로 병합 전에 로컬에서 돌리고 결과를 PR 본문에 적습니다. 워크플로 파일은 남겨 두었고 `gh workflow enable "Android scaffold"`로 다시 켭니다.
+
+.github/workflows/android.yml은 Ubuntu 24.04에서 같은 스크립트로 host/UI 검사를 실행하고 결과를 artifact로 보존합니다. 켜 두면 PR과 `main` push에서 실행하며, `.md`와 `docs/`만 바뀌면 건너뜁니다. 같은 PR에 새로 push하면 이전 실행은 취소됩니다. 지난 실행 결과는 [GitHub Actions](https://github.com/kako-labs/motion-care/actions)에서 확인합니다.
 
 SDK 설치 action에는 `packages: platform-tools`를 명시합니다. 기본값에 포함된 구형 `tools` 패키지는 현재 SDK 저장소에서 찾을 수 없어 설치가 실패합니다. API·Build Tools·Emulator는 이후 `scripts/dev.py setup-sdk`가 프로젝트 설정에 맞춰 설치합니다.
 
