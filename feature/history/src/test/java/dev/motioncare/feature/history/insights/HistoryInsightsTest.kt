@@ -84,6 +84,8 @@ class HistoryInsightsTest {
         assertEquals(17.0 / 3, trend.previous!!, 0.001)
         assertEquals(2.0, trend.recent!!, 0.001)
         assertEquals(-65, trend.changePercent)
+        assertEquals(listOf(6.0, 6.0, 5.0), trend.previousRates.map { Math.round(it * 10) / 10.0 })
+        assertEquals(listOf(3.0, 2.0, 1.0), trend.recentRates.map { Math.round(it * 10) / 10.0 })
     }
 
     @Test fun `short and unfinished trips stay out of the trend`() {
