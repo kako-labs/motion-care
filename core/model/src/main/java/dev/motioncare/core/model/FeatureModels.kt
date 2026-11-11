@@ -12,9 +12,12 @@ data class PersonProfile(
     val motionTriggers: Set<MotionTrigger> = emptySet(),
     val preferredRestMinutes: Int? = null,
     val preferredTemperatureCelsius: Double? = null,
+    /** The character picked for this person, as a key of the app's character set. Null shows a face by [kind]. */
+    val avatar: String? = null,
 ) {
     init {
         require(displayName.isNotBlank())
+        require(avatar == null || avatar.isNotBlank())
         require(preferredRestMinutes == null || preferredRestMinutes > 0)
         require(preferredTemperatureCelsius == null || preferredTemperatureCelsius in 16.0..30.0)
     }
@@ -46,7 +49,12 @@ sealed interface FeedbackAnswer {
     data class Rating(val value: Int, val scaleVersion: String) : FeedbackAnswer
     data object Skipped : FeedbackAnswer
 }
-enum class FeedbackReason { START_STOP, REPEATED_SPEED_CHANGE, CURVE, CABIN_ENVIRONMENT, UNKNOWN }
+/**
+ * Why a passenger felt uncomfortable. [FELT_HOT] and [STUFFY_AIR] record a feeling, not a cause: nausea itself can
+ * make people feel warm (docs/environment.md). [CABIN_ENVIRONMENT] is kept for answers saved before those two
+ * replaced it and is no longer offered.
+ */
+enum class FeedbackReason { START_STOP, REPEATED_SPEED_CHANGE, CURVE, CABIN_ENVIRONMENT, FELT_HOT, STUFFY_AIR, UNKNOWN }
 enum class FeedbackRespondent { SELF, GUARDIAN }
 data class TripFeedback(
     val tripId: TripId,

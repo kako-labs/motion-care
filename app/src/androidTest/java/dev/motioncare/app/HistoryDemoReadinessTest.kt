@@ -27,7 +27,7 @@ class HistoryDemoReadinessTest {
 
     @Test fun selectedObservationOpensTheSameTripAndEvent() {
         click("프로필")
-        click("자세히  ›")
+        click("자세히")
         val thirdEvent = hasText("3 ·", substring = true) and hasClickAction()
         compose.waitUntil(20_000) { compose.onAllNodes(thirdEvent).fetchSemanticsNodes().isNotEmpty() }
         // Scroll the outer page first: the chip's nearest scroll parent only moves horizontally.
@@ -35,7 +35,7 @@ class HistoryDemoReadinessTest {
         val event = compose.onAllNodes(thirdEvent).onFirst()
         event.performScrollTo()
         event.performClick()
-        val selected = hasText("정차 전 큰 감속 3 ·", substring = true)
+        val selected = hasText("정차 직전 큰 감속 3 ·", substring = true)
         assertTrue(compose.onRoot(useUnmergedTree = true).printToString(maxDepth = 80),
             compose.onAllNodes(selected).fetchSemanticsNodes().isNotEmpty())
         compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(selected)
@@ -98,7 +98,9 @@ class HistoryDemoReadinessTest {
         compose.runOnUiThread { compose.activity.intent.removeExtra("empty"); compose.activity.intent.putExtra("interrupted", true) }
         compose.activityRule.scenario.recreate()
         click("운행 기록")
-        click("11월 4일", substring = true)
+        // The date heads its day's group; the row itself shows the time and the status.
+        compose.onNodeWithText("11월 4일", substring = true).assertExists()
+        click("중단됨")
         compose.onNodeWithText("중단된 운행").assertExists()
     }
 

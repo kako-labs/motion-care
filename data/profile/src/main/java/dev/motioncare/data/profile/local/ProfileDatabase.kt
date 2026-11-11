@@ -4,7 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-private const val DATABASE_VERSION = 2
+private const val DATABASE_VERSION = 3
 
 // Separate file from the trip database so each module owns its schema version.
 internal class ProfileDatabase(context: Context) :
@@ -14,18 +14,25 @@ internal class ProfileDatabase(context: Context) :
         db.execSQL("""CREATE TABLE people (
             id TEXT PRIMARY KEY, display_name TEXT NOT NULL, kind TEXT NOT NULL DEFAULT 'ADULT',
             sensitivity TEXT NOT NULL DEFAULT 'UNSPECIFIED', triggers TEXT NOT NULL DEFAULT '',
-            rest_minutes INTEGER, preferred_temperature REAL
+            rest_minutes INTEGER, preferred_temperature REAL, avatar TEXT
         )""")
         createFeatureTables(db)
     }
+    // Each step upgrades one version, so a database from any earlier version walks up to the current one.
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        check(oldVersion == 1 && newVersion == 2) { "An explicit migration is required: $oldVersion -> $newVersion" }
-        db.execSQL("ALTER TABLE people ADD COLUMN kind TEXT NOT NULL DEFAULT 'ADULT'")
-        db.execSQL("ALTER TABLE people ADD COLUMN sensitivity TEXT NOT NULL DEFAULT 'UNSPECIFIED'")
-        db.execSQL("ALTER TABLE people ADD COLUMN triggers TEXT NOT NULL DEFAULT ''")
-        db.execSQL("ALTER TABLE people ADD COLUMN rest_minutes INTEGER")
-        db.execSQL("ALTER TABLE people ADD COLUMN preferred_temperature REAL")
-        createFeatureTables(db)
+        check(oldVersion in 1 until newVersion && newVersion == DATABASE_VERSION) {
+            "An explicit migration is required: $oldVersion -> $newVersion"
+        }
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE people ADD COLUMN kind TEXT NOT NULL DEFAULT 'ADULT'")
+            db.execSQL("ALTER TABLE people ADD COLUMN sensitivity TEXT NOT NULL DEFAULT 'UNSPECIFIED'")
+            db.execSQL("ALTER TABLE people ADD COLUMN triggers TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE people ADD COLUMN rest_minutes INTEGER")
+            db.execSQL("ALTER TABLE people ADD COLUMN preferred_temperature REAL")
+            createFeatureTables(db)
+        }
+        // A picked character. Existing people keep null and show the face for their kind.
+        if (oldVersion < 3) db.execSQL("ALTER TABLE people ADD COLUMN avatar TEXT")
     }
     private fun createFeatureTables(db: SQLiteDatabase) {
         db.execSQL("""CREATE TABLE current_seats (

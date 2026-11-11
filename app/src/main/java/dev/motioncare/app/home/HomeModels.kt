@@ -178,7 +178,7 @@ data class HomeAdvice(
 
 /** With the departure advice turned off the hero says so, as the history feature's seat screen does. */
 fun homeAdvice(advice: AdviceInsight, driverId: PersonId?, enabled: Boolean = true): HomeAdvice {
-    if (!enabled) return HomeAdvice("출발 안내가 꺼져 있어요.", "아래 안내 카드에서 다시 켤 수 있어요.", null, null, HeroAction.NONE)
+    if (!enabled) return HomeAdvice("출발 안내가 꺼져 있어요.", "아래 설정 카드에서 다시 켤 수 있어요.", null, null, HeroAction.NONE)
     val previous = advice.previousAverage
     val recent = advice.recentAverage
     val pattern = advice.pattern

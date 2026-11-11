@@ -18,6 +18,8 @@ internal interface TripWriter {
         steering: List<SteeringSample> = emptyList(),
         guidance: List<GuidanceEvent> = emptyList(),
     )
+    /** Saves the finished [trip] and drops what was recorded after [keepUntilMs], in one transaction. */
+    suspend fun finishAt(trip: TripRecord, keepUntilMs: Long)
 }
 internal interface TripCommands {
     suspend fun start(vehicleId: VehicleId? = null): CommandResult

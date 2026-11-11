@@ -1,6 +1,8 @@
 package dev.motioncare.feature.history.insights
 
+import androidx.compose.ui.graphics.vector.ImageVector
 import dev.motioncare.core.model.*
+import dev.motioncare.core.ui.MotionIcons
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.trip.TripRepository
 import kotlin.math.roundToInt
@@ -101,18 +103,19 @@ fun actionFor(pattern: DrivingPattern?): String = when (pattern) {
     null -> "출발과 감속을 여유 있게 해보세요."
 }
 
-/** One glyph per pattern so tiles read at a glance. */
-fun patternIcon(pattern: DrivingPattern): String = when (pattern) {
-    DrivingPattern.RAPID_START -> "⇡"
-    DrivingPattern.HARD_STOP -> "⇣"
-    DrivingPattern.REPEATED_SPEED_CHANGE -> "∿"
-    DrivingPattern.FAST_TURN -> "↻"
-    DrivingPattern.REPEATED_SWAY -> "⇄"
+/** One icon per pattern so tiles read at a glance, from the shared icon set. */
+fun patternIcon(pattern: DrivingPattern): ImageVector = when (pattern) {
+    DrivingPattern.RAPID_START -> MotionIcons.RapidStart
+    DrivingPattern.HARD_STOP -> MotionIcons.HardStop
+    DrivingPattern.REPEATED_SPEED_CHANGE -> MotionIcons.SpeedChange
+    DrivingPattern.FAST_TURN -> MotionIcons.FastTurn
+    DrivingPattern.REPEATED_SWAY -> MotionIcons.Sway
 }
 
+/** The one name of each pattern on every screen, the same as in docs/detection-thresholds.md. */
 fun patternLabel(pattern: DrivingPattern): String = when (pattern) {
-    DrivingPattern.HARD_STOP -> "정차 직전 속도 변화"
-    DrivingPattern.RAPID_START -> "출발 직후 속도 증가"
+    DrivingPattern.HARD_STOP -> "정차 직전 큰 감속"
+    DrivingPattern.RAPID_START -> "빠른 출발"
     DrivingPattern.REPEATED_SPEED_CHANGE -> "반복 가감속"
     DrivingPattern.FAST_TURN -> "빠른 회전"
     DrivingPattern.REPEATED_SWAY -> "반복 좌우 움직임"

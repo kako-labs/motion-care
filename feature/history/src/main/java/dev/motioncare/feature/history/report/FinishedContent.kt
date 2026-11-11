@@ -1,5 +1,7 @@
 package dev.motioncare.feature.history.report
 
+import dev.motioncare.core.ui.MotionSpace
+import dev.motioncare.core.ui.motionType
 import dev.motioncare.feature.history.presentation.BActionRibbon
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -64,8 +66,8 @@ fun FinishedRoute(
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     MetricTile("${insight.durationMs / 60_000}분", "운행 시간", Modifier.weight(1f))
                     MetricTile("${"%.1f".format(insight.distanceMeters / 1000)}km", "거리", Modifier.weight(1f))
-                    MetricTile("${insight.count(DrivingPattern.HARD_STOP)}회", "정차 직전 속도 변화", Modifier.weight(1f), true)
-                    MetricTile("${insight.count(DrivingPattern.RAPID_START)}회", "출발 직후 속도 증가", Modifier.weight(1f))
+                    MetricTile("${insight.count(DrivingPattern.HARD_STOP)}회", patternLabel(DrivingPattern.HARD_STOP), Modifier.weight(1f), true)
+                    MetricTile("${insight.count(DrivingPattern.RAPID_START)}회", patternLabel(DrivingPattern.RAPID_START), Modifier.weight(1f))
                 }
                 BoxWithConstraints(Modifier.fillMaxWidth()) {
                     val wide = maxWidth >= 900.dp
@@ -87,7 +89,7 @@ fun FinishedRoute(
     val values = trips.sortedBy { it.trip.startedAtEpochMs }.takeLast(6).mapNotNull { it.rate(pattern) }
     GlassPanel(modifier) {
         Text("최근 ${values.size}회 · ${patternLabel(pattern)} · 10분당", color = MotionSubtle, fontWeight = FontWeight.Medium)
-        if (values.isEmpty()) Text("비교할 기록이 더 필요해요.", fontSize = 24.sp) else TrendBars(values)
+        if (values.isEmpty()) Text("비교할 기록이 더 필요해요.", fontSize = motionType.section) else TrendBars(values)
     }
 }
 
@@ -99,12 +101,12 @@ fun FinishedRoute(
 ) {
     GlassPanel(modifier) {
         Text("다음 출발", color = MotionSubtle, fontWeight = FontWeight.Medium)
-        Text(advice.headline, fontSize = 29.sp, lineHeight = 36.sp, fontWeight = FontWeight.Medium)
+        Text(advice.headline, fontSize = motionType.headline, fontWeight = FontWeight.Medium)
         val passengerIds = state.participants?.passengerIds.orEmpty()
         passengerIds.forEach { id ->
             val person = state.people.firstOrNull { it.id == id } ?: return@forEach
             val saved = state.feedback.firstOrNull { it.targetPersonId == id }
-            OutlinedButton(onClick = onFeedback, modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)) {
+            OutlinedButton(onClick = onFeedback, modifier = Modifier.fillMaxWidth().heightIn(min = MotionSpace.Touch)) {
                 PersonAvatar(person, Modifier.size(44.dp)); Spacer(Modifier.width(10.dp)); Text(person.displayName, Modifier.weight(1f))
                 val score = (saved?.answer as? FeedbackAnswer.Rating)?.value
                 Text(score?.let { "★".repeat(it) } ?: "평가하기", color = MotionCyan)

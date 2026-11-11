@@ -52,7 +52,12 @@ import androidx.compose.ui.unit.sp
 import dev.motioncare.R
 import dev.motioncare.core.model.TripId
 import dev.motioncare.core.ui.MotionBrushes
+import dev.motioncare.core.ui.MotionIcons
+import dev.motioncare.core.ui.MotionPrimaryButton
 import dev.motioncare.core.ui.MotionPalette
+import dev.motioncare.core.ui.MotionSpace
+import dev.motioncare.core.ui.MotionSwitchRow
+import dev.motioncare.core.ui.motionType
 import dev.motioncare.core.ui.glass
 import dev.motioncare.feature.history.ui.PersonAvatar
 
@@ -64,11 +69,11 @@ import dev.motioncare.feature.history.ui.PersonAvatar
  */
 @Composable
 internal fun HomeScreen(
-    vehicleConnected: Boolean,
+    status: String,
     people: PeopleSummary,
     environment: EnvironmentCard,
     recent: List<RecentTripItem>,
-    start: StartButton,
+    start: StartButton?,
     links: HomeLinks,
     notice: (@Composable () -> Unit)?,
     guidance: @Composable () -> Unit,
@@ -78,17 +83,22 @@ internal fun HomeScreen(
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 1100.dp && maxHeight >= 820.dp
         val sizes = if (wide) WideSizes else CompactSizes
-        val header = @Composable { HomeHeader(vehicleConnected, sizes) }
+        val header = @Composable { HomeHeader(status, sizes) }
         val noticeStrip = notice?.let { content -> @Composable { NoticeStrip(sizes, content) } }
         if (wide) {
             Column(Modifier.fillMaxSize().padding(sizes.outer), verticalArrangement = Arrangement.spacedBy(sizes.gap)) {
                 header()
                 noticeStrip?.invoke()
-                HeroCard(sizes, Modifier.weight(1f).fillMaxWidth(), showCar = true) { hero(sizes) }
-                Row(Modifier.fillMaxWidth().height(300.dp), horizontalArrangement = Arrangement.spacedBy(sizes.gap)) {
-                    PeopleCard(people, onPeople, sizes, Modifier.width(480.dp).fillMaxHeight())
-                    EnvironmentPanel(environment, sizes, Modifier.weight(1f).fillMaxHeight())
-                    GuidanceCard(sizes, Modifier.width(400.dp).fillMaxHeight(), scrolls = true, guidance)
+                // The settings take a column of their own: at car size its switches need more height than a card row.
+                Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(sizes.gap)) {
+                    Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(sizes.gap)) {
+                        HeroCard(sizes, Modifier.weight(1f).fillMaxWidth(), showCar = true) { hero(sizes) }
+                        Row(Modifier.fillMaxWidth().height(sizes.infoRow), horizontalArrangement = Arrangement.spacedBy(sizes.gap)) {
+                            PeopleCard(people, onPeople, sizes, Modifier.width(sizes.peopleWidth).fillMaxHeight())
+                            EnvironmentPanel(environment, sizes, Modifier.weight(1f).fillMaxHeight())
+                        }
+                    }
+                    GuidanceCard(sizes, Modifier.width(sizes.settingsWidth).fillMaxHeight(), scrolls = true, guidance)
                 }
                 RecentTrips(recent, links, sizes, columns = 3)
                 BottomNav(start, links, sizes)
@@ -113,16 +123,19 @@ internal fun HomeScreen(
     }
 }
 
-/** The raised round button in the bottom bar. */
+/** The raised round button in the bottom bar. Devices without a car start sample trips with it. */
 internal data class StartButton(val label: String, val enabled: Boolean, val onClick: () -> Unit)
+
+/** Turns automatic recording on and off. In the car, trips start and finish with the gear instead of a button. */
+@Composable
+internal fun AutoRecordSwitch(enabled: Boolean, onChange: (Boolean) -> Unit) {
+    MotionSwitchRow("운행 자동 기록", enabled, onChange, description = "P에서 출발하면 기록을 시작해요")
+}
 
 /** Turns the departure advice on and off. The setting lives in the profile store of the history feature. */
 @Composable
 internal fun DepartureGuidanceSwitch(enabled: Boolean, onChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text("출발 안내", Modifier.weight(1f))
-        Switch(checked = enabled, onCheckedChange = onChange)
-    }
+    MotionSwitchRow("출발 안내", enabled, onChange)
 }
 
 /** Where the home screen's links lead. */
@@ -139,9 +152,8 @@ internal data class HomeLinks(
  */
 @Composable
 internal fun AdviceHero(advice: HomeAdvice, sizes: HomeSizes, onExplain: () -> Unit, onChooseSeats: () -> Unit) {
+    // At car size the advice itself is the heading, so Home2's "오늘의 편안한 운전" chip above it is left out.
     Column {
-        Chip("오늘의 편안한 운전", sizes)
-        Spacer(Modifier.height(16.dp))
         Text(
             advice.headline,
             fontSize = sizes.hero, lineHeight = sizes.hero * 1.16f, fontWeight = FontWeight.ExtraBold, color = Color.White,
@@ -153,15 +165,16 @@ internal fun AdviceHero(advice: HomeAdvice, sizes: HomeSizes, onExplain: () -> U
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             when (advice.action) {
-                HeroAction.EXPLAIN -> HeroButton("왜 이런 조언을 받았나요?", sizes, onExplain)
-                HeroAction.CHOOSE_SEATS -> HeroButton("좌석에서 운전자 고르기", sizes, onChooseSeats)
+                // Named like the screen it opens, and short enough to share the line with the comparison.
+                HeroAction.EXPLAIN -> MotionPrimaryButton("왜 이 조언인가요?", onExplain)
+                HeroAction.CHOOSE_SEATS -> MotionPrimaryButton("좌석에서 운전자 고르기", onChooseSeats)
                 HeroAction.NONE -> Unit
             }
             if (advice.comparison != null && advice.comparisonLabel != null) {
                 Column(
-                    Modifier.glass(RoundedCornerShape(22.dp)).padding(horizontal = 22.dp, vertical = 10.dp),
+                    Modifier.glass(RoundedCornerShape(22.dp)).padding(horizontal = 20.dp, vertical = 10.dp),
                 ) {
-                    Text(advice.comparisonLabel, fontSize = sizes.small, color = MotionPalette.TextSecondary)
+                    Text(advice.comparisonLabel, fontSize = motionType.caption, color = MotionPalette.TextSecondary)
                     Text(advice.comparison, fontSize = sizes.body, fontWeight = FontWeight.ExtraBold, color = MotionPalette.TextStrong)
                 }
             }
@@ -170,19 +183,7 @@ internal fun AdviceHero(advice: HomeAdvice, sizes: HomeSizes, onExplain: () -> U
 }
 
 @Composable
-private fun HeroButton(text: String, sizes: HomeSizes, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(22.dp)
-    Box(
-        Modifier.clip(shape).background(MotionBrushes.Primary, shape).border(1.5.dp, MotionPalette.ButtonBorder, shape)
-            .clickable(role = Role.Button, onClick = onClick).padding(horizontal = 30.dp, vertical = 18.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text, fontSize = sizes.body, fontWeight = FontWeight.ExtraBold, color = Color.White)
-    }
-}
-
-@Composable
-private fun HomeHeader(vehicleConnected: Boolean, sizes: HomeSizes) {
+private fun HomeHeader(status: String, sizes: HomeSizes) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Image(
             painterResource(R.drawable.home_logo), contentDescription = null, contentScale = ContentScale.Crop,
@@ -194,7 +195,7 @@ private fun HomeHeader(vehicleConnected: Boolean, sizes: HomeSizes) {
             Text("함께 타는 사람까지 편안한 운전", fontSize = sizes.subtitle, color = MotionPalette.TextSecondary,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        StatusPill(if (vehicleConnected) "차량 속도 기록" else "합성 샘플 전용", sizes)
+        StatusPill(status, sizes)
     }
 }
 
@@ -207,20 +208,6 @@ private fun StatusPill(text: String, sizes: HomeSizes) {
     ) {
         Box(Modifier.size(10.dp).clip(CircleShape).background(MotionPalette.Glow))
         Text(text, fontSize = sizes.small, color = MotionPalette.TextStrong, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun Chip(text: String, sizes: HomeSizes) {
-    Row(
-        Modifier.clip(RoundedCornerShape(50)).background(Color(0x3300AAD2))
-            .border(1.5.dp, Color(0x8C5AD2F0), RoundedCornerShape(50))
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(HomeIcons.Sparkle, contentDescription = null, tint = Color(0xFF7FE6FB), modifier = Modifier.size(20.dp))
-        Text(text, fontSize = sizes.small, fontWeight = FontWeight.Bold, color = MotionPalette.ChipText)
     }
 }
 
@@ -249,10 +236,10 @@ private fun HeroCard(sizes: HomeSizes, modifier: Modifier, showCar: Boolean, con
         }
         // On a wide screen the card takes what is left of the height, so its content scrolls rather than clips.
         // A phone scrolls the whole home column instead, and nested vertical scrolling is not allowed.
-        val column = Modifier.fillMaxWidth(if (showCar) 0.58f else 1f)
+        val column = Modifier.fillMaxWidth(if (showCar) 0.66f else 1f)
         Column(
             (if (showCar) column.fillMaxHeight().verticalScroll(rememberScrollState()) else column)
-                .padding(horizontal = if (showCar) 40.dp else 20.dp, vertical = if (showCar) 30.dp else 20.dp),
+                .padding(horizontal = if (showCar) MotionSpace.XLarge else 20.dp, vertical = if (showCar) MotionSpace.Large else 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             MaterialTheme(typography = heroTypography(sizes)) {
@@ -278,37 +265,33 @@ private fun CardTitle(text: String, sizes: HomeSizes, action: String? = null, on
 
 @Composable
 private fun PeopleCard(people: PeopleSummary, onPeople: () -> Unit, sizes: HomeSizes, modifier: Modifier) {
-    Column(modifier.glass().padding(horizontal = 24.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        CardTitle("오늘 함께 타는 사람", sizes, action = "변경", onAction = onPeople)
+    Column(modifier.glass().padding(horizontal = MotionSpace.Large, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
+        CardTitle("함께 타는 사람", sizes, action = "변경", onAction = onPeople)
         if (people.shown.isEmpty()) {
             Text(
                 if (people.registered == 0) "아직 등록한 사람이 없어요. \"변경\"에서 좌석을 눌러 추가해요." else "좌석에 앉은 사람이 없어요.",
                 fontSize = sizes.body, color = MotionPalette.TextSecondary,
             )
         } else {
-            Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                people.shown.forEach { seated ->
-                    Row(Modifier.weight(1f, fill = false), verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        PersonAvatar(seated.person, Modifier.size(sizes.logo * 0.85f).border(2.dp, Color(0xB378DCFA), CircleShape))
-                        Column {
-                            Text(seated.person.displayName, fontSize = sizes.value, fontWeight = FontWeight.ExtraBold,
-                                maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(seated.role, fontSize = sizes.small, color = MotionPalette.TextSecondary, maxLines = 2)
-                        }
-                    }
+            // One person per line in seat order, so up to three fit the card at car size.
+            people.shown.forEach { seated ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MotionSpace.Base)) {
+                    PersonAvatar(seated.person, Modifier.size(sizes.avatar).border(2.dp, Color(0xB378DCFA), CircleShape))
+                    Text(seated.person.displayName, fontSize = sizes.body, fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    Text(seated.role, fontSize = sizes.small, color = MotionPalette.TextSecondary, maxLines = 1)
                 }
-                if (people.more > 0) Text("외 ${people.more}명", fontSize = sizes.body, color = MotionPalette.TextSecondary)
             }
+            if (people.more > 0) Text("외 ${people.more}명", fontSize = sizes.small, color = MotionPalette.TextSecondary)
         }
     }
 }
 
-private val environmentIcons = listOf(HomeIcons.Air, HomeIcons.Cloud, HomeIcons.Thermometer, HomeIcons.Recirculate)
+private val environmentIcons = listOf(MotionIcons.Air, MotionIcons.Cloud, MotionIcons.Thermometer, MotionIcons.Recirculate)
 
 @Composable
 private fun EnvironmentPanel(card: EnvironmentCard, sizes: HomeSizes, modifier: Modifier) {
-    Column(modifier.glass().padding(horizontal = 24.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(modifier.glass().padding(horizontal = MotionSpace.Large, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("지금 차 안팎 환경", fontSize = sizes.section, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
             card.updatedAt?.let { Text(it, fontSize = sizes.small, color = MotionPalette.TextTertiary) }
@@ -320,12 +303,13 @@ private fun EnvironmentPanel(card: EnvironmentCard, sizes: HomeSizes, modifier: 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             card.items.forEachIndexed { index, item ->
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    IconBubble(environmentIcons[index], warm = item.warning, size = sizes.logo * 0.8f)
+                    verticalArrangement = Arrangement.spacedBy(MotionSpace.Tiny)) {
+                    IconBubble(environmentIcons[index], warm = item.warning, size = sizes.iconBubble)
                     Text(item.label, fontSize = sizes.small, color = MotionPalette.TextSecondary, textAlign = TextAlign.Center)
                     Text(
                         item.value,
-                        fontSize = if (item.hasValue) sizes.value else sizes.body,
+                        // A missing value says why in words, which wrap; the label size keeps them to two lines.
+                        fontSize = if (item.hasValue) sizes.value else sizes.small,
                         fontWeight = if (item.hasValue) FontWeight.ExtraBold else FontWeight.SemiBold,
                         color = if (item.warning) MotionPalette.Caution else if (item.hasValue) MotionPalette.Text else MotionPalette.TextTertiary,
                         textAlign = TextAlign.Center,
@@ -360,12 +344,12 @@ private fun IconBubble(icon: ImageVector, warm: Boolean, size: Dp) {
 @Composable
 private fun GuidanceCard(sizes: HomeSizes, modifier: Modifier, scrolls: Boolean, content: @Composable () -> Unit) {
     // Only the fixed-height card on a wide screen scrolls; a phone already scrolls the whole home column.
-    val card = modifier.glass().padding(horizontal = 22.dp, vertical = 20.dp)
+    val card = modifier.glass().padding(horizontal = MotionSpace.Large, vertical = 20.dp)
     Column(
         if (scrolls) card.verticalScroll(rememberScrollState()) else card,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(MotionSpace.Base),
     ) {
-        Text("안내", fontSize = sizes.section, fontWeight = FontWeight.ExtraBold)
+        Text("설정", fontSize = sizes.section, fontWeight = FontWeight.ExtraBold)
         MaterialTheme(typography = heroTypography(sizes).copy(labelLarge = TextStyle(fontSize = sizes.small, fontWeight = FontWeight.Bold))) {
             ProvideTextStyle(TextStyle(fontSize = sizes.small, fontWeight = FontWeight.SemiBold)) { content() }
         }
@@ -383,7 +367,7 @@ private fun RecentTrips(recent: List<RecentTripItem>, links: HomeLinks, sizes: H
             }
         } else if (columns > 1) {
             Row(horizontalArrangement = Arrangement.spacedBy(sizes.gap)) {
-                recent.forEach { TripCard(it, onTrip, sizes, Modifier.weight(1f).height(112.dp)) }
+                recent.forEach { TripCard(it, onTrip, sizes, Modifier.weight(1f).height(120.dp)) }
                 repeat(columns - recent.size) { Spacer(Modifier.weight(1f)) }
             }
         } else {
@@ -396,7 +380,7 @@ private fun RecentTrips(recent: List<RecentTripItem>, links: HomeLinks, sizes: H
 private fun TripCard(item: RecentTripItem, onTrip: (TripId) -> Unit, sizes: HomeSizes, modifier: Modifier) {
     Row(
         modifier.glass(RoundedCornerShape(24.dp)).clickable(role = Role.Button) { onTrip(item.id) }
-            .padding(start = 22.dp, end = 16.dp, top = 14.dp, bottom = 14.dp),
+            .padding(start = MotionSpace.Large, end = MotionSpace.Base, top = MotionSpace.Base, bottom = MotionSpace.Base),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -413,14 +397,14 @@ private fun TripCard(item: RecentTripItem, onTrip: (TripId) -> Unit, sizes: Home
                 }
             }
         }
-        Icon(HomeIcons.Chevron, contentDescription = null, tint = MotionPalette.NavIdle, modifier = Modifier.size(22.dp))
+        Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionPalette.NavIdle, modifier = Modifier.size(MotionSpace.IconMedium))
     }
 }
 
 @Composable
-private fun BottomNav(start: StartButton, links: HomeLinks, sizes: HomeSizes) {
+private fun BottomNav(start: StartButton?, links: HomeLinks, sizes: HomeSizes) {
     val barHeight = sizes.navButton * 0.82f
-    Box(Modifier.fillMaxWidth().height(sizes.navButton + 4.dp)) {
+    Box(Modifier.fillMaxWidth().height(if (start != null) sizes.navButton + 4.dp else barHeight)) {
         Row(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(barHeight)
                 .clip(RoundedCornerShape(30.dp))
@@ -428,14 +412,14 @@ private fun BottomNav(start: StartButton, links: HomeLinks, sizes: HomeSizes) {
                 .border(BorderStroke(1.5.dp, MotionPalette.CardBorder), RoundedCornerShape(30.dp)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            NavItem(HomeIcons.Home, "홈", active = true, sizes = sizes, onClick = {}, modifier = Modifier.weight(1f))
-            NavItem(HomeIcons.Clock, "기록", active = false, sizes = sizes, onClick = links.onRecords, modifier = Modifier.weight(1f))
-            Spacer(Modifier.width(sizes.navButton * 1.8f))
-            NavItem(HomeIcons.Person, "프로필", active = false, sizes = sizes, onClick = links.onProfile, modifier = Modifier.weight(1f))
+            NavItem(MotionIcons.Home, "홈", active = true, sizes = sizes, onClick = {}, modifier = Modifier.weight(1f))
+            NavItem(MotionIcons.Clock, "기록", active = false, sizes = sizes, onClick = links.onRecords, modifier = Modifier.weight(1f))
+            if (start != null) Spacer(Modifier.width(sizes.navButton * 1.8f))
+            NavItem(MotionIcons.Person, "프로필", active = false, sizes = sizes, onClick = links.onProfile, modifier = Modifier.weight(1f))
             // Home2's last tab is the vehicle screen, which does not exist yet; the seats take its place.
-            NavItem(HomeIcons.Car, "좌석", active = false, sizes = sizes, onClick = links.onSeats, modifier = Modifier.weight(1f))
+            NavItem(MotionIcons.Car, "좌석", active = false, sizes = sizes, onClick = links.onSeats, modifier = Modifier.weight(1f))
         }
-        StartCircle(start, sizes, Modifier.align(Alignment.TopCenter))
+        start?.let { StartCircle(it, sizes, Modifier.align(Alignment.TopCenter)) }
     }
 }
 
@@ -466,7 +450,7 @@ private fun StartCircle(start: StartButton, sizes: HomeSizes, modifier: Modifier
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(HomeIcons.Play, contentDescription = null, tint = Color.White, modifier = Modifier.size(sizes.navButton * 0.28f))
+        Icon(MotionIcons.Play, contentDescription = null, tint = Color.White, modifier = Modifier.size(sizes.navButton * 0.28f))
         Text(start.label, fontSize = sizes.small, fontWeight = FontWeight.ExtraBold, color = Color.White)
     }
 }

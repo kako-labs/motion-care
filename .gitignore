@@ -1,6 +1,8 @@
 .gradle/
 .kotlin/
 **/build/
+# Java tooling in editors (Eclipse, VS Code) compiles into bin/ next to each module
+bin/
 local.properties
 .idea/
 *.iml

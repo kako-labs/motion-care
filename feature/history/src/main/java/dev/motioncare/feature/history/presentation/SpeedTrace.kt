@@ -1,5 +1,8 @@
 package dev.motioncare.feature.history.presentation
 
+import dev.motioncare.core.ui.MotionSpace
+import dev.motioncare.core.ui.motionType
+import dev.motioncare.feature.history.insights.patternLabel
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
@@ -47,9 +50,9 @@ internal enum class SpeedMovement(
     val tabLabel: String,
     val sectionLabel: String,
 ) {
-    STOP(DrivingPattern.HARD_STOP, "감속", "정차 전 큰 감속"),
-    START(DrivingPattern.RAPID_START, "빠른 가속", "출발 직후 빠른 가속"),
-    REPEAT(DrivingPattern.REPEATED_SPEED_CHANGE, "반복 가감속", "반복 가감속"),
+    STOP(DrivingPattern.HARD_STOP, patternLabel(DrivingPattern.HARD_STOP), patternLabel(DrivingPattern.HARD_STOP)),
+    START(DrivingPattern.RAPID_START, patternLabel(DrivingPattern.RAPID_START), patternLabel(DrivingPattern.RAPID_START)),
+    REPEAT(DrivingPattern.REPEATED_SPEED_CHANGE, patternLabel(DrivingPattern.REPEATED_SPEED_CHANGE), patternLabel(DrivingPattern.REPEATED_SPEED_CHANGE)),
 }
 
 internal fun speedMovementGroups(snapshot: TripSnapshot): Map<SpeedMovement, List<Observation>> =
@@ -91,7 +94,7 @@ internal fun BSpeedTrace(snapshot: TripSnapshot, initialEvent: Int = 0, onOpenDe
     val events = groups.getValue(movement)
     val event = events.getOrNull(selected)
     GlassPanel(Modifier.fillMaxWidth()) {
-        Text("주행 속도와 움직임 구간", fontSize = 24.sp)
+        SectionTitle("주행 속도와 움직임 구간")
         Text("km/h · 시각", color = MotionSubtle)
         TracePlot(snapshot, null, events)
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -100,7 +103,7 @@ internal fun BSpeedTrace(snapshot: TripSnapshot, initialEvent: Int = 0, onOpenDe
                     selected = movement == item,
                     onClick = { movement = item; selected = 0 },
                     label = { Text("${item.tabLabel} ${groups.getValue(item).size}") },
-                    modifier = Modifier.heightIn(min = 56.dp),
+                    modifier = Modifier.heightIn(min = MotionSpace.Touch),
                 )
             }
         }
@@ -110,12 +113,12 @@ internal fun BSpeedTrace(snapshot: TripSnapshot, initialEvent: Int = 0, onOpenDe
                 events.forEachIndexed { index, item ->
                     FilterChip(selected == index, { selected = index },
                         label = { Text("${index + 1} · ${traceClock(snapshot, item.startMs)}") },
-                        modifier = Modifier.heightIn(min = 56.dp))
+                        modifier = Modifier.heightIn(min = MotionSpace.Touch))
                 }
             }
             if (event != null) {
                 HorizontalDivider(color = MotionLine)
-                Text("${movement.sectionLabel} ${selected + 1} · ${traceClock(snapshot, event.startMs)}", fontSize = 22.sp, color = MotionCyan)
+                Text("${movement.sectionLabel} ${selected + 1} · ${traceClock(snapshot, event.startMs)}", fontSize = motionType.section, color = MotionCyan)
                 Text(eventValue(snapshot, movement, event), color = MotionSubtle)
                 TracePlot(snapshot, event, listOf(event))
                 if (onOpenDetail != null) BActionRibbon("같은 운행 · 같은 구간", "운행 상세에서 보기") { onOpenDetail(selected) }
@@ -132,7 +135,7 @@ private fun TracePlot(snapshot: TripSnapshot, selected: Observation?, markers: L
     if (trace.segments.isEmpty()) { Text("표시할 유효 속도 기록이 없어요.", color = MotionSubtle); return }
     Row(Modifier.fillMaxWidth()) {
         Column(Modifier.width(36.dp).height(190.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            listOf(ceiling, ceiling / 2, 0.0).forEach { Text("${it.toInt()}", color = MotionSubtle, fontSize = 12.sp) }
+            listOf(ceiling, ceiling / 2, 0.0).forEach { Text("${it.toInt()}", color = MotionSubtle, fontSize = motionType.caption) }
         }
         Canvas(Modifier.weight(1f).height(190.dp)
             .semantics { contentDescription = if (selected == null) "전체 속도 그래프. 기록 공백은 선을 끊어 표시" else "선택한 움직임 전후의 속도 상세 그래프" }
@@ -159,13 +162,13 @@ private fun TracePlot(snapshot: TripSnapshot, selected: Observation?, markers: L
         }
     }
     Row(Modifier.fillMaxWidth().padding(start = 36.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-        listOf(trace.startMs, trace.startMs + (trace.endMs - trace.startMs) / 2, trace.endMs).forEach { Text(traceClock(snapshot, it), fontSize = 13.sp, color = MotionSubtle) }
+        listOf(trace.startMs, trace.startMs + (trace.endMs - trace.startMs) / 2, trace.endMs).forEach { Text(traceClock(snapshot, it), fontSize = motionType.caption, color = MotionSubtle) }
     }
     val cursor = cursorMs
     Text(if (cursor == null) "그래프를 터치해 시각과 속도 확인" else {
         val sample = trace.sampleAt(cursor)
         "${traceClock(snapshot, sample?.elapsedMs ?: cursor)} · ${sample?.metersPerSecond?.let { "%.1f km/h".format(it * 3.6) } ?: "기록 없음"}"
-    }, color = MotionCyan, fontSize = 16.sp)
+    }, color = MotionCyan, fontSize = motionType.label)
 }
 
 private fun eventValue(snapshot: TripSnapshot, movement: SpeedMovement, event: Observation): String {

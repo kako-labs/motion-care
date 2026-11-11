@@ -1,10 +1,12 @@
 package dev.motioncare.feature.history.profile
 
+import dev.motioncare.core.ui.MotionSpace
+import dev.motioncare.core.ui.motionType
+import dev.motioncare.core.ui.MotionIcons
 import dev.motioncare.feature.history.presentation.*
 import dev.motioncare.feature.history.ui.MotionSelected
 import kotlin.math.roundToInt
 import dev.motioncare.feature.history.insights.AdviceState
-import dev.motioncare.feature.history.insights.patternIcon
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -78,7 +80,7 @@ private fun PersonDetailContent(
             if (tab == ProfileTab.DRIVER) DriverProfile(person, state.driverTrips, state.advice, onAdvice)
             else BPassengerProfilePanel(
                 name = person.displayName, role = if (person.kind == PersonKind.CHILD) "동승자 · 어린이" else "동승자",
-                preferences = listOf(BMetric("민감도", person.motionSensitivity.label()), BMetric("휴식 간격", person.preferredRestMinutes?.let { "${it}분" }), BMetric("선호 온도", person.preferredTemperatureCelsius?.let { "${it}℃" })),
+                preferences = listOf(BMetric("민감도", person.motionSensitivity.label()), BMetric("휴식 간격", person.preferredRestMinutes?.let { "${it}분" })),
                 moments = person.motionTriggers.map { BMoment(it.label(), "등록한 이동 선호") } + state.passengerFeedback.sortedByDescending { it.createdAtEpochMs }.take(5).map { BMoment(tripDate(it.createdAtEpochMs), (it.answer as? FeedbackAnswer.Rating)?.let { rating -> "편안함 ${rating.value}/5" } ?: "미응답") },
                 portrait = { PersonAvatar(person, Modifier.size(100.dp)) }, onEdit = { editing = true }, showIdentity = false)
         }
@@ -92,29 +94,32 @@ private fun PersonDetailContent(
     val values = chronological.mapNotNull { it.rate(pattern) }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val wide = maxWidth >= 960.dp
-        if (wide) Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            TrendPanel(pattern, { pattern = it }, chronological, Modifier.weight(1f))
-            NextAdvice(advice, { onAdvice(person.id) }, Modifier.weight(.72f))
+        // Both cards take the height of the taller one, so the advice card does not end above an empty gap.
+        if (wide) Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(MotionSpace.Large)) {
+            TrendPanel(pattern, { pattern = it }, chronological, Modifier.weight(1f).fillMaxHeight())
+            NextAdvice(advice, { onAdvice(person.id) }, Modifier.weight(.72f).fillMaxHeight())
         } else Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
             TrendPanel(pattern, { pattern = it }, chronological); NextAdvice(advice, { onAdvice(person.id) })
         }
     }
     if (values.isNotEmpty()) GlassPanel(Modifier.fillMaxWidth()) {
-        Text("전체 운전 기록", fontSize = 22.sp, fontWeight = FontWeight.Medium)
+        SectionTitle("전체 운전 기록")
         Text("${patternLabel(pattern)} · 10분당", color = MotionSubtle)
         LineTrend(values)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("처음 ${"%.1f".format(values.first())}회", color = MotionMuted, fontSize = 18.sp)
-            Text("최근 ${"%.1f".format(values.last())}회", color = MotionCyan, fontWeight = FontWeight.Medium, fontSize = 20.sp)
+            Text("처음 ${"%.1f".format(values.first())}회", color = MotionMuted, fontSize = motionType.body)
+            Text("최근 ${"%.1f".format(values.last())}회", color = MotionCyan, fontWeight = FontWeight.Medium, fontSize = motionType.body)
         }
     }
     GlassPanel(Modifier.fillMaxWidth()) {
-        Text("최근 운행", fontSize = 22.sp, fontWeight = FontWeight.Medium)
+        SectionTitle("최근 운행")
         if (chronological.isEmpty()) Text("아직 운전 기록이 없어요.", color = MotionSubtle)
         chronological.takeLast(5).reversed().forEach { trip ->
-            Row(Modifier.fillMaxWidth().heightIn(min = 58.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(tripTime(trip.trip.startedAtEpochMs), Modifier.weight(1f))
-                Text("${trip.durationMs / 60_000}분 · ${"%.1f".format(trip.distanceMeters / 1000)}km", color = MotionSubtle)
+            Row(Modifier.fillMaxWidth().heightIn(min = MotionSpace.Touch), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(MotionSpace.Large)) {
+                Text(tripTime(trip.trip.startedAtEpochMs), Modifier.width(420.dp), fontSize = motionType.body)
+                Text("${trip.durationMs / 60_000}분 · ${"%.1f".format(trip.distanceMeters / 1000)}km", color = MotionSubtle,
+                    fontSize = motionType.label)
             }
             HorizontalDivider(color = MotionLine)
         }
@@ -123,22 +128,30 @@ private fun PersonDetailContent(
 
 @Composable private fun TrendPanel(pattern: DrivingPattern, onPattern: (DrivingPattern) -> Unit, trips: List<TripInsight>, modifier: Modifier = Modifier) {
     GlassPanel(modifier) {
-        Text("최근 운전 경향", fontSize = 22.sp, fontWeight = FontWeight.Medium)
+        SectionTitle("최근 운전 경향")
         val selected = trips.mapNotNull { it.rate(pattern) }
         val change = if (selected.size >= 2 && selected.first() > 0) ((selected.last() - selected.first()) / selected.first() * 100).roundToInt() else null
-        Text(when {
-            change == null || trips.size < 4 -> "비교하려면 기록이 더 필요해요."
-            change < 0 -> "${patternLabel(pattern)} ↓ ${-change}%"
-            change > 0 -> "${patternLabel(pattern)} ↑ $change%"
-            else -> "${patternLabel(pattern)} 변화 없음"
-        }, fontSize = 27.sp, fontWeight = FontWeight.Medium, color = if (change != null && change < 0 && trips.size >= 4) MotionCyan else MotionText)
+        val comparable = change != null && trips.size >= 4
+        val tone = if (comparable && change!! < 0) MotionCyan else MotionText
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(when {
+                !comparable -> "비교하려면 기록이 더 필요해요."
+                change == 0 -> "${patternLabel(pattern)} 변화 없음"
+                else -> patternLabel(pattern)
+            }, fontSize = motionType.headline, fontWeight = FontWeight.Medium, color = tone)
+            if (comparable && change != 0) {
+                Icon(if (change!! < 0) MotionIcons.ArrowDown else MotionIcons.ArrowUp, contentDescription = if (change < 0) "줄어듦" else "늘어남",
+                    tint = tone, modifier = Modifier.size(28.dp))
+                Text("${kotlin.math.abs(change)}%", fontSize = motionType.headline, fontWeight = FontWeight.Medium, color = tone)
+            }
+        }
         listOf(DrivingPattern.HARD_STOP, DrivingPattern.RAPID_START, DrivingPattern.REPEATED_SPEED_CHANGE).forEach { item ->
             val rates = trips.mapNotNull { it.rate(item) }
-            OutlinedButton(onClick = { onPattern(item) }, modifier = Modifier.fillMaxWidth().heightIn(min = 68.dp),
+            OutlinedButton(onClick = { onPattern(item) }, modifier = Modifier.fillMaxWidth().heightIn(min = MotionSpace.Touch),
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = if (pattern == item) MotionBlue.copy(.26f) else Color.Transparent)) {
-                Text(patternIcon(item), fontSize = 26.sp, color = MotionCyan); Spacer(Modifier.width(14.dp))
-                Text(patternLabel(item), Modifier.weight(1f), fontSize = 20.sp, fontWeight = FontWeight.Medium, color = MotionText)
-                Text(rates.lastOrNull()?.let { "${"%.1f".format(it)}회" } ?: "—", fontSize = 22.sp, fontWeight = FontWeight.Medium, color = MotionCyan)
+                PatternGlyph(item); Spacer(Modifier.width(14.dp))
+                Text(patternLabel(item), Modifier.weight(1f), fontSize = motionType.body, fontWeight = FontWeight.Medium, color = MotionText)
+                Text(rates.lastOrNull()?.let { "${"%.1f".format(it)}회" } ?: "—", fontSize = motionType.section, fontWeight = FontWeight.Medium, color = MotionCyan)
             }
         }
     }
@@ -146,9 +159,9 @@ private fun PersonDetailContent(
 
 @Composable private fun TabTile(label: String, selected: Boolean, onClick: () -> Unit) {
     Surface(onClick = onClick, shape = RoundedCornerShape(12.dp), color = if (selected) MotionSelected else Color.Transparent,
-        border = BorderStroke(1.dp, if (selected) MotionCyan.copy(.5f) else MotionLine), modifier = Modifier.heightIn(min = 56.dp).widthIn(min = 160.dp)) {
+        border = BorderStroke(1.dp, if (selected) MotionCyan.copy(.5f) else MotionLine), modifier = Modifier.heightIn(min = MotionSpace.Touch).widthIn(min = 160.dp)) {
         Row(Modifier.padding(horizontal = 22.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
-            Text(label, fontSize = 18.sp, fontWeight = FontWeight.Medium, color = if (selected) MotionText else MotionSubtle)
+            Text(label, fontSize = motionType.body, fontWeight = FontWeight.Medium, color = if (selected) MotionText else MotionSubtle)
         }
     }
 }
@@ -156,9 +169,11 @@ private fun PersonDetailContent(
 @Composable private fun NextAdvice(advice: AdviceInsight, onAdvice: () -> Unit, modifier: Modifier = Modifier) {
     GlassPanel(modifier) {
         Text("다음 출발", color = MotionSubtle, fontWeight = FontWeight.Medium)
-        Text(advice.headline, fontSize = 30.sp, lineHeight = 38.sp, fontWeight = FontWeight.Medium)
-        if (advice.state == AdviceState.INSUFFICIENT) Text("1분 넘게 달린 기록부터 분석해요", color = MotionCyan, fontSize = 20.sp, fontWeight = FontWeight.Medium)
-        if (advice.pattern != null) SecondaryAction("자세히  ›", onAdvice, Modifier.fillMaxWidth())
+        Text(advice.headline, fontSize = motionType.headline, fontWeight = FontWeight.Medium)
+        if (advice.state == AdviceState.INSUFFICIENT) Text("1분 넘게 달린 기록부터 분석해요", color = MotionCyan, fontSize = motionType.body, fontWeight = FontWeight.Medium)
+        // The button stays at the bottom of a card stretched to its neighbour's height.
+        Spacer(Modifier.weight(1f))
+        if (advice.pattern != null) SecondaryAction("자세히", onAdvice, Modifier.fillMaxWidth(), icon = MotionIcons.ChevronRight)
     }
 }
 
@@ -173,36 +188,37 @@ private fun PersonDetailContent(
 
 @Composable private fun Preferences(person: PersonProfile, modifier: Modifier = Modifier) {
     GlassPanel(modifier) {
-        Text("편안한 이동을 위한 선호", fontSize = 22.sp, fontWeight = FontWeight.Medium)
+        SectionTitle("편안한 이동을 위한 선호")
         ValueRow("멀미 민감도", person.motionSensitivity.label())
         ValueRow("불편한 상황", person.motionTriggers.joinToString(" · ") { it.label() }.ifBlank { "미설정" })
         ValueRow("휴식 간격", person.preferredRestMinutes?.let { "${it}분" } ?: "미설정")
-        ValueRow("선호 온도", person.preferredTemperatureCelsius?.let { "${"%.1f".format(it)}℃" } ?: "미설정")
+        // No preferred temperature: people rarely know theirs as a number, and the set point differs from the cabin
+        // (docs/environment.md). The stored column stays so older rows keep loading.
     }
 }
-@Composable private fun ValueRow(label: String, value: String) { Row(Modifier.fillMaxWidth().heightIn(min = 62.dp), verticalAlignment = Alignment.CenterVertically) { Text(label, color = MotionSubtle, modifier = Modifier.weight(1f)); Text(value, fontWeight = FontWeight.Medium) } }
+@Composable private fun ValueRow(label: String, value: String) { Row(Modifier.fillMaxWidth().heightIn(min = 64.dp), verticalAlignment = Alignment.CenterVertically) { Text(label, color = MotionSubtle, modifier = Modifier.weight(1f)); Text(value, fontWeight = FontWeight.Medium) } }
 
 @Composable private fun FeedbackHistory(feedback: List<TripFeedback>, modifier: Modifier = Modifier) {
     GlassPanel(modifier) {
-        Text("남긴 평가", fontSize = 22.sp, fontWeight = FontWeight.Medium)
+        SectionTitle("남긴 평가")
         if (feedback.isEmpty()) Text("아직 평가가 없어요.", color = MotionSubtle)
         val rated = feedback.mapNotNull { item -> (item.answer as? FeedbackAnswer.Rating)?.value?.let { item to it } }
         val oldestFirst = rated.sortedBy { it.first.createdAtEpochMs }.map { it.second }.takeLast(8)
         if (oldestFirst.size >= 2) {
-            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("★${oldestFirst.first()}", fontSize = 28.sp, color = MotionMuted, fontWeight = FontWeight.Medium)
-                Text("→", fontSize = 26.sp, color = MotionMuted)
-                Text("★${oldestFirst.last()}", fontSize = 40.sp, lineHeight = 44.sp, color = MotionCyan, fontWeight = FontWeight.Medium)
-                Text("최근 ${oldestFirst.size}번", fontSize = 17.sp, color = MotionSubtle)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("★${oldestFirst.first()}", fontSize = motionType.headline, color = MotionMuted, fontWeight = FontWeight.Medium)
+                Icon(MotionIcons.ArrowRight, contentDescription = "에서", tint = MotionMuted, modifier = Modifier.size(26.dp))
+                Text("★${oldestFirst.last()}", fontSize = motionType.title, color = MotionCyan, fontWeight = FontWeight.Medium)
+                Text("최근 ${oldestFirst.size}번", fontSize = motionType.label, color = MotionSubtle)
             }
             TrendBars(oldestFirst.map { it.toDouble() }, Modifier.fillMaxWidth().height(110.dp))
         }
         rated.sortedByDescending { it.first.createdAtEpochMs }.take(6).forEach { (item, rating) ->
-            Row(Modifier.fillMaxWidth().heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(tripDate(item.createdAtEpochMs), color = MotionSubtle, fontSize = 18.sp)
-                if (item.respondent == FeedbackRespondent.GUARDIAN) Text("  · 보호자", color = MotionMuted, fontSize = 16.sp)
+            Row(Modifier.fillMaxWidth().heightIn(min = 64.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(tripDate(item.createdAtEpochMs), color = MotionSubtle, fontSize = motionType.body)
+                if (item.respondent == FeedbackRespondent.GUARDIAN) Text("  · 보호자", color = MotionMuted, fontSize = motionType.label)
                 Spacer(Modifier.weight(1f))
-                Text("★".repeat(rating) + "☆".repeat(5 - rating), color = MotionCyan, fontSize = 24.sp, letterSpacing = 2.sp)
+                Text("★".repeat(rating) + "☆".repeat(5 - rating), color = MotionCyan, fontSize = motionType.section, letterSpacing = 2.sp)
             }
         }
     }
@@ -212,14 +228,16 @@ private fun PersonDetailContent(
 @Composable private fun PreferenceDialog(person: PersonProfile, onDismiss: () -> Unit, onSave: (PersonProfile) -> Unit) {
     var sensitivity by remember { mutableStateOf(person.motionSensitivity) }
     var triggers by remember { mutableStateOf(person.motionTriggers) }
-    MotionCareTheme { AlertDialog(onDismissRequest = onDismiss, title = { Text("이동 선호 수정", fontSize = 28.sp, fontWeight = FontWeight.Medium) }, text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    var avatar by remember { mutableStateOf(person.avatar) }
+    MotionCareTheme { AlertDialog(onDismissRequest = onDismiss, title = { Text("프로필 수정", fontSize = motionType.headline, fontWeight = FontWeight.Medium) }, text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        CharacterPicker(avatar, { avatar = it }, size = 56.dp)
         Text("멀미 민감도", fontWeight = FontWeight.Medium)
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { MotionSensitivity.entries.filter { it != MotionSensitivity.UNSPECIFIED }.forEach { item -> FilterChip(sensitivity == item, { sensitivity = item }, { Text(item.label(), fontSize = 19.sp) }, Modifier.heightIn(min = 56.dp)) } }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { MotionSensitivity.entries.filter { it != MotionSensitivity.UNSPECIFIED }.forEach { item -> FilterChip(sensitivity == item, { sensitivity = item }, { Text(item.label(), fontSize = motionType.body) }, Modifier.heightIn(min = MotionSpace.Touch)) } }
         Text("불편한 상황", fontWeight = FontWeight.Medium)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            MotionTrigger.entries.forEach { item -> FilterChip(item in triggers, { triggers = if (item in triggers) triggers - item else triggers + item }, { Text(item.label(), fontSize = 19.sp) }, Modifier.heightIn(min = 56.dp)) }
+            MotionTrigger.entries.forEach { item -> FilterChip(item in triggers, { triggers = if (item in triggers) triggers - item else triggers + item }, { Text(item.label(), fontSize = motionType.body) }, Modifier.heightIn(min = MotionSpace.Touch)) }
         }
-    } }, confirmButton = { TextButton(onClick = { onSave(person.copy(motionSensitivity = sensitivity, motionTriggers = triggers)) }) { Text("저장", fontSize = 21.sp, fontWeight = FontWeight.Medium) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("취소", fontSize = 21.sp) } },
+    } }, confirmButton = { TextButton(onClick = { onSave(person.copy(motionSensitivity = sensitivity, motionTriggers = triggers, avatar = avatar)) }) { Text("저장", fontSize = motionType.body, fontWeight = FontWeight.Medium) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("취소", fontSize = motionType.body) } },
         modifier = Modifier.width(620.dp), properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false))
 } }
 

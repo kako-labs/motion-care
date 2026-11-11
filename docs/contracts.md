@@ -19,6 +19,8 @@
 
 같은 파일의 `VehicleRecorder`는 `app`의 `TripRecordingService`만 사용합니다. `record(presenter, environment)`는 기록 중인 주행이 끝나거나 호출자가 취소할 때까지 차량 속도를 저장하고, 카드를 띄울 때 `GuidancePresenter`를 호출합니다. `environment`는 `EnvironmentSnapshot` 흐름이며 환경 카드에만 쓰입니다. 앱은 `EnvironmentRepository.current`를 넘기고, 흐름이 실패해도 기록은 계속됩니다. 소리는 `GuidanceAudio.play(문구)`로 냅니다. 재생하지 못해도 예외를 던지지 않으며, 알림음과 음성 중 무엇을 낼지는 `GuidanceSettings.sound`가 정합니다.
 
+`VehicleTripData`의 `autoRecord`(`AutoRecordSettings`)는 운행 자동 기록 스위치이며 기본 꺼짐입니다. `drives`(`DriveWatcher`)의 `startedTrips()`는 모으는 동안 기어를 보며 P에서 D·R로 바뀌면 주행을 시작하고 P에서 3분이면 끝내며, 시작한 주행의 `TripId`를 내보냅니다. 이렇게 끝난 주행의 종료 시각은 P로 바꾼 때이고, 그 뒤에 저장된 샘플·관찰·안내 결과는 지웁니다. `app`의 `TripRecordingService`만 사용합니다. 규칙은 [운행 자동 기록](auto-record.md)에 있습니다.
+
 조립부는 자동차 기기에서 `createVehicleTripData(context)`, 그 외 기기에서 `createSampleTripRepository(context)`를 호출합니다. 실제 기록은 `motion-care-trips.db`에 저장해 합성 샘플과 섞이지 않습니다.
 
 ### 프로필 · `data/profile/src/main/java/dev/motioncare/data/profile/ProfileRepository.kt`
@@ -40,7 +42,7 @@
 | capture(tripId) | refresh 후 그 결과를 주행에 저장 |
 | history(tripId) | 주행에 저장된 값 목록. 저장 순서 |
 
-조립부는 자동차 기기에서 `createVehicleEnvironmentRepository(context)`, 그 외 기기에서 `createUnsupportedEnvironmentRepository()`를 호출합니다. 후자는 모든 값이 `UNSUPPORTED`이고 아무것도 저장하지 않습니다. `app`의 `TripRecordingService`가 주행 시작, 1시간마다, 종료 때 `capture`를 부르고, `MainHost`가 홈을 열 때와 권한 응답 뒤에 `refresh`를 부릅니다. 이 모듈을 화면에서 읽으려면 해당 feature를 `allowedEdges`에 추가합니다.
+조립부는 자동차 기기에서 `createVehicleEnvironmentRepository(context)`, 그 외 기기에서 `createUnsupportedEnvironmentRepository()`를 호출합니다. 후자는 모든 값이 `UNSUPPORTED`이고 아무것도 저장하지 않습니다. `app`의 `TripRecordingService`가 주행 시작, 1시간마다, 종료 때 `capture`를 부르고, `MainHost`가 홈을 열 때와 권한 응답 뒤에 `refresh`를 부릅니다. 이 모듈을 화면에서 읽으려면 해당 feature를 `allowedEdges`에 추가합니다. feature:history는 이 모듈에 의존하지 않고, `MainHost`가 `historyGraph(environment = current, tripEnvironment = history)`로 값과 함수만 넘깁니다.
 
 ## 데이터 의미
 
@@ -118,7 +120,7 @@ DrivingViewModel의 busy는 주행 명령에만 적용합니다. 상세 조회�
 
 Application의 AppGraph가 도메인별 Repository를 한 개씩 소유합니다. Activity 재생성은 주행을 끊지 않습니다. 새 프로세스에서 미완료 원본은 INTERRUPTED로 보존합니다. 화면 종료를 자동 운행 종료로 해석하지 않습니다.
 
-주행 원본의 스키마는 v4입니다. 이전 파일은 `observations`, `steering_samples`, `guidance_events` 테이블만 추가하고 기존 주행과 샘플을 유지합니다. 프로필은 별도 파일 `motion-care-profile.db`, 환경은 `motion-care-environment.db`(v1)를 사용하며 스키마 버전을 따로 관리합니다. 트랜잭션 저장 후 목록을 갱신하고 읽기·쓰기는 IO dispatcher에서 처리합니다. 차량 샘플·관찰·조향·안내 결과는 약 1초마다 같은 트랜잭션으로 묶어 추가 저장하므로, 프로세스가 강제 종료되면 마지막 약 1초의 값은 잃을 수 있습니다. 보관 기간 정책은 아직 없습니다.
+주행 원본의 스키마는 v4입니다. 이전 파일은 `observations`, `steering_samples`, `guidance_events` 테이블만 추가하고 기존 주행과 샘플을 유지합니다. 프로필은 별도 파일 `motion-care-profile.db`(v3, v2에서 고른 캐릭터 `avatar` 열만 추가하고 기존 사람을 유지), 환경은 `motion-care-environment.db`(v1)를 사용하며 스키마 버전을 따로 관리합니다. 트랜잭션 저장 후 목록을 갱신하고 읽기·쓰기는 IO dispatcher에서 처리합니다. 차량 샘플·관찰·조향·안내 결과는 약 1초마다 같은 트랜잭션으로 묶어 추가 저장하므로, 프로세스가 강제 종료되면 마지막 약 1초의 값은 잃을 수 있습니다. 보관 기간 정책은 아직 없습니다.
 
 ## 후속 계약
 

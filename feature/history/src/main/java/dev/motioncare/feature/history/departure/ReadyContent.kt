@@ -1,5 +1,7 @@
 package dev.motioncare.feature.history.departure
 
+import dev.motioncare.core.ui.MotionSpace
+import dev.motioncare.core.ui.motionType
 import androidx.compose.foundation.Image
 import androidx.compose.material3.Icon
 import dev.motioncare.core.ui.MotionIcons
@@ -71,8 +73,8 @@ fun ReadyContent(busy: Boolean, vehicleConnected: Boolean, onStart: () -> Unit, 
                     Icon(MotionIcons.Plus, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(34.dp))
                 }
                 Column(Modifier.weight(1f)) {
-                    Text("함께 타는 사람 · 출발 안내", fontSize = 24.sp, fontWeight = FontWeight.Medium)
-                    Text("좌석 · 오늘의 조언", color = MotionSubtle, fontSize = 17.sp)
+                    SectionTitle("함께 타는 사람 · 출발 안내")
+                    Text("좌석 · 오늘의 조언", color = MotionSubtle, fontSize = motionType.label)
                 }
                 Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(32.dp))
             }
@@ -104,7 +106,7 @@ private fun DepartureContent(
     state: DepartureUiState,
     onPlace: (PersonId, SeatPosition) -> Unit,
     onClear: (SeatPosition) -> Unit,
-    onAdd: (String, PersonKind, SeatPosition?) -> Unit,
+    onAdd: (String, PersonKind, SeatPosition?, String?) -> Unit,
     onToggleGuidance: () -> Unit,
     onBack: () -> Unit,
     onProfile: (PersonId) -> Unit,
@@ -125,15 +127,15 @@ private fun DepartureContent(
                 ScreenTitle("출발 전 안내", onBack = onBack, action = {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         SecondaryAction("전체 기록", onRecords)
-                        PrimaryAction("완료  ✓", onBack, enabled = state.seating.driverId != null)
+                        PrimaryAction("완료", onBack, enabled = state.seating.driverId != null, icon = MotionIcons.Check)
                     }
                 })
                 state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
                 if (wide) Row(Modifier.fillMaxWidth().height(panelHeight), horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-                    SeatingPanel(state, openSeat, { openSeat = it }, Modifier.weight(1.15f).fillMaxHeight(), panelHeight)
+                    SeatingPanel(state, openSeat, { openSeat = it }, Modifier.weight(1f).fillMaxHeight(), panelHeight)
                     DepartureConsole(state, { openSeat = it }, onAdvice, onTrip, onToggleGuidance,
-                        Modifier.weight(.9f).fillMaxHeight(), compact)
+                        Modifier.weight(1f).fillMaxHeight(), compact)
                 } else Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
                     SeatingPanel(state, openSeat, { openSeat = it })
                     DepartureConsole(state, { openSeat = it }, onAdvice, onTrip, onToggleGuidance)
@@ -146,7 +148,7 @@ private fun DepartureContent(
             onProfile = { person -> openSeat = null; onProfile(person) },
             onAdd = { addSeat = openSeat; openSeat = null; addDialog = true })
     }
-    if (addDialog) AddPersonDialog(addSeat, { addDialog = false }, { name, kind -> onAdd(name, kind, addSeat); addDialog = false })
+    if (addDialog) AddPersonDialog(addSeat, { addDialog = false }, { name, kind, avatar -> onAdd(name, kind, addSeat, avatar); addDialog = false })
 }
 
 @Composable private fun AdviceCard(
@@ -173,53 +175,63 @@ private fun DepartureContent(
         }
         Spacer(Modifier.height(8.dp))
         Text(if (state.guidanceEnabled) advice.headline else "출발 안내가 꺼져 있어요.",
-            fontSize = 40.sp, lineHeight = 48.sp, fontWeight = FontWeight.Medium)
-        advice.context?.takeIf { state.guidanceEnabled }?.let { Text(it, color = MotionSubtle, fontSize = 19.sp) }
+            fontSize = motionType.title, fontWeight = FontWeight.Medium)
+        advice.context?.takeIf { state.guidanceEnabled }?.let { Text(it, color = MotionSubtle, fontSize = motionType.body) }
         if (state.guidanceEnabled && advice.state == AdviceState.INSUFFICIENT)
-            Text("1분 넘게 달린 기록부터 분석해요", color = MotionCyan, fontSize = 22.sp, fontWeight = FontWeight.Medium)
+            Text("1분 넘게 달린 기록부터 분석해요", color = MotionCyan, fontSize = motionType.section, fontWeight = FontWeight.Medium)
         Box((if (fill) Modifier.weight(1f) else Modifier.heightIn(min = 250.dp)).fillMaxWidth(), contentAlignment = Alignment.Center) {
             if (state.guidanceEnabled && advice.pattern != null && advice.recentRates.isNotEmpty()) Row(Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(28.dp)) {
                 driver?.let { person ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         PersonAvatar(person, Modifier.size(112.dp))
-                        Text(person.displayName, fontSize = 22.sp, fontWeight = FontWeight.Medium)
+                        Text(person.displayName, fontSize = motionType.section, fontWeight = FontWeight.Medium)
                     }
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("${patternIcon(advice.pattern)}  최근 ${advice.recentRates.size}번 운행", color = MotionSubtle, fontSize = 18.sp)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        PatternGlyph(advice.pattern)
+                        Text("최근 ${advice.recentRates.size}번 운행", color = MotionSubtle, fontSize = motionType.body)
+                    }
                     TrendBars(advice.recentRates, Modifier.fillMaxWidth().height(180.dp))
                 }
             } else if (state.guidanceEnabled && advice.pattern == null) {
                 if (driver == null) Column(Modifier.clip(RoundedCornerShape(28.dp)).clickable(onClick = onPickDriver).padding(18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     SteeringWheel(Modifier.size(168.dp))
-                    Text("운전석 선택  →", color = MotionCyan, fontSize = 22.sp, fontWeight = FontWeight.Medium)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("운전석 선택", color = MotionCyan, fontSize = motionType.section, fontWeight = FontWeight.Medium)
+                        Icon(MotionIcons.ArrowRight, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(26.dp))
+                    }
                 } else Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     PersonAvatar(driver, Modifier.size(132.dp))
-                    Text(driver.displayName, fontSize = 26.sp, fontWeight = FontWeight.Medium)
+                    Text(driver.displayName, fontSize = motionType.section, fontWeight = FontWeight.Medium)
                 }
             }
         }
         if (state.guidanceEnabled && advice.pattern != null) {
-            SecondaryAction("왜 이 조언인가요?  ↗", onExplain, Modifier.fillMaxWidth())
+            SecondaryAction("왜 이 조언인가요?", onExplain, Modifier.fillMaxWidth(), icon = MotionIcons.ArrowUpRight)
             advice.recentAverage?.let { recent ->
                 val before = advice.previousAverage
                 Surface(color = MotionBlue.copy(.22f), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(horizontal = 22.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         Column(Modifier.weight(1f)) {
-                            Text("10분당 ${patternLabel(advice.pattern)}", color = MotionSubtle, fontSize = 17.sp)
-                            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                before?.let { Text("%.1f".format(it), fontSize = 30.sp, color = MotionMuted, fontWeight = FontWeight.Medium); Text("→", fontSize = 28.sp, color = MotionMuted) }
-                                Text("%.1f".format(recent), fontSize = 46.sp, lineHeight = 50.sp, color = MotionCyan, fontWeight = FontWeight.Medium)
-                                Text("회", fontSize = 20.sp, color = MotionSubtle)
+                            Text("10분당 ${patternLabel(advice.pattern)}", color = MotionSubtle, fontSize = motionType.label)
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                before?.let { Text("%.1f".format(it), fontSize = motionType.headline, color = MotionMuted, fontWeight = FontWeight.Medium); Icon(MotionIcons.ArrowRight, contentDescription = "에서", tint = MotionMuted, modifier = Modifier.size(28.dp)) }
+                                Text("%.1f".format(recent), fontSize = motionType.title, color = MotionCyan, fontWeight = FontWeight.Medium)
+                                Text("회", fontSize = motionType.body, color = MotionSubtle)
                             }
                         }
                         if (before != null && before > 0) {
                             val change = ((recent - before) / before * 100).roundToInt()
-                            Text(if (change <= 0) "↓ ${-change}%" else "↑ $change%", fontSize = 30.sp, fontWeight = FontWeight.Medium,
-                                color = if (change <= 0) MotionCyan else MotionSubtle)
+                            val tone = if (change <= 0) MotionCyan else MotionSubtle
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Icon(if (change <= 0) MotionIcons.ArrowDown else MotionIcons.ArrowUp, contentDescription = if (change <= 0) "줄어듦" else "늘어남",
+                                    tint = tone, modifier = Modifier.size(28.dp))
+                                Text("${kotlin.math.abs(change)}%", fontSize = motionType.headline, fontWeight = FontWeight.Medium, color = tone)
+                            }
                         }
                     }
                 }
@@ -241,10 +253,18 @@ private fun DepartureContent(
         modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp)) {
         Row(Modifier.padding(horizontal = 22.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            Text("직전 운행", color = MotionSubtle, fontSize = 17.sp, fontWeight = FontWeight.Medium)
-            Text(tripTime(last.trip.startedAtEpochMs), fontSize = 20.sp, fontWeight = FontWeight.Medium)
-            Text("◷ ${last.durationMs / 60_000}분", fontSize = 20.sp, color = MotionSubtle)
-            top?.let { Text("${patternIcon(it)} ${patternLabel(it)} ${last.count(it)}회", fontSize = 20.sp, color = MotionCyan, fontWeight = FontWeight.Medium) }
+            Text("직전 운행", color = MotionSubtle, fontSize = motionType.label, fontWeight = FontWeight.Medium)
+            Text(tripTime(last.trip.startedAtEpochMs), fontSize = motionType.body, fontWeight = FontWeight.Medium)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(MotionIcons.Clock, contentDescription = null, tint = MotionSubtle, modifier = Modifier.size(24.dp))
+                Text("${last.durationMs / 60_000}분", fontSize = motionType.body, color = MotionSubtle)
+            }
+            top?.let {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PatternGlyph(it)
+                    Text("${patternLabel(it)} ${last.count(it)}회", fontSize = motionType.body, color = MotionCyan, fontWeight = FontWeight.Medium)
+                }
+            }
             Spacer(Modifier.weight(1f))
             Row(horizontalArrangement = Arrangement.spacedBy((-10).dp)) { riders.forEach { PersonAvatar(it, Modifier.size(44.dp)) } }
             Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(28.dp))
@@ -267,7 +287,7 @@ private fun DepartureContent(
     }
 }
 
-private val adviceSteps = listOf("◉" to "자리", "▶" to "운행", "★" to "평가", "✦" to "맞춤 조언")
+private val adviceSteps = listOf(MotionIcons.Person to "자리", MotionIcons.Play to "운행", MotionIcons.Star to "평가", MotionIcons.Sparkle to "맞춤 조언")
 
 // Shown until a driver has a usable record: where the advice will come from, instead of an empty card.
 @Composable private fun AdviceSteps(current: Int) {
@@ -280,10 +300,10 @@ private val adviceSteps = listOf("◉" to "자리", "▶" to "운행", "★" to 
                     .background(if (now) MotionCyan.copy(.22f) else if (done) MotionBlue.copy(.35f) else Color.Transparent, CircleShape)
                     .border(if (now) 3.dp else 1.5.dp, if (now || done) MotionCyan else MotionLine, CircleShape),
                     contentAlignment = Alignment.Center) {
-                    Text(if (done) "✓" else icon, fontSize = if (now) 38.sp else 30.sp,
-                        color = if (now || done) MotionCyan else MotionMuted)
+                    Icon(if (done) MotionIcons.Check else icon, contentDescription = null,
+                        tint = if (now || done) MotionCyan else MotionMuted, modifier = Modifier.size(if (now) 40.dp else 32.dp))
                 }
-                Text(label, fontSize = 18.sp, fontWeight = if (now) FontWeight.Medium else FontWeight.Normal,
+                Text(label, fontSize = motionType.body, fontWeight = if (now) FontWeight.Medium else FontWeight.Normal,
                     color = if (now) MotionText else MotionMuted)
             }
             if (index < adviceSteps.lastIndex) Box(Modifier.width(28.dp).height(2.dp).offset(y = (-16).dp)
@@ -300,7 +320,8 @@ private val adviceSteps = listOf("◉" to "자리", "▶" to "운행", "★" to 
     maxCarHeight: Dp = 860.dp,
 ) {
     Box(modifier.heightIn(min = 500.dp).padding(horizontal = 8.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
-        CarInterior(state, openSeat, onSeat, maxCarHeight)
+        // The padding comes out of the height the car may take.
+        CarInterior(state, openSeat, onSeat, maxCarHeight - 24.dp)
     }
 }
 
@@ -339,15 +360,15 @@ private fun DepartureOverview(
     Column(verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("출발 준비", fontSize = if (compact) 25.sp else 30.sp, fontWeight = FontWeight.Medium)
-                Text("탑승 인원 " + occupied.size + "명", color = MotionMuted, fontSize = 14.sp)
+                Text("출발 준비", fontSize = motionType.headline, fontWeight = FontWeight.ExtraBold)
+                Text("탑승 인원 " + occupied.size + "명", color = MotionMuted, fontSize = motionType.caption)
             }
-            Text("출발 안내", color = MotionSubtle, fontSize = 14.sp)
+            Text("출발 안내", color = MotionSubtle, fontSize = motionType.caption)
             Spacer(Modifier.width(12.dp))
             Switch(state.guidanceEnabled, { onToggleGuidance() })
         }
         if (occupied.isEmpty()) {
-            Text("차량 좌석을 눌러 운전자와 동승자를 선택해 주세요.", color = MotionSubtle, fontSize = 15.sp)
+            Text("차량 좌석을 눌러 운전자와 동승자를 선택해 주세요.", color = MotionSubtle, fontSize = motionType.caption)
         } else {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 occupied.take(3).forEach { (seat, person) ->
@@ -356,17 +377,17 @@ private fun DepartureOverview(
                         color = MotionPanel,
                         shape = RoundedCornerShape(16.dp),
                         border = BorderStroke(1.dp, MotionLine),
-                        modifier = Modifier.weight(1f).heightIn(min = if (compact) 58.dp else 72.dp),
+                        modifier = Modifier.weight(1f).heightIn(min = if (compact) 64.dp else 88.dp),
                     ) {
                         Row(
                             Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(9.dp),
                         ) {
-                            PersonAvatar(person, Modifier.size(if (compact) 34.dp else 42.dp))
+                            PersonAvatar(person, Modifier.size(if (compact) 40.dp else 56.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(person.displayName, fontSize = if (compact) 14.sp else 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(if (seat == SeatPosition.DRIVER) "운전자" else seat.shortLabel(), color = MotionMuted, fontSize = 11.sp, maxLines = 1)
+                                Text(person.displayName, fontSize = motionType.body, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(if (seat == SeatPosition.DRIVER) "운전자" else seat.shortLabel(), color = MotionSubtle, fontSize = motionType.label, maxLines = 1)
                             }
                         }
                     }
@@ -380,11 +401,11 @@ private fun DepartureOverview(
 private fun EnvironmentSummary(snapshot: EnvironmentSnapshot?, compact: Boolean) {
     GlassPanel(Modifier.fillMaxWidth(), compact = compact) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("실내·외부 환경", Modifier.weight(1f), fontSize = if (compact) 18.sp else 21.sp, fontWeight = FontWeight.Medium)
-            Text(snapshot?.let { tripTime(it.capturedAtEpochMs) } ?: "확인 전", color = MotionMuted, fontSize = 12.sp)
+            SectionTitle("실내·외부 환경", Modifier.weight(1f))
+            Text(snapshot?.let { tripTime(it.capturedAtEpochMs) } ?: "확인 전", color = MotionMuted, fontSize = motionType.caption)
         }
         if (snapshot == null) {
-            Text("환경 정보를 확인하고 있어요.", color = MotionSubtle, fontSize = 14.sp)
+            Text("환경 정보를 확인하고 있어요.", color = MotionSubtle, fontSize = motionType.caption)
         } else {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 EnvironmentValue("실내", temperatureValue(snapshot.cabinTemperature), Modifier.weight(1f))
@@ -394,8 +415,7 @@ private fun EnvironmentSummary(snapshot: EnvironmentSnapshot?, compact: Boolean)
             Text(
                 "실내·외기: 차량 신호 · 대기질: Open-Meteo/CAMS 예측 · " + environmentStatus(snapshot),
                 color = MotionMuted,
-                fontSize = 11.sp,
-                lineHeight = 15.sp,
+                fontSize = motionType.caption,
             )
         }
     }
@@ -404,8 +424,8 @@ private fun EnvironmentSummary(snapshot: EnvironmentSnapshot?, compact: Boolean)
 @Composable
 private fun EnvironmentValue(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        Text(label, color = MotionMuted, fontSize = 12.sp)
-        Text(value, color = MotionText, fontSize = 18.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+        Text(label, color = MotionMuted, fontSize = motionType.caption)
+        Text(value, color = MotionText, fontSize = motionType.body, fontWeight = FontWeight.Medium, maxLines = 1)
     }
 }
 
@@ -444,8 +464,9 @@ private fun Availability.shortStatus() = when (this) {
 
 // Top-down view with the front of the car at the top; the driver sits front-left.
 @Composable private fun CarInterior(state: DepartureUiState, openSeat: SeatPosition?, onSeat: (SeatPosition) -> Unit, maxCarHeight: Dp) {
-    BoxWithConstraints(Modifier.fillMaxWidth().heightIn(max = 860.dp), contentAlignment = Alignment.Center) {
-        val width = minOf(maxWidth, 570.dp, maxCarHeight / 1.5f)
+    BoxWithConstraints(Modifier.fillMaxWidth().heightIn(max = maxCarHeight), contentAlignment = Alignment.Center) {
+        // The cabin drawing is 1 : 1.5. It grows to the panel's height so the seats read from the driver's seat.
+        val width = minOf(maxWidth, maxCarHeight / 1.5f)
         val height = width * 1.5f
         Box(Modifier.size(width, height)) {
             Image(painterResource(R.drawable.mc_cabin_b), "차량 좌석", Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
@@ -453,7 +474,7 @@ private fun Availability.shortStatus() = when (this) {
                 Triple(SeatPosition.DRIVER, .34f, .50f), Triple(SeatPosition.FRONT_PASSENGER, .675f, .50f),
                 Triple(SeatPosition.REAR_LEFT, .305f, .735f), Triple(SeatPosition.REAR_CENTER, .502f, .735f), Triple(SeatPosition.REAR_RIGHT, .70f, .735f))
             positions.forEach { (seat, x, y) ->
-                val size = (width * .165f).coerceIn(48.dp, 64.dp)
+                val size = (width * .165f).coerceIn(48.dp, 96.dp)
                 Box(Modifier.offset(width * x - size / 2, height * y - size / 2)) {
                     SeatCircle(seat, size, state, openSeat, onSeat)
                 }
@@ -464,18 +485,18 @@ private fun Availability.shortStatus() = when (this) {
 
 @Composable private fun DepartureRecent(state: DepartureUiState, onTrip: (TripId) -> Unit, modifier: Modifier = Modifier, compact: Boolean = false) {
     GlassPanel(modifier.fillMaxWidth(), compact = compact) {
-        Text("최근 운행", fontSize = if (compact) 22.sp else 26.sp, fontWeight = FontWeight.Medium)
+        SectionTitle("최근 운행")
         if (state.recentTrips.isEmpty()) Text("아직 운전 기록이 없어요.", color = MotionSubtle)
         state.recentTrips.forEach { trip ->
             Surface(onClick = { onTrip(trip.trip.id) }, color = Color.Transparent, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().heightIn(min = if (compact) 66.dp else 90.dp)) {
                 Column(Modifier.padding(horizontal = 4.dp, vertical = if (compact) 10.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(tripTime(trip.trip.startedAtEpochMs), fontSize = if (compact) 17.sp else 20.sp, fontWeight = FontWeight.Medium)
-                    Text("${trip.durationMs / 60_000}분 · ${"%.1f".format(trip.distanceMeters / 1000)}km", color = MotionMuted, fontSize = if (compact) 13.sp else 15.sp)
+                    Text(tripTime(trip.trip.startedAtEpochMs), fontSize = motionType.body, fontWeight = FontWeight.Medium)
+                    Text("${trip.durationMs / 60_000}분 · ${"%.1f".format(trip.distanceMeters / 1000)}km", color = MotionMuted, fontSize = motionType.caption)
                 }
             }
         }
         Spacer(Modifier.weight(1f))
-        state.advice.recentAverage?.let { Text("최근 분석 가능한 운행 평균 · ${"%.1f".format(it)}회/10분", color = MotionCyan, fontSize = if (compact) 16.sp else 21.sp) }
+        state.advice.recentAverage?.let { Text("최근 분석 가능한 운행 평균 · ${"%.1f".format(it)}회/10분", color = MotionCyan, fontSize = motionType.body) }
     }
 }
 
@@ -487,10 +508,10 @@ private fun Availability.shortStatus() = when (this) {
         border = if (selected || person != null) BorderStroke(1.dp, if (selected) MotionCyan.copy(.7f) else MotionCyan.copy(.22f)) else null,
         modifier = Modifier.size(size, size + 12.dp).semantics { contentDescription = "${seat.label()} · ${person?.displayName ?: "빈 자리"}" }) {
         Column(Modifier.padding(4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
-            if (person == null) Box(Modifier.size(32.dp).background(Color(0x800A1724), RoundedCornerShape(10.dp)).border(1.dp, MotionCyan.copy(.22f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                Icon(MotionIcons.Plus, contentDescription = null, tint = MotionSubtle, modifier = Modifier.size(20.dp))
-            } else PersonAvatar(person, Modifier.size((size * .52f).coerceAtLeast(28.dp)))
-            if (person != null) Text(person.displayName, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MotionText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (person == null) Box(Modifier.size(size * .5f).background(Color(0x800A1724), RoundedCornerShape(12.dp)).border(1.dp, MotionCyan.copy(.22f), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+                Icon(MotionIcons.Plus, contentDescription = null, tint = MotionSubtle, modifier = Modifier.size(size * .3f))
+            } else PersonAvatar(person, Modifier.size((size * .55f).coerceAtLeast(28.dp)))
+            if (person != null) Text(person.displayName, fontSize = motionType.label, fontWeight = FontWeight.Bold, color = MotionText, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -516,16 +537,16 @@ private fun SeatPicker(
             Column(
                 // The width cap comes first: after fillMaxWidth the cap could not narrow the popup any more.
                 // The surface is opaque so the screen behind does not show through the list.
-                Modifier.widthIn(max = 420.dp).fillMaxWidth().heightIn(max = 620.dp)
+                Modifier.widthIn(max = 600.dp).fillMaxWidth().heightIn(max = 900.dp)
                     .background(Brush.verticalGradient(listOf(Color(0xFF0E2A4F), Color(0xFF071A33))), RoundedCornerShape(24.dp))
                     .border(1.5.dp, MotionLine, RoundedCornerShape(24.dp))
-                    .padding(20.dp).verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                    .padding(MotionSpace.Large).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(MotionSpace.Medium),
             ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(current.label(), fontSize = 22.sp, fontWeight = FontWeight.Medium)
-                        Text("앉을 사람을 선택해 주세요.", color = MotionMuted, fontSize = 13.sp)
+                        Text(current.label(), fontSize = motionType.section, fontWeight = FontWeight.Medium)
+                        Text("앉을 사람을 선택해 주세요.", color = MotionMuted, fontSize = motionType.label)
                     }
                     RoundIconButton("✕", onDismiss)
                 }
@@ -536,12 +557,12 @@ private fun SeatPicker(
                         border = BorderStroke(1.dp, MotionCyan.copy(.42f)),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                PersonAvatar(person, Modifier.size(46.dp))
-                                Text(person.displayName, Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                        Column(Modifier.padding(MotionSpace.Base), verticalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MotionSpace.Base)) {
+                                PersonAvatar(person, Modifier.size(MotionSpace.AvatarSmall))
+                                Text(person.displayName, Modifier.weight(1f), fontSize = motionType.body, fontWeight = FontWeight.Medium)
                             }
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
                                 SecondaryAction("프로필", { onProfile(person.id) }, Modifier.weight(1f))
                                 SecondaryAction("자리 비우기", { onClear(current) }, Modifier.weight(1f))
                             }
@@ -556,16 +577,16 @@ private fun SeatPicker(
                         enabled = !blocked,
                         color = Color.Transparent,
                         shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 62.dp).alpha(if (blocked) .38f else 1f),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = MotionSpace.RowSingle).alpha(if (blocked) .38f else 1f),
                     ) {
                         Row(
-                            Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                            Modifier.padding(horizontal = MotionSpace.Small, vertical = MotionSpace.Small),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(11.dp),
+                            horizontalArrangement = Arrangement.spacedBy(MotionSpace.Base),
                         ) {
-                            PersonAvatar(person, Modifier.size(42.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(person.displayName, fontSize = 17.sp, fontWeight = FontWeight.Medium)
+                            PersonAvatar(person, Modifier.size(MotionSpace.AvatarSmall))
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MotionSpace.Tiny)) {
+                                Text(person.displayName, fontSize = motionType.body, fontWeight = FontWeight.Medium)
                                 Text(
                                     when {
                                         blocked -> "어린이는 운전석을 선택할 수 없어요."
@@ -574,42 +595,57 @@ private fun SeatPicker(
                                         else -> "성인"
                                     },
                                     color = if (elsewhere != null) MotionCyan else MotionMuted,
-                                    fontSize = 12.sp,
+                                    fontSize = motionType.label,
                                 )
                             }
-                            Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(24.dp))
+                            Icon(MotionIcons.ChevronRight, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(MotionSpace.IconMedium))
                         }
                     }
                 }
-                SecondaryAction("＋  사람 추가", onAdd, Modifier.fillMaxWidth())
+                SecondaryAction("사람 추가", onAdd, Modifier.fillMaxWidth(), leadingIcon = MotionIcons.Plus)
             }
         }
     }
 }
 
-@Composable private fun AddPersonDialog(seat: SeatPosition?, onDismiss: () -> Unit, onAdd: (String, PersonKind) -> Unit) {
+@Composable private fun AddPersonDialog(seat: SeatPosition?, onDismiss: () -> Unit, onAdd: (String, PersonKind, String) -> Unit) {
     var name by remember { mutableStateOf("") }
     var kind by remember { mutableStateOf(PersonKind.ADULT) }
+    // Starts on a random character so a new person never looks like the last one; any other can be picked.
+    var avatar by remember { mutableStateOf(randomCharacter()) }
     val childAllowed = seat != SeatPosition.DRIVER
     Dialog(onDismissRequest = onDismiss) {
         MotionCareTheme {
+            // Scrolls so a short window, or one with the keyboard up, still reaches the buttons below the characters.
             Column(Modifier.width(620.dp).background(Brush.verticalGradient(listOf(Color(0xFF123A63), Color(0xFF071A30))), RoundedCornerShape(28.dp))
-                .border(1.dp, MotionLine, RoundedCornerShape(28.dp)).padding(28.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                .border(1.dp, MotionLine, RoundedCornerShape(28.dp)).verticalScroll(rememberScrollState()).padding(28.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("사람 추가", Modifier.weight(1f), fontSize = 30.sp, fontWeight = FontWeight.Medium)
-                    seat?.let { Text("→ ${it.label()}", color = MotionCyan, fontSize = 22.sp, fontWeight = FontWeight.Medium) }
+                    Text("사람 추가", Modifier.weight(1f), fontSize = motionType.headline, fontWeight = FontWeight.Medium)
+                    seat?.let {
+                        Icon(MotionIcons.ArrowRight, contentDescription = null, tint = MotionCyan, modifier = Modifier.size(24.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(it.label(), color = MotionCyan, fontSize = motionType.section, fontWeight = FontWeight.Medium)
+                    }
                 }
-                OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth().heightIn(min = 76.dp), singleLine = true,
-                    textStyle = MaterialTheme.typography.headlineSmall, placeholder = { Text("이름", fontSize = 22.sp) },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { if (name.isNotBlank()) onAdd(name.trim(), kind) }))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                    characterDrawable(avatar)?.let { drawable ->
+                        Image(painterResource(drawable), "고른 캐릭터", Modifier.size(96.dp).clip(CircleShape).border(2.dp, MotionCyan, CircleShape),
+                            contentScale = ContentScale.Crop)
+                    }
+                    OutlinedTextField(name, { name = it }, Modifier.weight(1f).heightIn(min = 76.dp), singleLine = true,
+                        textStyle = MaterialTheme.typography.headlineSmall, placeholder = { Text("이름", fontSize = motionType.section) },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { if (name.isNotBlank()) onAdd(name.trim(), kind, avatar) }))
+                }
+                CharacterPicker(avatar, { avatar = it }, size = 60.dp)
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     KindTile("성인", kind == PersonKind.ADULT, true, Modifier.weight(1f)) { kind = PersonKind.ADULT }
                     KindTile("어린이", kind == PersonKind.CHILD, childAllowed, Modifier.weight(1f)) { kind = PersonKind.CHILD }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     SecondaryAction("취소", onDismiss, Modifier.weight(1f))
-                    PrimaryAction(if (seat != null) "추가하고 앉히기" else "추가", { onAdd(name.trim(), kind) }, Modifier.weight(1f), enabled = name.isNotBlank())
+                    PrimaryAction(if (seat != null) "추가하고 앉히기" else "추가", { onAdd(name.trim(), kind, avatar) }, Modifier.weight(1f), enabled = name.isNotBlank())
                 }
             }
         }
@@ -621,7 +657,7 @@ private fun SeatPicker(
         color = if (selected) MotionSelected else MotionPanel, border = BorderStroke(1.dp, if (selected) MotionCyan.copy(.5f) else MotionLine),
         modifier = modifier.height(88.dp).alpha(if (enabled) 1f else .35f)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically)) {
-            Text(label, fontSize = 20.sp, fontWeight = FontWeight.Medium, color = if (selected) MotionText else MotionSubtle)
+            Text(label, fontSize = motionType.body, fontWeight = FontWeight.Medium, color = if (selected) MotionText else MotionSubtle)
         }
     }
 }

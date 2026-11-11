@@ -96,18 +96,40 @@ internal class TripSessionController(
         CommandResult.Success(current.id)
     }
 
-    override suspend fun finish(): CommandResult = mutex.withLock {
+    override suspend fun finish(): CommandResult = finishWithin(null)
+
+    /**
+     * Ends the trip at [parkedAtNanos] on the monotonic clock, dropping what was recorded after it. Automatic
+     * recording finishes a trip only after minutes in park, which are not part of the drive.
+     */
+    suspend fun finishParked(parkedAtNanos: Long): CommandResult = finishWithin(parkedAtNanos)
+
+    private suspend fun finishWithin(parkedAtNanos: Long?): CommandResult = mutex.withLock {
         check(initialized)
         val current = active() ?: return@withLock CommandResult.Rejected("기록 중인 주행이 없습니다.")
+        val keepUntilMs = parkedAtNanos?.let { ((it - startedAtNanos) / 1_000_000).coerceAtLeast(0) }
         pendingObservations += detector.finish()
         pendingObservations += lateral.finish()
         pendingGuidance += guidance?.finish(maxOf(lastElapsedMs, 0)).orEmpty()
-        val flushed = writePending(current)
-        writer.saveTrip(flushed.copy(
-            status = TripStatus.COMPLETED,
-            endedAtEpochMs = endTime(flushed),
-            revision = flushed.revision + 1,
-        ))
+        if (keepUntilMs == null) {
+            val flushed = writePending(current)
+            writer.saveTrip(flushed.copy(
+                status = TripStatus.COMPLETED,
+                endedAtEpochMs = endTime(flushed),
+                revision = flushed.revision + 1,
+            ))
+        } else {
+            pending.removeAll { it.elapsedMs > keepUntilMs }
+            pendingObservations.removeAll { it.startMs > keepUntilMs }
+            pendingSteering.removeAll { it.elapsedMs > keepUntilMs }
+            pendingGuidance.removeAll { it.elapsedMs > keepUntilMs }
+            val flushed = writePending(current)
+            writer.finishAt(flushed.copy(
+                status = TripStatus.COMPLETED,
+                endedAtEpochMs = flushed.startedAtEpochMs + keepUntilMs,
+                revision = flushed.revision + 1,
+            ), keepUntilMs)
+        }
         CommandResult.Success(current.id)
     }
 

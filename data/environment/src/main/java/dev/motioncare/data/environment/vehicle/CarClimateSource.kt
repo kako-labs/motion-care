@@ -136,7 +136,9 @@ internal class CarClimateSource(
             when (val answer = ask(sdk, call)) {
                 is Answer.Value -> { bound = true; return Result.success(answer.value) }
                 is Answer.Failed -> { bound = true; Log.w(TAG, "Climate value not read", answer.error); return null }
-                Answer.NoAnswer -> return null
+                // Right after the process starts the first call can wait for the binding and time out without an
+                // error; it is asked once more before the value counts as missing.
+                Answer.NoAnswer -> if (bound || attempt > 0) return null
                 is Answer.NotBound -> {
                     // The SDK binds in the background and throws until then. Wait only before the first answer.
                     if (bound || attempt == CONNECT_ATTEMPTS - 1) {

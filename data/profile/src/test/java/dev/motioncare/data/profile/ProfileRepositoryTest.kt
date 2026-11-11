@@ -29,6 +29,42 @@ class ProfileRepositoryTest {
         assertFalse(createProfileRepository(context).departureGuidanceEnabled.value)
     }
 
+    @Test fun `a picked character survives a new repository instance`() = runTest {
+        val repository = createProfileRepository(context)
+        val added = repository.addPerson("서아", PersonKind.CHILD)
+        repository.updatePerson(added.copy(avatar = "character_07"))
+
+        val reopened = createProfileRepository(context)
+        reopened.initialize()
+
+        assertEquals("character_07", reopened.people.value.single().avatar)
+    }
+
+    @Test fun `a version 2 database gains the character column and keeps its people`() = runTest {
+        // The people table as version 2 created it, before characters existed.
+        android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath("motion-care-profile.db"), null).use { db ->
+            db.execSQL("""CREATE TABLE people (
+                id TEXT PRIMARY KEY, display_name TEXT NOT NULL, kind TEXT NOT NULL DEFAULT 'ADULT',
+                sensitivity TEXT NOT NULL DEFAULT 'UNSPECIFIED', triggers TEXT NOT NULL DEFAULT '',
+                rest_minutes INTEGER, preferred_temperature REAL
+            )""")
+            db.execSQL("CREATE TABLE current_seats (seat TEXT PRIMARY KEY, person_id TEXT NOT NULL UNIQUE REFERENCES people(id) ON DELETE CASCADE)")
+            db.execSQL("CREATE TABLE trip_participants (trip_id TEXT NOT NULL, seat TEXT NOT NULL, person_id TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE, revision INTEGER NOT NULL, PRIMARY KEY (trip_id, seat), UNIQUE (trip_id, person_id))")
+            db.execSQL("CREATE TABLE trip_feedback (trip_id TEXT NOT NULL, target_person_id TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE, rating INTEGER NOT NULL, scale_version TEXT NOT NULL, reasons TEXT NOT NULL, respondent TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (trip_id, target_person_id))")
+            db.execSQL("INSERT INTO people (id, display_name, kind) VALUES ('p1', '지영', 'ADULT')")
+            db.version = 2
+        }
+
+        val repository = createProfileRepository(context)
+        repository.initialize()
+
+        val person = repository.people.value.single()
+        assertEquals("지영", person.displayName)
+        assertNull(person.avatar)
+        repository.updatePerson(person.copy(avatar = "character_01"))
+        assertEquals("character_01", createProfileRepository(context).also { it.initialize() }.people.value.single().avatar)
+    }
+
     @Test fun `people and comfort preferences survive a new repository instance`() = runTest {
         val repository = createProfileRepository(context)
         val added = repository.addPerson("민준")
@@ -122,7 +158,7 @@ class ProfileRepositoryTest {
             tripId = TripId("trip-one"),
             targetPersonId = passenger.id,
             answer = FeedbackAnswer.Rating(4, "COMFORT_5_V1"),
-            reasons = setOf(FeedbackReason.START_STOP),
+            reasons = setOf(FeedbackReason.START_STOP, FeedbackReason.FELT_HOT, FeedbackReason.STUFFY_AIR),
             respondent = FeedbackRespondent.GUARDIAN,
             createdAtEpochMs = 1234,
         )

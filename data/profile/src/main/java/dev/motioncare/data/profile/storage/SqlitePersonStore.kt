@@ -34,6 +34,7 @@ internal class SqlitePersonStore(
             put("triggers", person.motionTriggers.joinToString(",") { it.name })
             put("rest_minutes", person.preferredRestMinutes)
             put("preferred_temperature", person.preferredTemperatureCelsius)
+            put("avatar", person.avatar)
         }
         val db = database.writableDatabase
         val updated = db.update("people", values, "id = ?", arrayOf(person.id.value))
@@ -98,7 +99,8 @@ internal class SqlitePersonStore(
                 fun nullableDouble(name: String) = c.getColumnIndexOrThrow(name).let { if (c.isNull(it)) null else c.getDouble(it) }
                 add(PersonProfile(PersonId(text("id")), text("display_name"), PersonKind.valueOf(text("kind")),
                     MotionSensitivity.valueOf(text("sensitivity")), enumSet(text("triggers"), MotionTrigger::valueOf),
-                    nullableInt("rest_minutes"), nullableDouble("preferred_temperature")))
+                    nullableInt("rest_minutes"), nullableDouble("preferred_temperature"),
+                    c.getColumnIndexOrThrow("avatar").let { if (c.isNull(it)) null else c.getString(it) }))
             }
         } }
         mutableSeating.value = SeatingPlan(db.rawQuery("SELECT seat, person_id FROM current_seats", null).use { c -> buildMap {
