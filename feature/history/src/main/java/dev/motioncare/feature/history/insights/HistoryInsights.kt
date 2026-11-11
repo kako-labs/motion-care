@@ -78,12 +78,13 @@ fun adviceFor(driverId: PersonId?, all: List<TripInsight>): AdviceInsight {
     if (history.isEmpty()) return AdviceInsight(AdviceState.FIRST_TRIP, null, "출발과 감속을 여유 있게 해보세요.", null, null, null, emptyList(), null, null)
     val usable = history.filter { it.ratesPerTenMinutes.isNotEmpty() }
     if (usable.isEmpty()) return AdviceInsight(AdviceState.INSUFFICIENT, null, "분석할 기록이 부족해요.", null, null, null, emptyList(), null, null)
-    val recent = usable.takeLast(3)
+    val recent = usable.takeLast(TREND_TRIPS)
     val chosen = DrivingPattern.entries.maxByOrNull { pattern -> recent.mapNotNull { it.rate(pattern) }.averageOrZero() }
-    val rates = chosen?.let { pattern -> usable.takeLast(6).mapNotNull { it.rate(pattern) } }.orEmpty()
+    val rates = chosen?.let { pattern -> usable.takeLast(TREND_TRIPS * 2).mapNotNull { it.rate(pattern) } }.orEmpty()
     val latest = usable.last()
-    val previous = rates.dropLast(3).takeLast(3).takeIf { it.isNotEmpty() }?.average()
-    val recentAverage = rates.takeLast(3).takeIf { it.isNotEmpty() }?.average()
+    val trend = chosen?.let { patternTrend(usable, it) }
+    val previous = trend?.previous
+    val recentAverage = trend?.recent
     val state = if (usable.size == 1) AdviceState.INITIAL else AdviceState.READY
     val context = when {
         state == AdviceState.INITIAL -> "이번 운행에서 관찰됐어요."
@@ -92,6 +93,31 @@ fun adviceFor(driverId: PersonId?, all: List<TripInsight>): AdviceInsight {
     }
     return AdviceInsight(state, chosen, actionFor(chosen), context, chosen?.let(latest::count),
         (latest.analyzedDurationMs / 60_000.0).roundToInt(), rates, previous, recentAverage)
+}
+
+/** How many of a driver's latest analysed trips make "최근", and as many before them make "이전" (docs/history-analysis.md). */
+private const val TREND_TRIPS = 3
+
+/** One pattern's rate per ten minutes, averaged over the latest trips and over the same number before them. */
+data class PatternTrend(val previous: Double?, val recent: Double?) {
+    /** The change from the earlier trips in percent; null without them, or when they saw none of the pattern. */
+    val changePercent: Int?
+        get() = if (previous == null || recent == null || previous == 0.0) null else ((recent - previous) / previous * 100).roundToInt()
+}
+
+/**
+ * Compares completed trips long enough to analyse, oldest first, the way the home advice does, so the home and the
+ * profile show the same recent number for a pattern.
+ */
+fun patternTrend(trips: List<TripInsight>, pattern: DrivingPattern): PatternTrend {
+    val rates = trips.filter { it.trip.status == TripStatus.COMPLETED && it.ratesPerTenMinutes.isNotEmpty() }
+        .sortedBy { it.trip.startedAtEpochMs }
+        .takeLast(TREND_TRIPS * 2)
+        .mapNotNull { it.rate(pattern) }
+    return PatternTrend(
+        previous = rates.dropLast(TREND_TRIPS).takeLast(TREND_TRIPS).takeIf { it.isNotEmpty() }?.average(),
+        recent = rates.takeLast(TREND_TRIPS).takeIf { it.isNotEmpty() }?.average(),
+    )
 }
 
 fun actionFor(pattern: DrivingPattern?): String = when (pattern) {
