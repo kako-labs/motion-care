@@ -18,6 +18,7 @@ import dev.motioncare.core.model.*
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.trip.TripRepository
 import dev.motioncare.feature.history.AdviceViewModel
+import dev.motioncare.feature.history.insights.patternTrend
 import dev.motioncare.feature.history.presentation.*
 import dev.motioncare.feature.history.ui.*
 
@@ -39,7 +40,7 @@ internal fun AdviceRoute(driverId: PersonId?, trips: TripRepository, profiles: P
             if (latest == null || pattern == null) GlassPanel(Modifier.fillMaxWidth()) {
                 Text("분석할 운전 기록이 더 필요해요.", fontSize = motionType.section)
             } else {
-                val comparison = adviceComparisonCopy(latest, pattern, recent.drop(1).mapNotNull { it.rate(pattern) })
+                val comparison = adviceComparisonCopy(latest, pattern, patternTrend(state.driverTrips, pattern))
                 GlassPanel(Modifier.fillMaxWidth()) {
                     SectionTitle(comparison.title)
                     Text(comparison.comparison, fontSize = motionType.section)

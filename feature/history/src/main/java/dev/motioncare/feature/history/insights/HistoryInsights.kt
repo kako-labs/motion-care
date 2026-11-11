@@ -130,11 +130,18 @@ fun adviceFor(driverId: PersonId?, all: List<TripInsight>): AdviceInsight {
 /** How many of a driver's latest analysed trips make "최근", and as many before them make "이전" (docs/history-analysis.md). */
 private const val TREND_TRIPS = 3
 
-/** One pattern's rate per ten minutes, averaged over the latest trips and over the same number before them. */
-data class PatternTrend(val previous: Double?, val recent: Double?) {
+/** One pattern's rate per ten minutes on the latest trips and on as many before them, each list oldest first. */
+data class PatternTrend(val previousRates: List<Double>, val recentRates: List<Double>) {
+    val previous: Double? get() = previousRates.takeIf { it.isNotEmpty() }?.average()
+    val recent: Double? get() = recentRates.takeIf { it.isNotEmpty() }?.average()
+
     /** The change from the earlier trips in percent; null without them, or when they saw none of the pattern. */
     val changePercent: Int?
-        get() = if (previous == null || recent == null || previous == 0.0) null else ((recent - previous) / previous * 100).roundToInt()
+        get() {
+            val before = previous ?: return null
+            val now = recent ?: return null
+            return if (before == 0.0) null else ((now - before) / before * 100).roundToInt()
+        }
 }
 
 /**
@@ -146,10 +153,7 @@ fun patternTrend(trips: List<TripInsight>, pattern: DrivingPattern): PatternTren
         .sortedBy { it.trip.startedAtEpochMs }
         .takeLast(TREND_TRIPS * 2)
         .mapNotNull { it.rate(pattern) }
-    return PatternTrend(
-        previous = rates.dropLast(TREND_TRIPS).takeLast(TREND_TRIPS).takeIf { it.isNotEmpty() }?.average(),
-        recent = rates.takeLast(TREND_TRIPS).takeIf { it.isNotEmpty() }?.average(),
-    )
+    return PatternTrend(previousRates = rates.dropLast(TREND_TRIPS).takeLast(TREND_TRIPS), recentRates = rates.takeLast(TREND_TRIPS))
 }
 
 fun actionFor(pattern: DrivingPattern?): String = when (pattern) {

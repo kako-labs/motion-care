@@ -662,8 +662,9 @@ def fetch_hourly(url):
 
 
 def weather():
-    """Hourly Seoul values for the last month: outdoor temperature and the CAMS air quality the app also asks for."""
-    base = f"latitude={LATITUDE}&longitude={LONGITUDE}&past_days=30&forecast_days=1&timezone=Asia%2FSeoul"
+    """Hourly Seoul values for the last 92 days, the most Open-Meteo gives, so the script runs until early February:
+    outdoor temperature and the CAMS air quality the app also asks for."""
+    base = f"latitude={LATITUDE}&longitude={LONGITUDE}&past_days=92&forecast_days=1&timezone=Asia%2FSeoul"
     temperature = fetch_hourly(f"https://api.open-meteo.com/v1/forecast?{base}&hourly=temperature_2m")
     air = fetch_hourly(f"https://air-quality-api.open-meteo.com/v1/air-quality?{base}&hourly=pm10,pm2_5"
                        "&domains=cams_global")
