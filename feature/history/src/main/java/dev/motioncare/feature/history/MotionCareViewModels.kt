@@ -39,6 +39,9 @@ class DepartureViewModel(
             combine(changes(trips, profiles), profiles.departureGuidanceEnabled, environment) { _, enabled, snapshot ->
                 enabled to snapshot
             }.collectLatest { (enabled, snapshot) ->
+                // People and seats are already in memory, so they show while the trips are read.
+                mutable.update { it.copy(people = profiles.people.value, seating = profiles.seating.value,
+                    guidanceEnabled = enabled, environment = snapshot) }
                 val insights = loadInsights(trips, profiles)
                 val seating = profiles.seating.value
                 mutable.value = DepartureUiState(false, null, profiles.people.value, seating,
@@ -141,9 +144,12 @@ class AdviceViewModel(
                             ?.let { (it.answer as? FeedbackAnswer.Rating)?.value }
                     }.takeLast(5)
                 }
+                val evidence = all.filter { driverId != null && it.participants?.driverId == driverId && it.trip.status == TripStatus.COMPLETED && it.analyzedDurationMs >= 60_000 }
+                // The screen draws the speed of the latest trip only, so that one is read with its samples.
+                val latest = evidence.maxByOrNull { it.trip.startedAtEpochMs }?.let { fullInsight(trips, it.trip.id, it.participants) }
                 mutable.value = AdviceUiState(false, null, adviceFor(driverId, all),
                     profiles.people.value.filter { it.id in passengerIds }, ratings,
-                    all.filter { driverId != null && it.participants?.driverId == driverId && it.trip.status == TripStatus.COMPLETED && it.analyzedDurationMs >= 60_000 })
+                    evidence.map { if (it.trip.id == latest?.trip?.id) latest else it })
             }
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { mutable.update { it.copy(loading = false, error = "조언 근거를 불러오지 못했습니다.") } }
@@ -181,8 +187,9 @@ class TripExperienceViewModel(
             val environment = try { tripEnvironment(tripId) } catch (error: CancellationException) { throw error } catch (_: Exception) { emptyList() }
             changes(trips, profiles).collectLatest {
                 val all = loadInsights(trips, profiles)
-                val selected = all.firstOrNull { it.trip.id == tripId }
                 val participants = profiles.participants.value.firstOrNull { it.tripId == tripId }
+                // Only this trip's speed is drawn, so only this trip is read with its samples.
+                val selected = fullInsight(trips, tripId, participants)
                 mutable.value = TripExperienceUiState(false, null, selected, participants, profiles.people.value,
                     profiles.feedback.value.filter { it.tripId == tripId },
                     participants?.driverId?.let { driver -> all.filter { it.participants?.driverId == driver } }.orEmpty(),

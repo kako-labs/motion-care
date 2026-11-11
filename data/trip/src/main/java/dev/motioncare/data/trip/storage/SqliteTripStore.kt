@@ -94,13 +94,12 @@ internal class SqliteTripStore(
             val trip = db.rawQuery("SELECT * FROM trips WHERE id = ?", arrayOf(id.value)).use {
                 if (it.moveToFirst()) it.toRecord() else null
             } ?: return@withLock null
-            val samples = db.rawQuery("SELECT * FROM speed_samples WHERE trip_id = ? ORDER BY elapsed",
+            // A long trip has tens of thousands of samples: read only the columns used, by position, without
+            // copying the trip id into every row.
+            val samples = db.rawQuery("SELECT elapsed, speed, quality FROM speed_samples WHERE trip_id = ? ORDER BY elapsed",
                 arrayOf(id.value)).use { c ->
-                buildList { while (c.moveToNext()) {
-                    val speed = c.getColumnIndexOrThrow("speed")
-                    add(SpeedSample(c.getLong(c.getColumnIndexOrThrow("elapsed")),
-                        if (c.isNull(speed)) null else c.getDouble(speed),
-                        Quality.valueOf(c.getString(c.getColumnIndexOrThrow("quality")))))
+                buildList(c.count) { while (c.moveToNext()) {
+                    add(SpeedSample(c.getLong(0), if (c.isNull(1)) null else c.getDouble(1), Quality.valueOf(c.getString(2))))
                 } }
             }
             val observations = db.rawQuery("SELECT * FROM observations WHERE trip_id = ? ORDER BY start_ms, pattern",
@@ -115,7 +114,7 @@ internal class SqliteTripStore(
             }
             val steering = db.rawQuery("SELECT elapsed, degrees FROM steering_samples WHERE trip_id = ? ORDER BY elapsed",
                 arrayOf(id.value)).use { c ->
-                buildList { while (c.moveToNext()) add(SteeringSample(c.getLong(0), c.getDouble(1))) }
+                buildList(c.count) { while (c.moveToNext()) add(SteeringSample(c.getLong(0), c.getDouble(1))) }
             }
             val guidance = db.rawQuery("SELECT elapsed, observed, pattern, outcome FROM guidance_events WHERE trip_id = ? ORDER BY elapsed, rowid",
                 arrayOf(id.value)).use { c ->

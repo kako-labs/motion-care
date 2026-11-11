@@ -5,7 +5,10 @@ import dev.motioncare.core.model.*
 import dev.motioncare.core.ui.MotionIcons
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.trip.TripRepository
+import java.util.WeakHashMap
 import kotlin.math.roundToInt
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 private const val MAX_CONTIGUOUS_GAP_MS = 5_000L
 private const val MIN_RATE_DURATION_MS = 60_000L
@@ -46,11 +49,40 @@ data class AdviceInsight(
     }
 }
 
-suspend fun loadInsights(trips: TripRepository, profiles: ProfileRepository): List<TripInsight> {
-    val assignments = profiles.participants.value.associateBy { it.tripId }
-    return trips.records.value.mapNotNull { record -> trips.get(record.id)?.let { insight(it, assignments[record.id]) } }
-        .sortedByDescending { it.trip.startedAtEpochMs }
+/**
+ * A finished trip never changes, so its numbers are worked out once per repository and kept without the speed and
+ * steering samples. Reading every sample of every trip again on each screen made opening a trip take seconds once a
+ * few weeks of real-length trips were stored. A trip still recording, or one whose revision moved, is read again.
+ */
+private class InsightCache {
+    val lock = Mutex()
+    val trips = HashMap<TripId, TripInsight>()
 }
+
+private val caches = WeakHashMap<TripRepository, InsightCache>()
+
+/** Every stored trip, newest first, without samples; use [fullInsight] for a trip whose speed is drawn. */
+suspend fun loadInsights(trips: TripRepository, profiles: ProfileRepository): List<TripInsight> {
+    val cache = synchronized(caches) { caches.getOrPut(trips) { InsightCache() } }
+    val assignments = profiles.participants.value.associateBy { it.tripId }
+    val records = trips.records.value
+    // One load at a time, so screens opening together read each trip once between them.
+    val loaded = cache.lock.withLock {
+        cache.trips.keys.retainAll(records.mapTo(HashSet()) { it.id })
+        records.mapNotNull { record ->
+            cache.trips[record.id]?.takeIf { it.trip.revision == record.revision }
+                ?: trips.get(record.id)?.let { insight(it).withoutSamples() }
+                    ?.also { if (it.trip.status != TripStatus.RECORDING) cache.trips[record.id] = it }
+        }
+    }
+    return loaded.map { it.copy(participants = assignments[it.trip.id]) }.sortedByDescending { it.trip.startedAtEpochMs }
+}
+
+private fun TripInsight.withoutSamples() = copy(snapshot = snapshot.copy(samples = emptyList(), steering = emptyList()))
+
+/** One trip with every speed and steering sample, for the screens that draw its speed. */
+suspend fun fullInsight(trips: TripRepository, id: TripId, participants: TripParticipants?): TripInsight? =
+    trips.get(id)?.let { insight(it, participants) }
 
 fun insight(snapshot: TripSnapshot, participants: TripParticipants? = null): TripInsight {
     val validSegments = snapshot.samples.zipWithNext().filter { (left, right) ->

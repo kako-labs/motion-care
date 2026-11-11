@@ -225,6 +225,8 @@ fun MainHost(
                                     onFeedback = { navigation.navigate(HistoryRoutes.feedback(finished)) },
                                     onDone = driving::dismissFinished,
                                 )
+                                // Until the trips are read the advice is unknown; an empty card beats "누가 운전하나요?".
+                                departureState.loading -> Unit
                                 else -> AdviceHero(
                                     homeAdvice(departureState.advice, departureState.seating.driverId, departureState.guidanceEnabled), sizes,
                                     onExplain = { navigation.navigate(HistoryRoutes.advice(departureState.seating.driverId)) },
