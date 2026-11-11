@@ -5,7 +5,6 @@ import dev.motioncare.core.ui.motionType
 import dev.motioncare.core.ui.MotionIcons
 import dev.motioncare.feature.history.presentation.*
 import dev.motioncare.feature.history.ui.MotionSelected
-import kotlin.math.roundToInt
 import dev.motioncare.feature.history.insights.AdviceState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.BorderStroke
@@ -108,7 +107,7 @@ private fun PersonDetailContent(
         LineTrend(values)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("처음 ${"%.1f".format(values.first())}회", color = MotionMuted, fontSize = motionType.body)
-            Text("최근 ${"%.1f".format(values.last())}회", color = MotionCyan, fontWeight = FontWeight.Medium, fontSize = motionType.body)
+            Text("마지막 ${"%.1f".format(values.last())}회", color = MotionCyan, fontWeight = FontWeight.Medium, fontSize = motionType.body)
         }
     }
     GlassPanel(Modifier.fillMaxWidth()) {
@@ -129,29 +128,33 @@ private fun PersonDetailContent(
 @Composable private fun TrendPanel(pattern: DrivingPattern, onPattern: (DrivingPattern) -> Unit, trips: List<TripInsight>, modifier: Modifier = Modifier) {
     GlassPanel(modifier) {
         SectionTitle("최근 운전 경향")
-        val selected = trips.mapNotNull { it.rate(pattern) }
-        val change = if (selected.size >= 2 && selected.first() > 0) ((selected.last() - selected.first()) / selected.first() * 100).roundToInt() else null
-        val comparable = change != null && trips.size >= 4
-        val tone = if (comparable && change!! < 0) MotionCyan else MotionText
+        // The same comparison as the home advice, so both screens give one recent number (docs/history-analysis.md).
+        val trend = patternTrend(trips, pattern)
+        val change = trend.changePercent
+        // Earlier trips without the pattern leave no percent, but more of it now is still a rise.
+        val rising = trend.previous == 0.0 && (trend.recent ?: 0.0) > 0.0
+        val falling = change != null && change < 0
+        val tone = if (falling) MotionCyan else MotionText
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(when {
-                !comparable -> "비교하려면 기록이 더 필요해요."
-                change == 0 -> "${patternLabel(pattern)} 변화 없음"
+                trend.previous == null -> "비교하려면 기록이 더 필요해요."
+                change == 0 || (change == null && !rising) -> "${patternLabel(pattern)} 변화 없음"
                 else -> patternLabel(pattern)
             }, fontSize = motionType.headline, fontWeight = FontWeight.Medium, color = tone)
-            if (comparable && change != 0) {
-                Icon(if (change!! < 0) MotionIcons.ArrowDown else MotionIcons.ArrowUp, contentDescription = if (change < 0) "줄어듦" else "늘어남",
+            if (rising || (change != null && change != 0)) {
+                Icon(if (falling) MotionIcons.ArrowDown else MotionIcons.ArrowUp, contentDescription = if (falling) "줄어듦" else "늘어남",
                     tint = tone, modifier = Modifier.size(28.dp))
-                Text("${kotlin.math.abs(change)}%", fontSize = motionType.headline, fontWeight = FontWeight.Medium, color = tone)
+                if (change != null) Text("${kotlin.math.abs(change)}%", fontSize = motionType.headline, fontWeight = FontWeight.Medium, color = tone)
             }
         }
+        Text("최근 3회 평균 · 10분당", color = MotionSubtle, fontSize = motionType.label)
         listOf(DrivingPattern.HARD_STOP, DrivingPattern.RAPID_START, DrivingPattern.REPEATED_SPEED_CHANGE).forEach { item ->
-            val rates = trips.mapNotNull { it.rate(item) }
+            val recent = patternTrend(trips, item).recent
             OutlinedButton(onClick = { onPattern(item) }, modifier = Modifier.fillMaxWidth().heightIn(min = MotionSpace.Touch),
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = if (pattern == item) MotionBlue.copy(.26f) else Color.Transparent)) {
                 PatternGlyph(item); Spacer(Modifier.width(14.dp))
                 Text(patternLabel(item), Modifier.weight(1f), fontSize = motionType.body, fontWeight = FontWeight.Medium, color = MotionText)
-                Text(rates.lastOrNull()?.let { "${"%.1f".format(it)}회" } ?: "—", fontSize = motionType.section, fontWeight = FontWeight.Medium, color = MotionCyan)
+                Text(recent?.let { "${"%.1f".format(it)}회" } ?: "—", fontSize = motionType.section, fontWeight = FontWeight.Medium, color = MotionCyan)
             }
         }
     }

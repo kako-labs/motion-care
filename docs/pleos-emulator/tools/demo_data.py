@@ -9,8 +9,9 @@ Trips are not written into the database. The script drives the emulator's vehicl
 automatic recording on, so every trip, pattern, card and environment value is what the app itself recorded from the
 emulated car. Only what a person would type is put straight into the profile database, because the emulator keyboard
 cannot type Korean: four people with characters, who sits where, and the passengers' answers after each trip except
-the last, which is left for answering on camera. The driver's first trips are rough and later ones gentle, so the
-departure advice has a trend to compare. The trips all fall on the day of the run.
+the last, which is left for answering on camera. The driver's first trips are rough and later ones gentler, so the
+departure advice has a trend to compare; even the last keeps one hard stop, so no screen shows only zeros. The trips
+all fall on the day of the run.
 
 This script clears the app's data and drives the vehicle signals, so it must never run against an emulator that
 belongs to other work. Air quality needs internet in the emulator; without it the cards say so.
@@ -64,10 +65,15 @@ def gentle(hard_stops=0):
 
 
 def curves():
-    """City driving with two fast turns and gentle stops."""
+    """City driving with two fast turns and gentle stops.
+
+    The app estimates sideways acceleration from speed and the wheel angle (LateralDetector: 3.0 m wheelbase, 14.26
+    steering ratio). 36 km/h with the wheel at 70° comes to about 2.9 m/s², over its 2.0 m/s² fast turn line;
+    the earlier 30 km/h and 60° came to 1.7 m/s² and was never seen as a fast turn.
+    """
     steps = [(v, 0) for v in range(0, 37, 3)] + [(36, 0)] * 8
-    for turn in (60, -60):
-        steps += [(30, turn)] * 5 + [(30, 0)] * 10
+    for turn in (70, -70):
+        steps += [(36, turn)] * 5 + [(36, 0)] * 10
     steps += [(v, 0) for v in range(36, -1, -3)] + [(0, 0)] * 2
     steps += [(v, 0) for v in range(0, 37, 3)] + [(36, 0)] * 20 + [(v, 0) for v in range(36, -1, -3)] + [(0, 0)] * 2
     return steps
@@ -79,9 +85,9 @@ TRIPS = [
     ("지영 1, 거침", FAMILY_DRIVES, rough(), {"power": 1, "recirc": 1, "driver_temp": 26}),
     ("지영 2, 거침", FAMILY_DRIVES, rough(), {"power": 1, "recirc": 1, "driver_temp": 25}),
     ("지영 3, 거침", FAMILY_DRIVES, rough(5), {"power": 1, "recirc": 1, "driver_temp": 24}),
-    ("지영 4, 나아짐", FAMILY_DRIVES, gentle(2), {"power": 1, "recirc": 0, "driver_temp": 23}),
-    ("지영 5, 부드러움", FAMILY_DRIVES, gentle(1), {"power": 1, "recirc": 0, "driver_temp": 22}),
-    ("지영 6, 부드러움", FAMILY_DRIVES, gentle(0), {"power": 1, "recirc": 0, "driver_temp": 22}),
+    ("지영 4, 나아짐", FAMILY_DRIVES, gentle(3), {"power": 1, "recirc": 0, "driver_temp": 23}),
+    ("지영 5, 나아짐", FAMILY_DRIVES, gentle(2), {"power": 1, "recirc": 0, "driver_temp": 22}),
+    ("지영 6, 부드러움", FAMILY_DRIVES, gentle(1), {"power": 1, "recirc": 0, "driver_temp": 22}),
 ]
 
 # Passengers' answers per trip in TRIPS order: person -> (rating 1..5, reasons, respondent). The last trip is left open.
