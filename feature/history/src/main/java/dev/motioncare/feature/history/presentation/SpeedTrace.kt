@@ -127,6 +127,9 @@ internal fun BSpeedTrace(snapshot: TripSnapshot, initialEvent: Int = 0, onOpenDe
     }
 }
 
+/** Room for a three-digit speed such as "120" at the caption size, so highway trips keep the label on one line. */
+private val SpeedAxisWidth = 60.dp
+
 @Composable
 private fun TracePlot(snapshot: TripSnapshot, selected: Observation?, markers: List<Observation>) {
     val trace = remember(snapshot, selected) { speedTrace(snapshot, selected) }
@@ -134,8 +137,10 @@ private fun TracePlot(snapshot: TripSnapshot, selected: Observation?, markers: L
     var cursorMs by remember(trace) { mutableStateOf<Long?>(null) }
     if (trace.segments.isEmpty()) { Text("표시할 유효 속도 기록이 없어요.", color = MotionSubtle); return }
     Row(Modifier.fillMaxWidth()) {
-        Column(Modifier.width(36.dp).height(190.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            listOf(ceiling, ceiling / 2, 0.0).forEach { Text("${it.toInt()}", color = MotionSubtle, fontSize = motionType.caption) }
+        Column(Modifier.width(SpeedAxisWidth).height(190.dp), verticalArrangement = Arrangement.SpaceBetween) {
+            listOf(ceiling, ceiling / 2, 0.0).forEach {
+                Text("${it.toInt()}", color = MotionSubtle, fontSize = motionType.caption, maxLines = 1, softWrap = false)
+            }
         }
         Canvas(Modifier.weight(1f).height(190.dp)
             .semantics { contentDescription = if (selected == null) "전체 속도 그래프. 기록 공백은 선을 끊어 표시" else "선택한 움직임 전후의 속도 상세 그래프" }
@@ -161,7 +166,7 @@ private fun TracePlot(snapshot: TripSnapshot, selected: Observation?, markers: L
             }
         }
     }
-    Row(Modifier.fillMaxWidth().padding(start = 36.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+    Row(Modifier.fillMaxWidth().padding(start = SpeedAxisWidth), horizontalArrangement = Arrangement.SpaceBetween) {
         listOf(trace.startMs, trace.startMs + (trace.endMs - trace.startMs) / 2, trace.endMs).forEach { Text(traceClock(snapshot, it), fontSize = motionType.caption, color = MotionSubtle) }
     }
     val cursor = cursorMs

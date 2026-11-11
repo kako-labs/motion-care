@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.motioncare.core.model.AirGrade
@@ -95,16 +96,19 @@ internal fun CabinPanel(summary: CabinSummary, modifier: Modifier = Modifier) {
         SectionTitle("이 운행의 차 안 환경")
         summary.feelings.forEach { feeling ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(feeling.name, fontWeight = FontWeight.Medium)
-                Text(feeling.feelings, color = MotionText)
+                Text(feeling.name, fontWeight = FontWeight.Medium, maxLines = 1, softWrap = false)
+                Text(feeling.feelings, Modifier.weight(1f), color = MotionText)
             }
         }
         if (summary.values.isEmpty()) {
             Text("이 운행에 저장된 환경 기록이 없어요.", color = MotionSubtle)
         } else summary.values.forEach { item ->
-            Row(Modifier.fillMaxWidth().heightIn(min = 64.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(item.label, Modifier.weight(1f), color = MotionSubtle)
-                Text(item.end?.let { "출발 ${item.start} → 종료 $it" } ?: item.start, color = MotionText)
+            // The label keeps one line; a long start-to-end value wraps in the space that is left.
+            Row(Modifier.fillMaxWidth().heightIn(min = 64.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(item.label, color = MotionSubtle, maxLines = 1, softWrap = false)
+                Text(item.end?.let { "출발 ${item.start} → 종료 $it" } ?: item.start, Modifier.weight(1f), color = MotionText,
+                    textAlign = TextAlign.End)
             }
         }
         Text("느낌과 그때의 차 값을 나란히 보여 줄 뿐, 무엇 때문인지 판단하지 않아요.", color = MotionMuted, fontSize = motionType.caption)
