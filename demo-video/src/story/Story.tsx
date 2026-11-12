@@ -205,15 +205,35 @@ const Ending = ({sec}: {sec: number}) => {
   );
 };
 
-export const Story = () => {
-  const frame = useCurrentFrame();
-  const sec = frame / FPS;
+/** A calm title before the car screen: the problem, then the app. No glow, no feature montage. */
+const TITLE_SEC = 5;
+
+const Title = ({sec}: {sec: number}) => {
+  const problem = Math.min(ramp(sec, 0.2, 0.8), 1 - ramp(sec, 2.2, 2.7));
+  const app = Math.min(ramp(sec, 2.7, 3.3), 1 - ramp(sec, TITLE_SEC - 0.4, TITLE_SEC + 0.2));
+  return (
+    <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', textAlign: 'center'}}>
+      <div style={{position: 'absolute', fontSize: 52, fontWeight: 800, color: THEME.text, opacity: problem}}>
+        운전하는 사람은 괜찮은데, 뒷자리 아이는 멀미를 합니다
+      </div>
+      <div style={{position: 'absolute', display: 'flex', alignItems: 'center', gap: 28, opacity: app}}>
+        <Img src={staticFile('story/app_icon.png')} style={{width: 132, height: 132}} />
+        <div style={{textAlign: 'left'}}>
+          <div style={{fontSize: 88, fontWeight: 900, color: THEME.text, letterSpacing: -1}}>모션케어</div>
+          <div style={{fontSize: 34, fontWeight: 500, color: '#c9d6e8'}}>함께 타는 사람까지 편안한 운전을 돕는 Pleos 차량용 앱</div>
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+/** Everything after the title, timed from its own start (scenes.ts times). */
+const Body = () => {
+  const sec = useCurrentFrame() / FPS;
   const mainIn = ramp(sec, 0, 0.8);
   const mainOut = 1 - ramp(sec, MAIN_END - 0.8, MAIN_END);
   return (
-    <AbsoluteFill style={{background: THEME.bg, fontFamily: THEME.font}}>
-      <style>{fontFace}</style>
-      <AbsoluteFill style={{background: 'radial-gradient(900px 600px at 20% 0%, rgba(30,90,160,0.30), transparent 70%)'}} />
+    <AbsoluteFill>
       {sec < MAIN_END ? <AbsoluteFill style={{opacity: Math.min(mainIn, mainOut)}}><Main sec={sec} /></AbsoluteFill> : null}
       {sec >= MAIN_END - 0.2 ? <Ending sec={sec - MAIN_END} /> : null}
       {PLACED.filter((p) => p.audio).map((p) => {
@@ -229,4 +249,18 @@ export const Story = () => {
   );
 };
 
-export const STORY_FRAMES = Math.round(END_SEC * FPS);
+export const Story = () => {
+  const sec = useCurrentFrame() / FPS;
+  return (
+    <AbsoluteFill style={{background: THEME.bg, fontFamily: THEME.font}}>
+      <style>{fontFace}</style>
+      <AbsoluteFill style={{background: 'radial-gradient(900px 600px at 20% 0%, rgba(30,90,160,0.30), transparent 70%)'}} />
+      {sec < TITLE_SEC + 0.3 ? <Title sec={sec} /> : null}
+      <Sequence from={Math.round((TITLE_SEC - 0.2) * FPS)} layout="none">
+        <Body />
+      </Sequence>
+    </AbsoluteFill>
+  );
+};
+
+export const STORY_FRAMES = Math.round((TITLE_SEC - 0.2 + END_SEC) * FPS);

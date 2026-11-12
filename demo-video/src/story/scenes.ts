@@ -51,10 +51,10 @@ const CALC: Rect = [853, 225, 2560, 1185];
 const cardAt = CHIME - (M.stop3 - 3);
 
 const SCENES: Scene[] = [
-  // Opening: the car is parked with the navigation in front, and the app is opened from the dock.
-  {id: 'open', src: 'story', chapter: 0, from: M.open + 1.3, dur: 11, caps: [
-    {at: 0, title: '운전하는 사람은 괜찮은데, 뒷자리 아이는 멀미를 합니다'},
-    {at: 4.5, title: '모션케어는 함께 타는 사람까지 편안한 운전을 돕는 차량용 앱입니다'},
+  // The car is parked with the navigation in front; the app is opened from the dock. The title comes before.
+  {id: 'open', src: 'story', chapter: 1, from: M.open + 5.8, dur: 6.5, caps: [
+    {at: 0, title: '출발 전, 차는 P에 서 있습니다'},
+    {at: 2.6, title: '하단 바에서 모션케어를 엽니다'},
   ]},
   {id: 'home', src: 'story', chapter: 1, from: M.open + 12.3, dur: 6.5, spots: [{at: 0.6, until: 6.3, rect: HERO}], caps: [
     {at: 0, title: '출발 전, 운전자의 지난 기록으로 고른 오늘의 조언', sub: '지영의 최근 운행에서 정차 직전 큰 감속이 줄었습니다'},
