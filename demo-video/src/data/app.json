@@ -1,0 +1,22 @@
+{
+ "duration": 193.36666666666667,
+ "marks": {
+  "home": 2.724,
+  "seats": 10.734,
+  "seat-popup": 24.943,
+  "add-person": 36.084,
+  "records": 49.963,
+  "filter": 67.879,
+  "detail": 84.095,
+  "detail-segment": 89.263,
+  "detail-lower": 96.356,
+  "outing": 105.453,
+  "outing-lower": 140.402,
+  "profile": 150.192,
+  "profile-lower": 159.143,
+  "advice": 166.634,
+  "advice-calc": 175.833,
+  "home-again": 188.353,
+  "end": 193.358
+ }
+}

@@ -1,0 +1,7 @@
+node_modules
+node_modules/
+out/
+.cache/
+public/remap/
+public/rec/
+public/tts/
