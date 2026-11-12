@@ -1,6 +1,8 @@
 """Speaks the story narration with ElevenLabs, one clip per caption (src/story/narration-lines.json).
 
 usage: python3 tools/tts/narrate.py [--force] [key ...]
+A line is its text, or {"text": ..., "seed": n} when another seed read it more clearly (checked by transcribing the
+clips with whisper; see docs/story.md).
 Needs ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID in the environment. Writes the API output to public/tts/raw/<key>.mp3,
 a trimmed and loudness-matched copy to public/tts/<key>.mp3, and src/data/narration.json with each clip's text and
 length. A clip whose text has not changed is kept, so only changed lines cost characters. --force or keys respeak.
@@ -23,9 +25,9 @@ SEED = 7
 LEAD, TAIL, PAUSE = 0.04, 0.08, 0.35
 
 
-def speak(text, prev, nxt, dest):
+def speak(text, prev, nxt, dest, seed=SEED):
     key, voice = os.environ["ELEVENLABS_API_KEY"], os.environ["ELEVENLABS_VOICE_ID"]
-    body = {"text": text, "model_id": MODEL, "seed": SEED}
+    body = {"text": text, "model_id": MODEL, "seed": seed}
     # Neighbouring lines only shape the intonation; they are not spoken.
     if prev:
         body["previous_text"] = prev
@@ -93,6 +95,10 @@ def finish(raw, dest):
     return round(duration(dest), 3)
 
 
+def entry(value):
+    return (value, SEED) if isinstance(value, str) else (value["text"], value.get("seed", SEED))
+
+
 def main():
     args = sys.argv[1:]
     force = "--force" in args
@@ -103,15 +109,16 @@ def main():
     keys = list(lines)
     data = {}
     for i, key in enumerate(keys):
-        text = lines[key]
+        text, seed = entry(lines[key])
         raw = os.path.join(RAW, f"{key}.mp3")
         dest = os.path.join(OUT, f"{key}.mp3")
-        again = force or key in only or old.get(key, {}).get("text") != text or not os.path.exists(raw)
+        was = old.get(key, {})
+        again = force or key in only or was.get("text") != text or was.get("seed", SEED) != seed or not os.path.exists(raw)
         if again:
-            prev = lines[keys[i - 1]] if i > 0 else None
-            nxt = lines[keys[i + 1]] if i + 1 < len(keys) else None
-            speak(text, prev, nxt, raw)
-        data[key] = {"text": text, "sec": finish(raw, dest)}
+            prev = entry(lines[keys[i - 1]])[0] if i > 0 else None
+            nxt = entry(lines[keys[i + 1]])[0] if i + 1 < len(keys) else None
+            speak(text, prev, nxt, raw, seed)
+        data[key] = {"text": text, "seed": seed, "sec": finish(raw, dest)}
         print(f"{'spoke' if again else 'kept '} {key:12} {data[key]['sec']:5.2f}s  {text}", flush=True)
     json.dump(data, open(DATA, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print("chars", sum(len(v["text"]) for v in data.values()))
