@@ -3,7 +3,7 @@ import {AbsoluteFill, Audio, Easing, Img, OffthreadVideo, Sequence, interpolate,
 import {THEME} from '../config/theme';
 import history from '../data/history.json';
 import story from '../data/story.json';
-import {LINES, TITLE_LINE_AT, TTS_ENDING_SEC, TTS_TITLE_SEC} from './narration';
+import {LINES, TITLE_LINE_AT, TITLE_LINE_SEC, TTS_ENDING_SEC, TTS_TITLE_SEC} from './narration';
 import {CHAPTERS, END_SEC, ENDING_SEC, FPS, MAIN_END, PLACED, capAt, captionAt, sceneAt, type Placed, type Rect} from './scenes';
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
@@ -261,7 +261,7 @@ export const Story = ({narration = false}: {narration?: boolean}) => {
       <AbsoluteFill style={{background: 'radial-gradient(900px 600px at 20% 0%, rgba(30,90,160,0.30), transparent 70%)'}} />
       {sec < titleSec + 0.3 ? <Title sec={sec} len={titleSec} /> : null}
       {narration ? (
-        <Sequence from={Math.round(TITLE_LINE_AT * FPS)} durationInFrames={Math.ceil((TTS_TITLE_SEC - TITLE_LINE_AT) * FPS)} layout="none">
+        <Sequence from={Math.round(TITLE_LINE_AT * FPS)} durationInFrames={Math.ceil((TITLE_LINE_SEC + 0.1) * FPS)} layout="none">
           <Audio src={staticFile('tts/title.mp3')} />
         </Sequence>
       ) : null}

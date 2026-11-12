@@ -26,6 +26,8 @@ const chime = story.sounds[0];
 
 export const TITLE_LINE_AT = 0.5;
 export const TTS_TITLE_SEC = 6.2;
+/** The title line plays to its end, past the title, while the car screen fades in. */
+export const TITLE_LINE_SEC = CLIPS.title?.sec ?? 0;
 /** The body starts 0.2 s before the title ends (Story.tsx). */
 const titleFree = TITLE_LINE_AT + (CLIPS.title?.sec ?? 0) + GAP - (TTS_TITLE_SEC - 0.2);
 
