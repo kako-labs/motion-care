@@ -1,5 +1,10 @@
 package dev.motioncare.feature.history.presentation
 
+import dev.motioncare.core.ui.motionType
+import dev.motioncare.core.ui.MotionSecondaryButton
+import dev.motioncare.core.ui.MotionChip
+import dev.motioncare.core.ui.MotionSpace
+import dev.motioncare.feature.history.ui.SectionTitle
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Icon
 import dev.motioncare.core.ui.MotionIcons
@@ -13,6 +18,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,8 +28,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -91,36 +95,38 @@ internal fun BActionRibbon(label: String, title: String, enabled: Boolean = true
         Row(Modifier.background(MotionBrushes.Action).padding(horizontal = if (compact) 20.dp else 28.dp, vertical = if (compact) 18.dp else 22.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(label, color = BSubtle, fontSize = 14.sp)
-                Text(title, color = if (enabled) BText else BSubtle, fontSize = if (compact) 19.sp else 22.sp, lineHeight = if (compact) 28.sp else 32.sp, fontWeight = FontWeight.Medium)
+                Text(label, color = BSubtle, fontSize = motionType.label)
+                Text(title, color = if (enabled) BText else BSubtle, fontSize = motionType.section, fontWeight = FontWeight.Medium)
             }
             Icon(MotionIcons.ArrowUpRight, contentDescription = null, tint = BCyan, modifier = Modifier.size(26.dp))
         }
     }
 }
 
+/** One row of a grid; [columns] keeps a short last row in the same columns as the rows above it. */
 @Composable
-private fun BMetrics(metrics: List<BMetric>, modifier: Modifier = Modifier) {
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+private fun BMetrics(metrics: List<BMetric>, modifier: Modifier = Modifier, columns: Int = metrics.size) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MotionSpace.Large)) {
         metrics.forEach { metric ->
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(metric.label, color = BSubtle, fontSize = 14.sp)
-                Text(metric.value ?: "기록 없음", color = BCyan, fontSize = 29.sp, fontWeight = FontWeight.Normal)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MotionSpace.Small)) {
+                Text(metric.label, color = BSubtle, fontSize = motionType.label)
+                Text(metric.value ?: "기록 없음", color = BText, fontSize = motionType.headline, fontWeight = FontWeight.Bold)
             }
         }
+        repeat(columns - metrics.size) { Spacer(Modifier.weight(1f)) }
     }
 }
 
 @Composable
 internal fun BReportPanel(state: BReportUi, onFeedback: () -> Unit, modifier: Modifier = Modifier, speedChart: (@Composable () -> Unit)? = null) {
     BGlass(modifier.fillMaxWidth()) {
-        Text(state.title, color = BText, fontSize = 29.sp, fontWeight = FontWeight.Medium)
-        Text(state.participants, color = BSubtle, fontSize = 15.sp)
+        Text(state.title, color = BText, fontSize = motionType.headline, fontWeight = FontWeight.Medium)
+        Text(state.participants, color = BSubtle, fontSize = motionType.caption)
         BMetrics(state.metrics)
         HorizontalDivider(color = BLine)
-        if (speedChart == null) Text("주행 속도 · km/h", color = BText, fontSize = 19.sp)
+        if (speedChart == null) SectionTitle("주행 속도 · km/h")
         if (speedChart != null) speedChart()
-        else if (state.speedSegments.isEmpty()) Text("표시할 유효 속도 구간이 없어요.", color = BSubtle, fontSize = 16.sp)
+        else if (state.speedSegments.isEmpty()) Text("표시할 유효 속도 구간이 없어요.", color = BSubtle, fontSize = motionType.label)
         else Canvas(Modifier.fillMaxWidth().height(180.dp).semantics { contentDescription = "유효한 속도 구간의 흐름. 신호 공백은 이어 그리지 않음" }) {
             (0..2).forEach { line ->
                 val y = size.height * line / 2
@@ -136,11 +142,11 @@ internal fun BReportPanel(state: BReportUi, onFeedback: () -> Unit, modifier: Mo
                 drawPath(path, BCyan, style = Stroke(3.dp.toPx(), cap = StrokeCap.Round))
             }
         }
-        Text("관찰된 움직임", color = BText, fontSize = 19.sp)
-        state.movements.chunked(3).forEach { BMetrics(it) }
+        SectionTitle("관찰된 움직임")
+        state.movements.chunked(3).forEach { BMetrics(it, columns = 3) }
         HorizontalDivider(color = BLine)
         BoxWithConstraints {
-            if (maxWidth >= 680.dp) Row(horizontalArrangement = Arrangement.spacedBy(30.dp)) {
+            if (maxWidth >= 680.dp) Row(horizontalArrangement = Arrangement.spacedBy(MotionSpace.XLarge)) {
                 BReportResponse(state.feedback, onFeedback, Modifier.weight(1f))
                 BReportGuidance(state.guidance, Modifier.weight(1f))
             } else Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
@@ -154,17 +160,17 @@ internal fun BReportPanel(state: BReportUi, onFeedback: () -> Unit, modifier: Mo
 @Composable
 private fun BReportResponse(feedback: String?, onFeedback: () -> Unit, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("동승자의 응답", color = BSubtle, fontSize = 14.sp)
-        Text(feedback ?: "미응답", color = BCyan, fontSize = 27.sp)
-        OutlinedButton(onClick = onFeedback, modifier = Modifier.heightIn(min = 56.dp)) { Text("평가 남기기 · 수정 ↗") }
+        Text("동승자의 응답", color = BSubtle, fontSize = motionType.label)
+        Text(feedback ?: "미응답", color = BText, fontSize = motionType.headline, fontWeight = FontWeight.Bold)
+        MotionSecondaryButton("평가 남기기 · 수정", onFeedback, icon = MotionIcons.ArrowUpRight)
     }
 }
 
 @Composable
 private fun BReportGuidance(guidance: String?, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("주행 안내", color = BSubtle, fontSize = 14.sp)
-        Text(guidance ?: "표시된 안내 없음", color = BText, fontSize = 19.sp)
+        Text("주행 안내", color = BSubtle, fontSize = motionType.label)
+        Text(guidance ?: "표시된 안내 없음", color = BText, fontSize = motionType.body)
     }
 }
 
@@ -178,23 +184,23 @@ internal fun BPassengerProfilePanel(
         if (showIdentity) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
             Box(Modifier.size(100.dp), contentAlignment = Alignment.Center) { portrait() }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                Text(role, color = BSubtle, fontSize = 14.sp)
-                Text(name, color = BText, fontSize = 32.sp, fontWeight = FontWeight.Medium)
+                Text(role, color = BSubtle, fontSize = motionType.caption)
+                Text(name, color = BText, fontSize = motionType.headline, fontWeight = FontWeight.Medium)
             }
-            OutlinedButton(onClick = onEdit, modifier = Modifier.heightIn(min = 56.dp)) { Text("프로필 편집") }
+            MotionSecondaryButton("프로필 편집", onEdit)
         }
-        Text("${name}에게 편안한 이동을.", color = BText, fontSize = 27.sp)
-        preferences.chunked(3).forEach { BMetrics(it) }
+        Text("${name}에게 편안한 이동을.", color = BText, fontSize = motionType.headline)
+        preferences.chunked(3).forEach { BMetrics(it, columns = 3) }
         BGlass(Modifier.fillMaxWidth()) {
-            Text("조금 더 신경 쓸 순간", color = BText, fontSize = 20.sp)
-            if (moments.isEmpty()) Text("아직 등록하거나 응답한 정보가 없어요.", color = BSubtle, fontSize = 16.sp)
+            SectionTitle("조금 더 신경 쓸 순간")
+            if (moments.isEmpty()) Text("아직 등록하거나 응답한 정보가 없어요.", color = BSubtle, fontSize = motionType.label)
             moments.forEachIndexed { index, moment ->
                 HorizontalDivider(color = BLine)
                 Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                    Text("%02d".format(index + 1), color = BCyan, fontSize = 13.sp)
+                    Text("%02d".format(index + 1), color = BCyan, fontSize = motionType.caption)
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(moment.title, color = BText, fontSize = 19.sp)
-                        Text(moment.detail, color = BSubtle, fontSize = 14.sp)
+                        Text(moment.title, color = BText, fontSize = motionType.body)
+                        Text(moment.detail, color = BSubtle, fontSize = motionType.caption)
                     }
                 }
             }
@@ -211,8 +217,8 @@ internal fun BFeedbackPanel(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(22.dp)) {
-        Text("${name}의 한마디", color = BText, fontSize = 25.sp)
-        Text(when (rating) { 1 -> "많이 불편했어요"; 2 -> "조금 불편했어요"; 3 -> "보통이었어요"; 4 -> "편안했어요"; 5 -> "아주 편안했어요"; else -> "이동은 어땠나요?" }, color = BCyan, fontSize = 29.sp)
+        Text("${name}의 한마디", color = BText, fontSize = motionType.section)
+        Text(when (rating) { 1 -> "많이 불편했어요"; 2 -> "조금 불편했어요"; 3 -> "보통이었어요"; 4 -> "편안했어요"; 5 -> "아주 편안했어요"; else -> "이동은 어땠나요?" }, color = BCyan, fontSize = motionType.headline)
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val starWidth = if (maxWidth < 320.dp) 56.dp else (maxWidth - 40.dp) / 5
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -220,26 +226,28 @@ internal fun BFeedbackPanel(
                     val selected = rating != null && score <= rating
                     Surface(onClick = { onRating(score) }, enabled = !saving, shape = RoundedCornerShape(14.dp),
                         color = if (selected) MotionSelected else Color(0x06FFFFFF), border = BorderStroke(1.dp, if (selected) BCyan.copy(.45f) else BLine),
-                        modifier = Modifier.width(starWidth).heightIn(min = 72.dp).semantics { contentDescription = "${score}점" }) {
-                        Box(Modifier.padding(10.dp), contentAlignment = Alignment.Center) { Text(if (selected) "★" else "☆", color = if (selected) BCyan else BSubtle, fontSize = 34.sp) }
+                        modifier = Modifier.width(starWidth).heightIn(min = 96.dp).semantics { contentDescription = "${score}점" }) {
+                        Box(Modifier.padding(10.dp), contentAlignment = Alignment.Center) { Text(if (selected) "★" else "☆", color = if (selected) BCyan else BSubtle, fontSize = motionType.title) }
                     }
                 }
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("많이 불편했어요", color = BSubtle, fontSize = 12.sp)
-            Text("아주 편안했어요", color = BSubtle, fontSize = 12.sp)
+            Text("많이 불편했어요", color = BSubtle, fontSize = motionType.label)
+            Text("아주 편안했어요", color = BSubtle, fontSize = motionType.label)
         }
         HorizontalDivider(color = BLine)
-        Text("불편했던 순간이 있었나요?", color = BText, fontSize = 22.sp)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                reasons.forEach { reason -> FilterChip(selected = reason.id in selectedReasons, onClick = { onReason(reason.id) }, enabled = !saving,
-                    colors = FilterChipDefaults.filterChipColors(containerColor = Color(0x06FFFFFF), labelColor = BSubtle,
-                        selectedContainerColor = MotionSelected, selectedLabelColor = BText),
-                    border = BorderStroke(1.dp, if (reason.id in selectedReasons) BCyan.copy(.45f) else BLine),
-                    label = { Text(reason.label) }, modifier = Modifier.heightIn(min = 56.dp)) }
+        SectionTitle("불편했던 순간이 있었나요?")
+        // Three car-size choices to a row across the panel's width.
+        reasons.chunked(3).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MotionSpace.Medium)) {
+                row.forEach { reason ->
+                    MotionChip(reason.label, reason.id in selectedReasons, { onReason(reason.id) }, Modifier.weight(1f), enabled = !saving)
+                }
+                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
         }
         BActionRibbon("이번 이동의 기록에", if (saving) "저장 중이에요" else "나의 응답 남기기", enabled = rating in 1..5 && !saving, onClick = onSave)
-        OutlinedButton(onClick = onSkip, enabled = !saving, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("건너뛰기") }
+        MotionSecondaryButton("건너뛰기", onSkip, Modifier.fillMaxWidth(), enabled = !saving)
     }
 }

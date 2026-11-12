@@ -1,6 +1,7 @@
 package dev.motioncare.feature.history.advice
 
 import dev.motioncare.core.model.DrivingPattern
+import dev.motioncare.feature.history.insights.PatternTrend
 import dev.motioncare.feature.history.insights.TripInsight
 import dev.motioncare.feature.history.insights.patternLabel
 import java.util.Locale
@@ -13,27 +14,31 @@ internal data class AdviceComparisonCopy(
     val calculation: String,
 )
 
-/** Formats the rates already selected by the screen; does not select or aggregate trips. */
+/**
+ * Words the comparison the home advice and the profile make (docs/history-analysis.md): the latest analysed trips
+ * against as many before them. The latest trip only shows how one trip's rate is worked out.
+ */
 internal fun adviceComparisonCopy(
     latest: TripInsight,
     pattern: DrivingPattern,
-    previousRates: List<Double>,
+    trend: PatternTrend,
 ): AdviceComparisonCopy {
     val count = latest.count(pattern)
     val rate = latest.rate(pattern)
-    val current = rate?.let { "이번 운행 ${decimal(it)}회/10분" } ?: "이번 운행 분석 부족"
-    val previous = if (previousRates.isEmpty()) "이전 운행 없음"
-        else "이전 ${previousRates.size}회 평균 ${decimal(previousRates.average())}회/10분"
+    val recent = trend.recent?.let { "최근 ${trend.recentRates.size}회 평균 ${decimal(it)}회/10분" } ?: "분석할 운행 부족"
+    val previous = trend.previous?.let { "이전 ${trend.previousRates.size}회 평균 ${decimal(it)}회/10분" } ?: "이전 운행 없음"
+    val perTrip = listOf("이전" to trend.previousRates, "최근" to trend.recentRates).filter { it.second.isNotEmpty() }
+        .joinToString(", ") { (name, rates) -> "$name ${rates.size}회 ${rates.joinToString(" · ") { decimal(it) }}" }
     val minutes = String.format(Locale.KOREAN, "%.2f", latest.analyzedDurationMs / 60_000.0)
         .trimEnd('0').trimEnd('.')
     return AdviceComparisonCopy(
         title = if (pattern == DrivingPattern.HARD_STOP) "정차 직전 큰 감속" else patternLabel(pattern),
-        comparison = "$current · $previous",
-        basis = if (previousRates.isEmpty()) "비교할 같은 운전자의 이전 완료 운행이 없어요."
-            else "같은 운전자의 이번 운행보다 앞선 완료 운행 중 분석 가능한 ${previousRates.size}회와 비교해요.",
-        observation = "${duration(latest.durationMs)} 동안 ${count}회 관찰 · 유효 분석 ${minutes}분",
+        comparison = "$recent · $previous",
+        basis = if (trend.previousRates.isEmpty()) "비교할 같은 운전자의 이전 완료 운행이 없어요."
+            else "같은 운전자의 완료 운행 중 분석 가능한 최근 ${trend.recentRates.size}회와 그 앞 ${trend.previousRates.size}회의 평균을 비교해요.",
+        observation = "이번 운행 ${duration(latest.durationMs)} 동안 ${count}회 관찰 · 유효 분석 ${minutes}분",
         calculation = if (rate == null) "분석할 기록이 부족해 이번 운행의 빈도는 계산하지 않았어요."
-            else "${count}회 ÷ ${minutes}분 × 10 ≈ ${decimal(rate)}회/10분. 계산에는 반올림 전 유효 분석 시간을 사용하고, 표시만 소수 첫째 자리로 반올림해요. 기록 공백은 제외해요.",
+            else "${count}회 ÷ ${minutes}분 × 10 ≈ ${decimal(rate)}회/10분. 운행마다 이렇게 구한 빈도를 평균해요(오래된 순, 회/10분: $perTrip). 계산에는 반올림 전 유효 분석 시간을 사용하고, 표시만 소수 첫째 자리로 반올림해요. 기록 공백은 제외해요.",
     )
 }
 

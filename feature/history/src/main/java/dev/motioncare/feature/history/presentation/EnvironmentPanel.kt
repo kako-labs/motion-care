@@ -1,5 +1,6 @@
 package dev.motioncare.feature.history.presentation
 
+import dev.motioncare.core.ui.motionType
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -71,9 +72,9 @@ internal fun environmentFields(snapshot: EnvironmentSnapshot): List<EnvironmentF
 @Composable
 internal fun EnvironmentPanel(snapshot: EnvironmentSnapshot?, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        Text("실내와 바깥, 서로 다른 환경", color = Color(0xFFE2F3FF), fontSize = 24.sp, fontWeight = FontWeight.Medium)
+        Text("실내와 바깥, 서로 다른 환경", color = Color(0xFFE2F3FF), fontSize = motionType.section, fontWeight = FontWeight.Medium)
         if (snapshot == null) {
-            Text("저장된 환경 기록이 없어요. 다른 주행의 값으로 대신하지 않아요.", color = Color(0xFFA6C2D9), fontSize = 16.sp)
+            Text("저장된 환경 기록이 없어요. 다른 주행의 값으로 대신하지 않아요.", color = Color(0xFFA6C2D9), fontSize = motionType.label)
         } else {
             val fields = environmentFields(snapshot)
             BoxWithConstraints {
@@ -87,8 +88,8 @@ internal fun EnvironmentPanel(snapshot: EnvironmentSnapshot?, modifier: Modifier
                 }
             }
         }
-        Text("실내 PM2.5·CO₂: 지원 신호 없음", color = Color(0xFF8BAAC5), fontSize = 14.sp)
-        Text("대기질: Open-Meteo, CAMS 예측 · 실측이 아닌 모델 예측이에요.", color = Color(0xFF8BAAC5), fontSize = 14.sp)
+        Text("실내 PM2.5·CO₂: 지원 신호 없음", color = Color(0xFF8BAAC5), fontSize = motionType.caption)
+        Text("대기질: Open-Meteo, CAMS 예측 · 실측이 아닌 모델 예측이에요.", color = Color(0xFF8BAAC5), fontSize = motionType.caption)
     }
 }
 
@@ -100,12 +101,12 @@ private fun EnvironmentFields(fields: List<EnvironmentFieldUi>, modifier: Modifi
                 Modifier.fillMaxWidth().glass(RoundedCornerShape(20.dp)).padding(22.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(field.label, color = Color(0xFFA6C2D9), fontSize = 15.sp)
-                Text(field.value, color = Color(0xFFCCEFFF), fontSize = 30.sp, fontWeight = FontWeight.Normal)
-                Text(field.status, color = Color(0xFFA6C2D9), fontSize = 14.sp)
-                Text(field.source, color = Color(0xFF88A6C1), fontSize = 12.sp)
+                Text(field.label, color = Color(0xFFA6C2D9), fontSize = motionType.caption)
+                Text(field.value, color = Color(0xFFCCEFFF), fontSize = motionType.headline, fontWeight = FontWeight.Normal)
+                Text(field.status, color = Color(0xFFA6C2D9), fontSize = motionType.caption)
+                Text(field.source, color = Color(0xFF88A6C1), fontSize = motionType.caption)
                 field.observedAtEpochMs?.let { at ->
-                    Text("기준 시각 " + SimpleDateFormat("M월 d일 HH:mm", Locale.KOREAN).format(Date(at)), color = Color(0xFF88A6C1), fontSize = 12.sp)
+                    Text("기준 시각 " + SimpleDateFormat("M월 d일 HH:mm", Locale.KOREAN).format(Date(at)), color = Color(0xFF88A6C1), fontSize = motionType.caption)
                 }
             }
         }

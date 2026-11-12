@@ -60,9 +60,9 @@ private val motionColors = darkColorScheme(
     onError = Color(0xFF5C1A10),
 )
 
-/** Dark glass colors for every screen. Text sizes stay at the Material defaults; screens set their own. */
+/** Dark glass colors and the type scale of the current window ([LocalMotionType]) for every screen. */
 @Composable
-fun MotionTheme(content: @Composable () -> Unit) = MaterialTheme(colorScheme = motionColors) {
+fun MotionTheme(content: @Composable () -> Unit) = MaterialTheme(colorScheme = motionColors, typography = motionTypography(motionType)) {
     CompositionLocalProvider(LocalContentColor provides MotionPalette.Text, content = content)
 }
 

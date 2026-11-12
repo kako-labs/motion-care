@@ -43,14 +43,15 @@ class HomeScreenTest {
     }
 
     private fun show(
-        start: StartButton = StartButton("샘플 시작", enabled = true) { started += 1 },
+        start: StartButton? = StartButton("샘플 시작", enabled = true) { started += 1 },
+        status: String = "합성 샘플 전용",
         people: PeopleSummary = PeopleSummary(emptyList(), more = 0, registered = 0),
         environment: EnvironmentCard = UNSUPPORTED,
         recent: List<RecentTripItem> = emptyList(),
     ) = compose.setContent {
         MotionTheme {
             HomeScreen(
-                vehicleConnected = false,
+                status = status,
                 people = people,
                 environment = environment,
                 recent = recent,
@@ -121,10 +122,19 @@ class HomeScreenTest {
         assertEquals(listOf(TripId("t1")), opened)
     }
 
-    @Test fun guidanceCardHoldsTheSwitches() {
+    @Test fun settingsCardHoldsTheSwitches() {
         show()
-        see("안내")
+        see("설정")
         see("출발 안내")
+    }
+
+    // In the car the gear starts and finishes trips, so the bar keeps its four tabs only.
+    @Test fun withoutAStartButtonTheBarKeepsItsTabs() {
+        show(start = null, status = "자동 기록 켜짐")
+        see("자동 기록 켜짐")
+        compose.onNodeWithText("샘플 시작").assertDoesNotExist()
+        see("기록").performClick()
+        assertEquals(1, recordsOpened)
     }
 
     @Test fun recordsTabAndFullRecordsLinkOpenTheRecords() {

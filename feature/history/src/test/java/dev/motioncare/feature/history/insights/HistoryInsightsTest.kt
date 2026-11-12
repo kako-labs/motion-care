@@ -78,6 +78,62 @@ class HistoryInsightsTest {
         assertEquals(listOf(1.0, 2.0), advice.recentRates)
     }
 
+    @Test fun `the trend averages the latest three trips against the three before`() {
+        val trend = patternTrend(drives(9, 6, 6, 5, 3, 2, 1), DrivingPattern.HARD_STOP)
+
+        assertEquals(17.0 / 3, trend.previous!!, 0.001)
+        assertEquals(2.0, trend.recent!!, 0.001)
+        assertEquals(-65, trend.changePercent)
+        assertEquals(listOf(6.0, 6.0, 5.0), trend.previousRates.map { Math.round(it * 10) / 10.0 })
+        assertEquals(listOf(3.0, 2.0, 1.0), trend.recentRates.map { Math.round(it * 10) / 10.0 })
+    }
+
+    @Test fun `short and unfinished trips stay out of the trend`() {
+        val short = insight(snapshot("short", 30_000, (0L..30_000L step 5_000L).map { SpeedSample(it, 5.0, Quality.VALID) },
+            List(9) { observation(DrivingPattern.HARD_STOP, it * 1_000L) }, startedAt = 10_000_000))
+        val interrupted = insight(snapshot("stopped", 600_000, validTenMinuteSamples(),
+            List(9) { observation(DrivingPattern.HARD_STOP, it * 10_000L) }, startedAt = 11_000_000, status = TripStatus.INTERRUPTED))
+
+        val trend = patternTrend(drives(4, 4, 4, 1, 1, 1) + short + interrupted, DrivingPattern.HARD_STOP)
+
+        assertEquals(4.0, trend.previous!!, 0.001)
+        assertEquals(1.0, trend.recent!!, 0.001)
+    }
+
+    @Test fun `with three trips or fewer there is nothing earlier to compare`() {
+        val trend = patternTrend(drives(3, 2, 1), DrivingPattern.HARD_STOP)
+
+        assertNull(trend.previous)
+        assertEquals(2.0, trend.recent!!, 0.001)
+        assertNull(trend.changePercent)
+    }
+
+    @Test fun `no percent when the earlier trips saw none of the pattern`() {
+        val trend = patternTrend(drives(0, 0, 0, 1, 0, 0), DrivingPattern.HARD_STOP)
+
+        assertEquals(0.0, trend.previous!!, 0.001)
+        assertNull(trend.changePercent)
+    }
+
+    @Test fun `the home advice compares the same numbers as the profile trend`() {
+        val trips = drives(9, 6, 6, 5, 3, 2, 1)
+
+        val advice = adviceFor(PersonId("driver"), trips)
+        val trend = patternTrend(trips, DrivingPattern.HARD_STOP)
+
+        assertEquals(DrivingPattern.HARD_STOP, advice.pattern)
+        assertEquals(trend.previous, advice.previousAverage)
+        assertEquals(trend.recent, advice.recentAverage)
+    }
+
+    private fun drives(vararg hardStops: Int) = hardStops.mapIndexed { index, count ->
+        insight(
+            snapshot("t$index", 600_000, validTenMinuteSamples(),
+                List(count) { observation(DrivingPattern.HARD_STOP, it * 10_000L) }, startedAt = index * 1_000_000L),
+            TripParticipants(TripId("t$index"), PersonId("driver"), emptySet(), 0),
+        )
+    }
+
     private fun validTenMinuteSamples() = (0L..600_000L step 5_000L).map {
         SpeedSample(it, 5.0, Quality.VALID)
     }
@@ -87,8 +143,10 @@ class HistoryInsightsTest {
         durationMs: Long,
         samples: List<SpeedSample>,
         observations: List<Observation> = emptyList(),
+        startedAt: Long = 1_000,
+        status: TripStatus = TripStatus.COMPLETED,
     ) = TripSnapshot(
-        TripRecord(TripId(id), 1_000, 1_000 + durationMs, TripStatus.COMPLETED, origin = DataOrigin.VEHICLE),
+        TripRecord(TripId(id), startedAt, startedAt + durationMs, status, origin = DataOrigin.VEHICLE),
         samples,
         observations,
     )

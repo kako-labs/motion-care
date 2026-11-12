@@ -48,6 +48,24 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 - **경로 안내 화면:** 에뮬레이터 내비에 지도와 경로가 표시되지 않아, 회전 안내를 가리는지는 확인하지 못했습니다.
 - **내비 앱 내부 표시:** NaviHelper 문서의 API는 경로 요청, 경유지 추가, 내비 화면 호출, 이벤트 수신이며, 내비 화면 안에 문구를 넣는 기능은 찾지 못했습니다.
 
+### 앱 아이콘과 카드 아이콘
+
+2026-11-12에 시험 앱(저장소에 넣지 않음)으로 같은 `CATEGORY_MESSAGE` 카드의 아이콘과 모양을 바꾸는 API를 하나씩 넣어 보고, 하단 바와 앱 목록이 앱 아이콘을 어떻게 그리는지 확인했습니다. 카드 시험은 P 기어, 내비 앞입니다. 마지막 세 줄은 이 결과로 만든 실제 앱입니다. 아이콘을 고른 근거는 [화면 디자인](../design.md#앱-아이콘과-카드-아이콘)에 있습니다.
+
+| 시험 | 결과 | 증거 |
+| --- | --- | --- |
+| 카드 왼쪽 아이콘 | 알림의 작은 아이콘(`setSmallIcon`)이 보임. 큰 아이콘(`setLargeIcon`)을 넣으면 그것이 대신 보임. 앱 아이콘(Manifest `android:icon`)과는 따로 정해짐 | [122_card_icon_options](shots/122_card_icon_options.jpg), [123_launcher_vs_card_icon](shots/123_launcher_vs_card_icon.jpg) |
+| 카드 아이콘 그리기 | 틀을 씌우지 않고 받은 그림을 색 그대로 그림. 각진 사각형은 각진 채, 투명한 모서리는 카드의 흰 바탕으로 보임. 크기 약 77px. 오른쪽 아래에 파란 말풍선 배지를 얹음 | 같음 |
+| 카드 모양 바꾸기 | `setColor`, `setColorized`, `MessagingStyle`의 보낸 사람 아이콘, 사용자 지정 뷰(`DecoratedCustomViewStyle`와 뷰만) 모두 카드가 바뀌지 않음. 사용자 지정 뷰의 배경색과 글자도 보이지 않음 | [122_card_icon_options](shots/122_card_icon_options.jpg) |
+| 야간 모드 | `cmd uimode night yes`에서 상태 표시줄만 어두워지고 카드는 흰색. 시험 뒤 `no`로 되돌림 | 같음 |
+| 하단 바·앱 목록 | 적응형 아이콘은 108dp 중 가운데 72dp를 둥근 사각형(모서리 반경 약 20%)으로 잘라 보여 줌. 하단 바 아이콘 76px. 적응형이 아닌 아이콘(이전 앱 아이콘)은 각진 사각형 그대로 | [123_launcher_vs_card_icon](shots/123_launcher_vs_card_icon.jpg), [125_app_icon_dock_library](shots/125_app_icon_dock_library.jpg) |
+| 실제 앱의 카드 | `film_takes.py pattern`으로 정지 직전 감속 카드를 띄움. 카드 아이콘의 둥근 모서리 밖 화소가 카드 바탕과 같은 흰색 | [124_app_icon_card](shots/124_app_icon_card.jpg) |
+| 앱 업데이트 직후 | 앱 목록은 바로 새 아이콘. 하단 바는 앱을 강제 종료하고 다시 열어도 옛 아이콘을 보여 줌 | [125_app_icon_dock_library](shots/125_app_icon_dock_library.jpg) |
+| 에뮬레이터 재시작 뒤 | 하단 바도 새 아이콘 | 같음 |
+
+- **하단 바 갱신:** 하단 바는 시스템 UI(`com.android.systemui`, user 10)가 그립니다. `user` 빌드라 셸에서 앱 컴포넌트를 껐다 켤 수 없어(`SecurityException`) 재시작 말고 다른 갱신 방법은 시험하지 못했습니다. 촬영 전에 아이콘을 바꿨다면 에뮬레이터를 다시 시작합니다.
+- **기아 틀:** 가이드 그림의 기아 틀(왼쪽 위·오른쪽 아래를 자른 모양)은 에뮬레이터에 없어 확인하지 못했습니다.
+
 ### 앱의 차량 속도 기록
 
 시험 앱이 아니라 실제 앱을 설치해 시험했습니다. 주차 중 기록을 시작하고, 내비를 앞으로 띄운 뒤 91초 동안 최고 60km/h로 가감속했습니다. 주차 후 기록을 끝낸 총 길이는 약 114초입니다.
@@ -265,6 +283,26 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 
 로그 시각은 에뮬레이터 시계 기준입니다. 포그라운드 서비스는 adb 명령으로 시작했으므로 앱 버튼에서 시작하는 경로는 구현할 때 확인해야 합니다.
 
+### 운행 자동 기록
+
+2026-11-10에 "운행 자동 기록" 스위치와 기어 시작·종료를 `auto_record_e2e.py`로 두 번 확인했습니다. 첫 번째는 대기 60초이고 끝 시각 처리 전 APK, 두 번째는 대기 30분이고 최종 APK입니다. 규칙과 근거는 [운행 자동 기록](../auto-record.md)에 있습니다.
+
+| 항목 | 결과 | 증거 |
+| --- | --- | --- |
+| 꺼져 있을 때 | 머리말 "자동 기록 꺼짐", 하단 탭 넷, 서비스 없음. `CAR_POWERTRAIN`은 설치 때 허용 | [113_auto_record_off](shots/113_auto_record_off.jpg) |
+| 켜기 | 속도·위치·알림 요청 창 3개를 허용하면 스위치가 켜지고 서비스가 포그라운드로 시작. 알림 "운행 자동 기록 켜짐" | [114_auto_record_on](shots/114_auto_record_on.jpg) |
+| 대기 | 내비를 앞에 두고 P에서 60초와 1804초 동안 서비스 유지 | [auto_record_e2e](logs/auto_record_e2e.log) |
+| 시작 | D로 바꾸고 두 번 모두 1.1초 뒤 "운행 기록 중" | |
+| 끝 | P로 바꾸고 약 186초 뒤 주행 완료. 처리 후에는 끝 시각이 P로 바꾼 때라 약 37초 주행이 37.6초·샘플 240건으로 저장(처리 전 222초·1411건). 홈에 종료 카드, 최근 기록에 "1분 미만" | [115_auto_record_finished](shots/115_auto_record_finished.jpg) |
+| 재부팅 | 다섯 번 중 네 번은 부팅 완료 뒤 12~19초에 서비스가 켜짐. 한 번은 `BootReceiver`용 프로세스가 10초 안에 붙지 못해 시스템이 종료(`am_kill ... start timeout`)하고 방송을 다시 보내지 않음 | [auto_record_e2e](logs/auto_record_e2e.log) |
+| 앱 업데이트 | 다시 설치하고 약 2초 뒤 `MY_PACKAGE_REPLACED`로 서비스가 켜짐. 시스템 기록은 "Background started FGS: Allowed ... PACKAGE_REPLACED" | |
+| 백그라운드 시작과 위치 | 시스템이 "Foreground service started from background can not have location ... access"를 남기지만, 부팅으로 켜진 서비스의 주행에서 대기질 이유는 위치를 받은 뒤의 "네트워크"였음(에뮬레이터 인터넷 없음) | |
+| 끄기 | 스위치를 끄면 서비스와 알림이 사라짐 | |
+| 다른 시험 | `speed_permission_e2e.py` 12개, `driving_screen_e2e.py` 5개, `car_service_restart_e2e.py` 7개 통과. `recording_e2e.py`는 거부·허용·주행·카드·패턴·종료까지 진행 | |
+
+- **처음 캡처의 "권한 없음":** 권한을 허용하고 약 4초 뒤 찍은 [114](shots/114_auto_record_on.jpg)의 외부 대기질은 허용 전 값입니다. 위치와 대기질을 다시 읽는 데 몇 초 걸리고, 끝난 뒤 화면([115](shots/115_auto_record_finished.jpg))은 "네트워크 연결 필요"입니다.
+- **재부팅 시간:** 이 에뮬레이터는 `adb reboot` 뒤 약 20초 만에 다시 켜졌습니다. 실차의 부팅 부하와 시동 순서는 다릅니다.
+
 ### 차량 신호
 
 - **속도:** Vehicle SDK 2.3.2에는 속도 API가 없습니다. `CarPropertyManager`의 `PERF_VEHICLE_SPEED`는 `android.car.permission.CAR_SPEED` 권한으로 읽힙니다.
@@ -332,8 +370,12 @@ UxR 80은 `NO_SETUP`과 `NO_VIDEO`입니다. DO는 Distraction Optimized이며, 
 | [tools/car_service_restart_e2e.py](tools/car_service_restart_e2e.py) | 기록 중 차량 서비스 재시작 자동 시험. 앱 프로세스 유지, 속도 재구독, 주행 종료, 재시작 뒤 바깥 온도 확인. `--apk`로 다른 빌드 지정. 약 3분 |
 | [tools/restart_location_voice_e2e.py](tools/restart_location_voice_e2e.py) | 차량 서비스 재시작 뒤 위치와 음성 자동 시험. 재시작 직후 위치를 옮겨 종료 때 대기질 좌표를 보고, 패턴 카드의 음성 재생을 확인. 에뮬레이터 인터넷 필요, 소리를 켠 에뮬레이터 권장. 약 3분 |
 | [tools/notification_off_e2e.py](tools/notification_off_e2e.py) | 알림 꺼짐 안내 자동 시험. "알림 켜기"로 요청 창 거부, "다시 묻지 않음", 설정 화면 열기와 켜기를 차례로 확인. 약 1분 |
-| [tools/driving_screen_e2e.py](tools/driving_screen_e2e.py) | 주행 중 앱 화면 자동 시험. 주차 중 기록 시작, 앱을 앞에 둔 채 40km/h 주행에서 시스템 차단 화면 없이 앱이 보이고 기록이 계속되는지, 주차 후 종료까지 확인. 주행 제한값도 출력. 약 1분 |
-| [tools/speed_permission_e2e.py](tools/speed_permission_e2e.py) | 속도 권한 거부 안내 자동 시험. 요청 창 거부, "다시 묻지 않음", "설정 열기"로 Car Settings에서 위치 허용, 돌아와 기록 시작까지 확인. 약 1분 30초 |
+| [tools/driving_screen_e2e.py](tools/driving_screen_e2e.py) | 주행 중 앱 화면 자동 시험. 주차 중 운행 자동 기록을 켜고, 앱을 앞에 둔 채 40km/h 주행에서 시스템 차단 화면 없이 앱이 보이고 기록이 계속되는지, 주차 후 종료까지 확인. 주행 제한값도 출력. 약 1분 |
+| [tools/speed_permission_e2e.py](tools/speed_permission_e2e.py) | 속도 권한 거부 안내 자동 시험. "운행 자동 기록" 스위치로 요청 창 거부, "다시 묻지 않음", "설정 열기"로 Car Settings에서 위치 허용, 돌아와 스위치를 켜고 D로 기록 시작까지 확인. 약 1분 30초 |
+| [tools/demo_data.py](tools/demo_data.py) | 영상 촬영용 데이터 준비. 앱 데이터를 지우고 가상 차량으로 일곱 번 주행해 앱이 직접 기록하게 함(민준 운전 1번: 빠른 회전 2번, 지영 운전 6번: 거친 주행 3번 뒤 정차 직전 큰 감속을 3·2·1번으로 줄인 주행 3번. 가상 콘솔 응답이 늦으면 감속이 한꺼번에 일어나 한 번 더 잡힐 수 있음. 11/11 실행 결과는 3·2·2번). 에뮬레이터 키보드로 한글을 칠 수 없어 사람 넷·좌석·동승자 평가만 프로필 DB에 넣고, 마지막 운행의 평가는 촬영 중 입력하도록 비워 둠. 약 25분 |
+| [tools/demo_history.py](tools/demo_history.py) | 영상 촬영용 3주치 운행 기록. 도로·운전자 모형으로 만든 속도·조향을 앱 DB 형식 그대로 넣음(10/21~11/11, 20건, 11~73분: 등원·학원·출퇴근·마트·고속도로 나들이·산길). 관찰 패턴과 주행 중 안내는 앱 규칙(PatternDetector·LateralDetector·GuidancePolicy·EnvironmentAdvisor)을 옮긴 코드로 계산하고, `--check`로 앱이 직접 기록한 운행과 결과가 같은지 확인함(11/11 앱 기록 7건: 패턴 60개·안내 22개 일치). 바깥 기온과 대기질은 그 시각 서울의 Open-Meteo 값, 실내 온도·공조·동승자 평가는 생성값. 사람·좌석·설정은 그대로 두므로 `demo_data.py`를 먼저 한 번 실행. 약 1분 |
+| [tools/film_takes.py](tools/film_takes.py) | 영상 촬영 테이크를 매번 같은 주행으로 재현. `check`(촬영 전 상태), `pattern`(내기 순환을 켜고 앱을 다시 띄운 뒤 기어 D, 내비, 40km/h에서 약 2.9m/s²로 세 번 정차 → 내비 위 "정지 지점보다 조금 일찍 감속해보세요"), `air`(외기 유입·바깥 대기질 나쁨 이상 → 출발 직후 "외기 유입을 줄이고 공기청정 기능을 확인해보세요"), `restore`(demo_history.py로 영상용 기록 복원). 단계마다 Enter를 기다리고 `--no-wait`로 이어 실행. 11/12 실행: pattern 정차 직전 큰 감속 3회만 관찰되고 카드 표시, air 출발 4초 뒤 카드 표시. 내기 순환을 바꾼 뒤 앱을 다시 띄우지 않으면 앱이 이전 공조 값으로 공기 카드를 먼저 띄워 15분 간격 때문에 패턴 카드가 생략됨 |
+| [tools/auto_record_e2e.py](tools/auto_record_e2e.py) | 운행 자동 기록 자동 시험. 스위치 켜기, 내비 뒤 대기(`IDLE_SECONDS`, 기본 600), D로 시작, P 3분으로 종료, 재부팅과 앱 업데이트 뒤 서비스 재시작, 끄기까지 확인. 에뮬레이터를 다시 부팅함. 대기 10분이면 약 20분 |
 
 저장소에 넣지 않은 것:
 

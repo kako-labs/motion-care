@@ -60,7 +60,9 @@ python3 scripts/dev.py verify --clean-home
 
 각 모듈 build/reports/tests, build/test-results, build/reports/lint-results-debug.html에 결과가 생깁니다. UI는 app/build/reports/androidTests 아래에 있습니다.
 
-.github/workflows/android.yml은 Ubuntu 24.04에서 같은 스크립트로 host/UI 검사를 실행하고 결과를 artifact로 보존합니다. PR과 `main` push에서 실행하며, `.md`와 `docs/`만 바뀌면 건너뜁니다. 같은 PR에 새로 push하면 이전 실행은 취소됩니다. 최근 실행 결과는 [GitHub Actions](https://github.com/kako-labs/motion-care/actions)에서 확인합니다.
+**CI는 2026-11-12부터 꺼 두었습니다.** 계정의 GitHub Actions 사용 한도를 90% 썼다는 알림을 받았기 때문입니다. 워크플로는 PR마다, `main` push마다 `verify`(5~9분)와 `ui`(약 13분)를 캐시 없이 새로 돌려, PR 하나에 약 40분이 들었습니다. 두 작업은 로컬의 `python3 scripts/dev.py verify`, `python3 scripts/dev.py ui`와 같은 명령이므로 병합 전에 로컬에서 돌리고 결과를 PR 본문에 적습니다. 워크플로 파일은 남겨 두었고 `gh workflow enable "Android scaffold"`로 다시 켭니다.
+
+.github/workflows/android.yml은 Ubuntu 24.04에서 같은 스크립트로 host/UI 검사를 실행하고 결과를 artifact로 보존합니다. 켜 두면 PR과 `main` push에서 실행하며, `.md`와 `docs/`만 바뀌면 건너뜁니다. 같은 PR에 새로 push하면 이전 실행은 취소됩니다. 지난 실행 결과는 [GitHub Actions](https://github.com/kako-labs/motion-care/actions)에서 확인합니다.
 
 SDK 설치 action에는 `packages: platform-tools`를 명시합니다. 기본값에 포함된 구형 `tools` 패키지는 현재 SDK 저장소에서 찾을 수 없어 설치가 실패합니다. API·Build Tools·Emulator는 이후 `scripts/dev.py setup-sdk`가 프로젝트 설정에 맞춰 설치합니다.
 
@@ -73,4 +75,4 @@ SDK 설치 action에는 `packages: platform-tools`를 명시합니다. 기본값
 - dependency lock 오류: 임의로 lockfile을 삭제하지 않고 버전 변경 여부를 확인합니다. 변경 작업일 때만 --write-locks 사용.
 - 사내 프록시: 조직의 정상 프록시 설정 사용. 개인 토큰·프록시 비밀번호를 저장소에 넣지 않습니다.
 
-실차 SDK·차량 표시면·자동 시동·권한의 검증은 별도이며 일반 Android UI 테스트로 대체하지 않습니다. Pleos 에뮬레이터 설치와 측정 방법은 [측정 기록](pleos-emulator/README.md)을 따릅니다. 차량 속도 기록은 CI에서 돌지 않으므로, 입력·서비스·권한·탐지를 바꾸면 켜 둔 Pleos 에뮬레이터에서 `python3 docs/pleos-emulator/tools/recording_e2e.py`를 실행합니다. 안내 소리를 바꾸면 [측정 기록](pleos-emulator/README.md#소리-측정)의 `sound_e2e.py`도 실행합니다. 이 도구는 앱을 설치하고 차량 신호를 바꾸므로, 다른 작업이 쓰는 기기를 고르지 않도록 `ANDROID_SERIAL`로 기기를 지정합니다. 탐지 값을 바꾸면 [탐지 기준의 근거](detection-thresholds.md)의 방법으로, 안내 규칙을 바꾸면 [안내 카드의 근거](guidance-card.md)의 방법으로 다시 측정합니다.
+실차 SDK·차량 표시면·자동 시동·권한의 검증은 별도이며 일반 Android UI 테스트로 대체하지 않습니다. Pleos 에뮬레이터 설치와 측정 방법은 [측정 기록](pleos-emulator/README.md)을 따릅니다. 차량 속도 기록은 CI에서 돌지 않으므로, 입력·서비스·권한·탐지를 바꾸면 켜 둔 Pleos 에뮬레이터에서 `python3 docs/pleos-emulator/tools/recording_e2e.py`를 실행합니다. 안내 소리를 바꾸면 [측정 기록](pleos-emulator/README.md#소리-측정)의 `sound_e2e.py`도 실행합니다. 운행 자동 기록·서비스 수명·부팅 수신기를 바꾸면 `auto_record_e2e.py`를 실행합니다. 이 도구는 에뮬레이터를 다시 부팅합니다. 이 도구는 앱을 설치하고 차량 신호를 바꾸므로, 다른 작업이 쓰는 기기를 고르지 않도록 `ANDROID_SERIAL`로 기기를 지정합니다. 탐지 값을 바꾸면 [탐지 기준의 근거](detection-thresholds.md)의 방법으로, 안내 규칙을 바꾸면 [안내 카드의 근거](guidance-card.md)의 방법으로 다시 측정합니다.

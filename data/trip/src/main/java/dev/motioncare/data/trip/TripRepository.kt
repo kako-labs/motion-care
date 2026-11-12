@@ -45,9 +45,26 @@ fun interface GuidanceAudio {
     fun play(message: String)
 }
 
+/** Whether trips start and finish by themselves with the gear. Off until the driver turns it on. */
+interface AutoRecordSettings {
+    val enabled: StateFlow<Boolean>
+    fun setEnabled(enabled: Boolean)
+}
+
+/** Starts and finishes trips with the gear. Used by the recording service in app. */
+fun interface DriveWatcher {
+    /**
+     * Follows the gear until the collector stops: a trip starts when the car leaves park and finishes after three
+     * minutes in park. Emits each trip it starts so the caller can record it.
+     */
+    fun startedTrips(): Flow<TripId>
+}
+
 class VehicleTripData(
     val trips: TripRepository,
     val recorder: VehicleRecorder,
     val guidance: GuidanceSettings,
     val audio: GuidanceAudio,
+    val autoRecord: AutoRecordSettings,
+    val drives: DriveWatcher,
 )

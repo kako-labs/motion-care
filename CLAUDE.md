@@ -28,7 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    gh pr create --base main --title "feat: 프로필 등록 화면 추가" --body-file <본문 파일>
    ```
 
-5. `gh pr checks`로 CI의 `verify`와 `ui`를 확인합니다. 문서만 바꾼 PR은 CI가 돌지 않습니다. 병합은 상대 담당이 확인하고 사용자가 요청한 뒤에 합니다. force push와 `--no-verify`는 쓰지 않습니다.
+5. 검증은 로컬에서 합니다. GitHub Actions CI는 계정의 Actions 사용 한도 때문에 2026-11-12부터 꺼 두었습니다(`docs/testing.md`의 "결과와 CI"). 병합 전에 3단계의 `verify`(필요하면 `ui`)를 통과시키고 결과를 PR 본문에 적습니다. `ui-connected`는 촬영·측정에 쓰는 Pleos 에뮬레이터에서 돌리지 않습니다. 병합은 상대 담당이 확인하고 사용자가 요청한 뒤에 합니다. force push와 `--no-verify`는 쓰지 않습니다.
 
 `core/*`, Gradle 설정, CI, 스키마, 공개 Repository를 바꾸는 PR은 다른 담당의 작업에 영향을 주므로 본문에 영향 범위를 적습니다. 담당 구분은 `docs/ownership.md`에 있습니다.
 
@@ -69,10 +69,11 @@ data:* ───────► core:model
 - **데이터 접근:** data 모듈은 Repository 인터페이스와 생성 함수만 공개하고 나머지는 `internal`입니다. 모듈마다 DB 파일과 스키마 버전을 따로 가지며, `onUpgrade`는 명시적 마이그레이션이 없으면 실패합니다. 파일이 나뉘어 있어 모듈을 넘는 트랜잭션은 쓸 수 없습니다.
 - **조립:** DI 프레임워크 없이 Application 범위의 `AppGraph`가 Repository를 만들고, `MainActivity`를 거쳐 `MainHost`로 전달합니다.
 - **화면 이동:** `MainHost`는 home 경로와 `historyGraph` 호출만 갖습니다. 기록 쪽 경로는 `feature/history/.../navigation/HistoryNavigation.kt`에 추가하며 `MainHost`를 고치지 않습니다.
-- **home 화면:** `app`의 `home` 패키지가 `Home2` 시안 배치로 조립합니다. 큰 카드에는 `DrivingViewModel` 상태에 따라 출발 조언, `ActiveContent`(feature:driving), `FinishedContent`(feature:history)가 들어가고, 아래에 사람·환경·안내·최근 기록 카드와 "운행 시작" 버튼이 있습니다. 좌석·사람·출발 조언은 feature:history의 `DepartureViewModel`에서 읽습니다. 화면에 넣는 값의 변환은 `HomeModels.kt`에 있습니다. 담당이 다른 영역이 한 화면에 모이는 지점입니다. 색·배경·유리 카드·버튼은 `core:ui`의 `MotionStyle.kt`(`MotionTheme`)를 홈과 기록 화면이 함께 씁니다.
+- **home 화면:** `app`의 `home` 패키지가 `Home2` 시안 배치로 조립합니다. 큰 카드에는 `DrivingViewModel` 상태에 따라 출발 조언, `ActiveContent`(feature:driving), `FinishedContent`(feature:history)가 들어가고, 아래에 사람·환경·설정·최근 기록 카드가 있고, 차량이 없는 기기에만 "샘플 시작" 버튼이 있습니다. 좌석·사람·출발 조언은 feature:history의 `DepartureViewModel`에서 읽습니다. 화면에 넣는 값의 변환은 `HomeModels.kt`에 있습니다. 담당이 다른 영역이 한 화면에 모이는 지점입니다. 색·배경·유리 카드·버튼은 `core:ui`의 `MotionStyle.kt`(`MotionTheme`), 글자 크기는 `MotionType.kt`(`motionType.body` 등, 숫자 sp를 직접 쓰지 않음), 아이콘은 `MotionIcons.kt`를 홈과 기록 화면이 함께 씁니다.
 - **화면 패턴:** `*Route` 컴포저블이 ViewModel을 만들고 상태를 `*Content`에 넘깁니다. 도메인 거부는 `CommandResult.Rejected`, 저장 실패는 예외로 전달되며 ViewModel이 화면 상태로 바꿉니다.
 - **주행 기록:** `TripSessionController`가 기록 중인 주행을 하나로 유지합니다. 새 프로세스에서 미완료 기록은 `INTERRUPTED`가 되고, `SqliteTripStore`는 오래된 revision의 저장을 거부합니다. `UnavailableVehicleDataSource`는 차량 입력이 없을 때 합성값으로 대체되지 않도록 예외를 던집니다.
 - **차량 기록:** `AppGraph`는 자동차 기기에서만 `createVehicleTripData`를 조립합니다. 주행이 시작되면 `TripRecordingService`가 `VehicleRecorder.record()`를 돌리고, 속도는 이벤트 시각 기준으로 약 1초마다 묶어 추가 저장합니다. 단위 테스트로 잡히지 않는 이 흐름은 `docs/pleos-emulator/tools/recording_e2e.py`로 확인합니다.
+- **운행 자동 기록:** 자동차 기기에는 시작 버튼이 없습니다. 홈 설정 카드의 스위치(`AutoRecordSettings`, 기본 꺼짐)를 켜면 `TripRecordingService`가 주행 사이에도 포그라운드로 남아 `DriveWatcher.startedTrips()`를 모읍니다. `GearDriveWatcher`가 `CarGearSource`(`GEAR_SELECTION`, `CAR_POWERTRAIN`)를 `AutoTripPolicy`에 넘겨 P에서 D·R로 바뀌면 시작하고 P에서 3분이면 끝냅니다. 부팅·앱 업데이트 뒤에는 `BootReceiver`가, 앱을 열면 `MainActivity`가 서비스를 다시 켭니다. 출발 때 좌석·환경 저장은 화면과 서비스가 같은 `TripPreparation`을 씁니다. 규칙과 측정은 `docs/auto-record.md`, 에뮬레이터 확인은 `docs/pleos-emulator/tools/auto_record_e2e.py`입니다.
 - **패턴 탐지:** `TripSessionController`가 차량 샘플을 `PatternDetector`와 `LateralDetector`에 한 건씩 넘기고, 찾은 `Observation`을 샘플과 같은 트랜잭션으로 저장합니다. 합성 샘플 주행은 탐지하지 않습니다. 기준값의 출처와 한계는 `docs/detection-thresholds.md`에 있으며 멀미 기준이 아닙니다.
 - **환경:** `data:environment`의 `EnvironmentRepository`가 바깥 온도·실내 공조(차량)와 바깥 대기질(Open-Meteo 예측)을 값마다 출처·시각·상태와 함께 냅니다. 값이 없으면 채우지 않고 이유를 남깁니다. `TripRecordingService`가 주행 시작·1시간마다·종료 때 저장하고, 그 사이 5분마다 읽어 `current`를 기록기에 넘깁니다. 일반 기기는 모두 미지원입니다. 근거와 규칙 값은 `docs/environment.md`, 에뮬레이터 확인은 `docs/pleos-emulator/tools/environment_e2e.py`입니다.
 - **주행 중 안내:** `GuidancePolicy`(data:trip)가 관찰과 샘플, `EnvironmentAdvisor`가 고른 환경 안내를 받고 `LongDriveTracker`로 쉬지 않고 달린 시간을 세어 카드의 표시·대기·생략을 정하고(패턴 우선, 15분 간격 공유), 결과 `GuidanceEvent`를 샘플과 같은 트랜잭션으로 저장합니다. 표시는 `TripRecordingService`가 넘긴 `NotificationGuidancePresenter`(feature:driving)가 맡고, 소리는 `GuidanceSoundPlayer`(data:trip)가 맡습니다. 소리 실패는 카드에 영향을 주지 않습니다. 규칙과 문구의 출처는 `docs/guidance-card.md`에 있습니다.
@@ -83,7 +84,7 @@ data:* ───────► core:model
 
 - **백그라운드:** 일반 서비스는 앱이 뒤로 가고 60초 뒤 종료됩니다. 기록은 포그라운드 서비스에서 돌립니다.
 - **주행 중 화면:** `distractionOptimized`를 선언하지 않은 Activity는 5km/h부터 시스템 화면으로 가려집니다. `MainActivity`는 시험과 시연을 위해 선언해 주행 중에도 보입니다. 선언한 앱은 주행 제한(UxR 80: 설정 화면·영상 금지)을 직접 따라야 하는데, 아직 처리하지 않았습니다.
-- **알림:** 일반 알림은 내비 위에 뜨지 않고 종 배지도 표시되지 않습니다. 메시지·내비 카테고리만 뜹니다. 주행 중 안내는 `CATEGORY_MESSAGE` 카드로 표시합니다(약 9초, 두 줄까지). App Market 심사 통과 여부는 미확인입니다. 알림 설정은 Car Settings 앱 정보의 앱 단위 스위치뿐이고 채널별 화면이 없습니다. 하단 바에 뒤로 버튼이 없어 설정 화면은 `FLAG_ACTIVITY_NEW_TASK`로 엽니다.
+- **알림:** 일반 알림은 내비 위에 뜨지 않고 종 배지도 표시되지 않습니다. 메시지·내비 카테고리만 뜹니다. 주행 중 안내는 `CATEGORY_MESSAGE` 카드로 표시합니다(약 9초, 두 줄까지). 카드 왼쪽 아이콘은 앱 아이콘이 아니라 알림의 작은 아이콘(큰 아이콘을 넣으면 그것)이며 틀 없이 그대로 그려지고, 색·사용자 지정 뷰로는 카드 모양이 바뀌지 않습니다(`docs/design.md`의 "앱 아이콘과 카드 아이콘"). App Market 심사 통과 여부는 미확인입니다. 알림 설정은 Car Settings 앱 정보의 앱 단위 스위치뿐이고 채널별 화면이 없습니다. 하단 바에 뒤로 버튼이 없어 설정 화면은 `FLAG_ACTIVITY_NEW_TASK`로 엽니다.
 - **소리:** 알림 채널의 소리는 재생 기록이 없어 앱이 직접 냅니다. TextToSpeech SDK는 온디바이스 모드만 씁니다. 등록·키가 필요 없고 인터넷 권한 없이도 재생되며(앱은 대기질 때문에 인터넷 권한을 가짐), 서버 모드용 `universal-access`는 의존성에서 뺐습니다. SDK는 오디오 포커스를 잡지 않고 다른 앱에 포커스를 뺏겨도 멈추지 않으며, 포커스만으로는 내비 음성·통화와의 겹침이 막히지 않아 앱이 처리합니다.
 - **속도:** Vehicle SDK 2.3.2에는 속도 API가 없습니다. `CarPropertyManager`의 `PERF_VEHICLE_SPEED`를 `android.car.permission.CAR_SPEED` 권한으로 읽으며 단위는 m/s입니다. 이 권한은 위치 권한 그룹에 속해 요청 창에 위치 정보로 표시됩니다. 두 번 거부한 뒤에는 Car Settings 앱 정보의 권한 > 위치에서만 다시 켤 수 있습니다. `ACTION_APPLICATION_DETAILS_SETTINGS`는 위치 항목이 없는 Pleos 차량 설정을 열어, 앱은 `ACTION_AUTO_REVOKE_PERMISSIONS`로 엽니다.
 - **차량 서비스 재시작:** `Car.createCar`를 `CarServiceLifecycleListener` 없이 부른 `Car`가 앱에 하나라도 있으면, 차량 서비스가 재시작될 때 앱 프로세스가 종료됩니다. 리스너를 넘기면 같은 `Car`가 다시 연결되지만 관리자와 콜백은 비워지므로 다시 얻고 다시 등록합니다. `CarSpeedSource`와 `CarClimateSource`가 이 방식입니다. 위치·음성 SDK는 `Car`를 쓰지 않고, 그 서비스는 차량 서비스 재시작 때 종료되지 않았습니다.

@@ -18,9 +18,13 @@ class DrivingViewModel(private val repository: TripRepository) : ViewModel() {
     init {
         viewModelScope.launch {
             repository.records.collect { records ->
-                mutableState.update { it.copy(active = records.firstOrNull { trip ->
-                    trip.status == TripStatus.RECORDING
-                }) }
+                val active = records.firstOrNull { it.status == TripStatus.RECORDING }
+                mutableState.update { state ->
+                    // Automatic recording finishes trips from the recording service, so watch for it here too.
+                    val ended = state.active?.id?.takeIf { it != active?.id }
+                        ?.takeIf { id -> records.any { it.id == id && it.status == TripStatus.COMPLETED } }
+                    state.copy(active = active, finishedId = ended ?: state.finishedId)
+                }
             }
         }
         initialize()

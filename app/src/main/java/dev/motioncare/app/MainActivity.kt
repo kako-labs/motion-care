@@ -1,11 +1,9 @@
 package dev.motioncare.app
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.core.content.ContextCompat
 import dev.motioncare.core.ui.MotionTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,11 +19,18 @@ class MainActivity : ComponentActivity() {
                     environment = graph.environment,
                     vehicleConnected = graph.vehicleConnected,
                     guidance = graph.guidance,
-                    onRecordingStarted = {
-                        ContextCompat.startForegroundService(this, Intent(this, TripRecordingService::class.java))
-                    },
+                    startRecordingService = { startRecordingService(this) },
+                    autoRecord = graph.autoRecord,
+                    preparation = graph.preparation,
                 )
             }
         }
+    }
+
+    // The service ends with its process; opening the app starts watching the gear again.
+    override fun onStart() {
+        super.onStart()
+        val graph = (application as MotionCareApplication).graph
+        if (graph.autoRecord?.enabled?.value == true && speedPermissionGranted(this)) startRecordingService(this)
     }
 }

@@ -5,6 +5,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import dev.motioncare.core.model.EnvironmentSnapshot
 import dev.motioncare.core.model.TripId
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.trip.TripRepository
@@ -19,9 +20,10 @@ internal fun TripDetailRoute(
     onBackToHome: () -> Unit,
     onFeedback: () -> Unit,
     initialEvent: Int = 0,
+    tripEnvironment: suspend (TripId) -> List<EnvironmentSnapshot> = { emptyList() },
 ) {
     val detail: TripExperienceViewModel = viewModel(factory = viewModelFactory {
-        initializer { TripExperienceViewModel(id, trips, profiles) }
+        initializer { TripExperienceViewModel(id, trips, profiles, tripEnvironment = tripEnvironment) }
     })
     val state by detail.uiState.collectAsStateWithLifecycle()
     TripDetailContent(state, onBack, onBackToHome, onFeedback, initialEvent)

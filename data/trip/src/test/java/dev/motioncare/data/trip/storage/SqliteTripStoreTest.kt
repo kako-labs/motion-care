@@ -97,6 +97,34 @@ class SqliteTripStoreTest {
         } finally { db.close(); context.deleteDatabase(name) }
     }
 
+    // Automatic recording ends a trip when the car went into park, three minutes before it notices.
+    @Test fun `finishing at a cutoff drops what was recorded after it`() = runTest {
+        val name = name()
+        val db = MotionCareDatabase(context, name)
+        try {
+            val store = SqliteTripStore(db)
+            store.saveTrip(trip())
+            store.appendSamples(
+                trip().copy(revision = 1),
+                listOf(SpeedSample(0, 1.0, Quality.VALID), SpeedSample(500, 0.0, Quality.VALID), SpeedSample(900, 0.0, Quality.VALID)),
+                listOf(Observation(DrivingPattern.HARD_STOP, 300, 500, 2.5, "test-1"), Observation(DrivingPattern.RAPID_START, 600, 700, 2.1, "test-1")),
+                listOf(SteeringSample(400, 1.0), SteeringSample(800, 2.0)),
+                listOf(GuidanceEvent(450, 400, DrivingPattern.HARD_STOP, GuidanceOutcome.SHOWN),
+                    GuidanceEvent(850, 800, DrivingPattern.HARD_STOP, GuidanceOutcome.SKIPPED_EXPIRED)),
+            )
+            val finished = trip().copy(status = TripStatus.COMPLETED, endedAtEpochMs = 1500, revision = 2)
+            store.finishAt(finished, keepUntilMs = 500)
+            val saved = store.get(trip().id)!!
+            assertEquals(finished, saved.trip)
+            assertEquals(listOf(0L, 500L), saved.samples.map { it.elapsedMs })
+            assertEquals(listOf(300L), saved.observations.map { it.startMs })
+            assertEquals(listOf(400L), saved.steering.map { it.elapsedMs })
+            assertEquals(listOf(450L), saved.guidance.map { it.elapsedMs })
+            try { store.finishAt(finished.copy(revision = 1), keepUntilMs = 0); fail("Expected stale revision rejection") }
+            catch (_: IllegalArgumentException) { }
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
     @Test fun `observations are saved with samples and read back in time order`() = runTest {
         val name = name()
         val db = MotionCareDatabase(context, name)

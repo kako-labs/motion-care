@@ -20,10 +20,10 @@ class HistoryPresentationStateTest {
     private val driver = PersonId("selected")
     private val other = PersonId("other")
     private val rider = PersonId("rider")
-    private class Trips(val snapshots: List<TripSnapshot>) : TripRepository {
+    private class Trips(val snapshots: List<TripSnapshot>, val gate: CompletableDeferred<Unit>? = null) : TripRepository {
         override val records = MutableStateFlow(snapshots.map { it.trip })
         override suspend fun initialize() = Unit
-        override suspend fun get(id: TripId) = snapshots.firstOrNull { it.trip.id == id }
+        override suspend fun get(id: TripId): TripSnapshot? { gate?.await(); return snapshots.firstOrNull { it.trip.id == id } }
         override suspend fun start(vehicleId: VehicleId?) = error("Must not start from presentation")
         override suspend fun captureSample() = error("Must not capture from presentation")
         override suspend fun finish() = error("Must not finish from presentation")
@@ -86,6 +86,22 @@ class HistoryPresentationStateTest {
         finally { empty.viewModelScope.cancel() }
     }
 
+    @Test fun peopleAndSeatsShowWhileTripsAreStillBeingRead() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        val profiles = Profiles(driver, rider, listOf(TripParticipants(TripId("mine"), driver, setOf(rider), 0)))
+        val model = DepartureViewModel(Trips(listOf(trip("mine")), gate), profiles)
+        try {
+            advanceUntilIdle()
+            assertTrue(model.uiState.value.loading)
+            assertEquals(2, model.uiState.value.people.size)
+            assertEquals(driver, model.uiState.value.seating.driverId)
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertFalse(model.uiState.value.loading)
+            assertEquals(listOf("mine"), model.uiState.value.recentTrips.map { it.trip.id.value })
+        } finally { model.viewModelScope.cancel() }
+    }
+
     @Test fun adviceDoesNotChooseAnInterruptedOrShortTripAsEvidence() = runTest(dispatcher) {
         val trips = Trips(listOf(trip("good"), trip("short", 30_000), trip("interrupted", status = TripStatus.INTERRUPTED)))
         val links = trips.records.value.map { TripParticipants(it.id, driver, setOf(rider), 0) }
@@ -110,6 +126,56 @@ class HistoryPresentationStateTest {
             assertTrue(completed)
             assertEquals(FeedbackAnswer.Rating(4, "COMFORT_5_V1"), profiles.feedback.value.single().answer)
             assertEquals(FeedbackRespondent.GUARDIAN, profiles.feedback.value.single().respondent)
+        } finally { model.viewModelScope.cancel() }
+    }
+
+    @Test fun tripDetailShowsOnlyTheValuesStoredForThatTrip() = runTest(dispatcher) {
+        val profiles = Profiles(driver, rider, emptyList())
+        val asked = mutableListOf<TripId>()
+        val model = TripExperienceViewModel(TripId("one"), Trips(listOf(trip("one"))), profiles,
+            tripEnvironment = { id -> asked += id; listOf(environment(5_000)) })
+        try {
+            advanceUntilIdle()
+            assertEquals(listOf(TripId("one")), asked)
+            assertEquals(listOf(5_000L), model.uiState.value.environment.map { it.capturedAtEpochMs })
+        } finally { model.viewModelScope.cancel() }
+    }
+
+    @Test fun unreadableTripEnvironmentShowsNothingAndKeepsTheTrip() = runTest(dispatcher) {
+        val profiles = Profiles(driver, rider, emptyList())
+        val model = TripExperienceViewModel(TripId("one"), Trips(listOf(trip("one"))), profiles,
+            tripEnvironment = { error("database closed") })
+        try {
+            advanceUntilIdle()
+            assertNull(model.uiState.value.error)
+            assertNotNull(model.uiState.value.insight)
+            assertTrue(model.uiState.value.environment.isEmpty())
+        } finally { model.viewModelScope.cancel() }
+    }
+
+    @Test fun tripDetailReadsTheChosenTripInFull() = runTest(dispatcher) {
+        val links = listOf("one", "two").map { TripParticipants(TripId(it), driver, setOf(rider), 0) }
+        val model = TripExperienceViewModel(TripId("one"), Trips(listOf(trip("one"), trip("two"))), Profiles(driver, rider, links))
+        try {
+            advanceUntilIdle()
+            val insight = model.uiState.value.insight!!
+            assertEquals(TripId("one"), insight.trip.id)
+            assertEquals(121, insight.snapshot.samples.size)
+            assertEquals(driver, insight.participants?.driverId)
+            assertEquals(2, model.uiState.value.recentDriverTrips.size)
+        } finally { model.viewModelScope.cancel() }
+    }
+
+    @Test fun adviceKeepsTheLatestTripInFullForItsSpeedChart() = runTest(dispatcher) {
+        fun at(id: String, started: Long) = trip(id).let { it.copy(trip = it.trip.copy(startedAtEpochMs = started, endedAtEpochMs = started + 120_000)) }
+        val trips = Trips(listOf(at("older", 1_000), at("latest", 500_000)))
+        val links = trips.records.value.map { TripParticipants(it.id, driver, setOf(rider), 0) }
+        val model = AdviceViewModel(driver, trips, Profiles(driver, rider, links))
+        try {
+            advanceUntilIdle()
+            val byId = model.uiState.value.driverTrips.associateBy { it.trip.id.value }
+            assertEquals(121, byId.getValue("latest").snapshot.samples.size)
+            assertTrue(byId.getValue("older").snapshot.samples.isEmpty())
         } finally { model.viewModelScope.cancel() }
     }
 

@@ -1,9 +1,14 @@
 package dev.motioncare.feature.history.insights
 
+import androidx.compose.ui.graphics.vector.ImageVector
 import dev.motioncare.core.model.*
+import dev.motioncare.core.ui.MotionIcons
 import dev.motioncare.data.profile.ProfileRepository
 import dev.motioncare.data.trip.TripRepository
+import java.util.WeakHashMap
 import kotlin.math.roundToInt
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 private const val MAX_CONTIGUOUS_GAP_MS = 5_000L
 private const val MIN_RATE_DURATION_MS = 60_000L
@@ -44,11 +49,40 @@ data class AdviceInsight(
     }
 }
 
-suspend fun loadInsights(trips: TripRepository, profiles: ProfileRepository): List<TripInsight> {
-    val assignments = profiles.participants.value.associateBy { it.tripId }
-    return trips.records.value.mapNotNull { record -> trips.get(record.id)?.let { insight(it, assignments[record.id]) } }
-        .sortedByDescending { it.trip.startedAtEpochMs }
+/**
+ * A finished trip never changes, so its numbers are worked out once per repository and kept without the speed and
+ * steering samples. Reading every sample of every trip again on each screen made opening a trip take seconds once a
+ * few weeks of real-length trips were stored. A trip still recording, or one whose revision moved, is read again.
+ */
+private class InsightCache {
+    val lock = Mutex()
+    val trips = HashMap<TripId, TripInsight>()
 }
+
+private val caches = WeakHashMap<TripRepository, InsightCache>()
+
+/** Every stored trip, newest first, without samples; use [fullInsight] for a trip whose speed is drawn. */
+suspend fun loadInsights(trips: TripRepository, profiles: ProfileRepository): List<TripInsight> {
+    val cache = synchronized(caches) { caches.getOrPut(trips) { InsightCache() } }
+    val assignments = profiles.participants.value.associateBy { it.tripId }
+    val records = trips.records.value
+    // One load at a time, so screens opening together read each trip once between them.
+    val loaded = cache.lock.withLock {
+        cache.trips.keys.retainAll(records.mapTo(HashSet()) { it.id })
+        records.mapNotNull { record ->
+            cache.trips[record.id]?.takeIf { it.trip.revision == record.revision }
+                ?: trips.get(record.id)?.let { insight(it).withoutSamples() }
+                    ?.also { if (it.trip.status != TripStatus.RECORDING) cache.trips[record.id] = it }
+        }
+    }
+    return loaded.map { it.copy(participants = assignments[it.trip.id]) }.sortedByDescending { it.trip.startedAtEpochMs }
+}
+
+private fun TripInsight.withoutSamples() = copy(snapshot = snapshot.copy(samples = emptyList(), steering = emptyList()))
+
+/** One trip with every speed and steering sample, for the screens that draw its speed. */
+suspend fun fullInsight(trips: TripRepository, id: TripId, participants: TripParticipants?): TripInsight? =
+    trips.get(id)?.let { insight(it, participants) }
 
 fun insight(snapshot: TripSnapshot, participants: TripParticipants? = null): TripInsight {
     val validSegments = snapshot.samples.zipWithNext().filter { (left, right) ->
@@ -76,12 +110,13 @@ fun adviceFor(driverId: PersonId?, all: List<TripInsight>): AdviceInsight {
     if (history.isEmpty()) return AdviceInsight(AdviceState.FIRST_TRIP, null, "출발과 감속을 여유 있게 해보세요.", null, null, null, emptyList(), null, null)
     val usable = history.filter { it.ratesPerTenMinutes.isNotEmpty() }
     if (usable.isEmpty()) return AdviceInsight(AdviceState.INSUFFICIENT, null, "분석할 기록이 부족해요.", null, null, null, emptyList(), null, null)
-    val recent = usable.takeLast(3)
+    val recent = usable.takeLast(TREND_TRIPS)
     val chosen = DrivingPattern.entries.maxByOrNull { pattern -> recent.mapNotNull { it.rate(pattern) }.averageOrZero() }
-    val rates = chosen?.let { pattern -> usable.takeLast(6).mapNotNull { it.rate(pattern) } }.orEmpty()
+    val rates = chosen?.let { pattern -> usable.takeLast(TREND_TRIPS * 2).mapNotNull { it.rate(pattern) } }.orEmpty()
     val latest = usable.last()
-    val previous = rates.dropLast(3).takeLast(3).takeIf { it.isNotEmpty() }?.average()
-    val recentAverage = rates.takeLast(3).takeIf { it.isNotEmpty() }?.average()
+    val trend = chosen?.let { patternTrend(usable, it) }
+    val previous = trend?.previous
+    val recentAverage = trend?.recent
     val state = if (usable.size == 1) AdviceState.INITIAL else AdviceState.READY
     val context = when {
         state == AdviceState.INITIAL -> "이번 운행에서 관찰됐어요."
@@ -90,6 +125,35 @@ fun adviceFor(driverId: PersonId?, all: List<TripInsight>): AdviceInsight {
     }
     return AdviceInsight(state, chosen, actionFor(chosen), context, chosen?.let(latest::count),
         (latest.analyzedDurationMs / 60_000.0).roundToInt(), rates, previous, recentAverage)
+}
+
+/** How many of a driver's latest analysed trips make "최근", and as many before them make "이전" (docs/history-analysis.md). */
+private const val TREND_TRIPS = 3
+
+/** One pattern's rate per ten minutes on the latest trips and on as many before them, each list oldest first. */
+data class PatternTrend(val previousRates: List<Double>, val recentRates: List<Double>) {
+    val previous: Double? get() = previousRates.takeIf { it.isNotEmpty() }?.average()
+    val recent: Double? get() = recentRates.takeIf { it.isNotEmpty() }?.average()
+
+    /** The change from the earlier trips in percent; null without them, or when they saw none of the pattern. */
+    val changePercent: Int?
+        get() {
+            val before = previous ?: return null
+            val now = recent ?: return null
+            return if (before == 0.0) null else ((now - before) / before * 100).roundToInt()
+        }
+}
+
+/**
+ * Compares completed trips long enough to analyse, oldest first, the way the home advice does, so the home and the
+ * profile show the same recent number for a pattern.
+ */
+fun patternTrend(trips: List<TripInsight>, pattern: DrivingPattern): PatternTrend {
+    val rates = trips.filter { it.trip.status == TripStatus.COMPLETED && it.ratesPerTenMinutes.isNotEmpty() }
+        .sortedBy { it.trip.startedAtEpochMs }
+        .takeLast(TREND_TRIPS * 2)
+        .mapNotNull { it.rate(pattern) }
+    return PatternTrend(previousRates = rates.dropLast(TREND_TRIPS).takeLast(TREND_TRIPS), recentRates = rates.takeLast(TREND_TRIPS))
 }
 
 fun actionFor(pattern: DrivingPattern?): String = when (pattern) {
@@ -101,18 +165,19 @@ fun actionFor(pattern: DrivingPattern?): String = when (pattern) {
     null -> "출발과 감속을 여유 있게 해보세요."
 }
 
-/** One glyph per pattern so tiles read at a glance. */
-fun patternIcon(pattern: DrivingPattern): String = when (pattern) {
-    DrivingPattern.RAPID_START -> "⇡"
-    DrivingPattern.HARD_STOP -> "⇣"
-    DrivingPattern.REPEATED_SPEED_CHANGE -> "∿"
-    DrivingPattern.FAST_TURN -> "↻"
-    DrivingPattern.REPEATED_SWAY -> "⇄"
+/** One icon per pattern so tiles read at a glance, from the shared icon set. */
+fun patternIcon(pattern: DrivingPattern): ImageVector = when (pattern) {
+    DrivingPattern.RAPID_START -> MotionIcons.RapidStart
+    DrivingPattern.HARD_STOP -> MotionIcons.HardStop
+    DrivingPattern.REPEATED_SPEED_CHANGE -> MotionIcons.SpeedChange
+    DrivingPattern.FAST_TURN -> MotionIcons.FastTurn
+    DrivingPattern.REPEATED_SWAY -> MotionIcons.Sway
 }
 
+/** The one name of each pattern on every screen, the same as in docs/detection-thresholds.md. */
 fun patternLabel(pattern: DrivingPattern): String = when (pattern) {
-    DrivingPattern.HARD_STOP -> "정차 직전 속도 변화"
-    DrivingPattern.RAPID_START -> "출발 직후 속도 증가"
+    DrivingPattern.HARD_STOP -> "정차 직전 큰 감속"
+    DrivingPattern.RAPID_START -> "빠른 출발"
     DrivingPattern.REPEATED_SPEED_CHANGE -> "반복 가감속"
     DrivingPattern.FAST_TURN -> "빠른 회전"
     DrivingPattern.REPEATED_SWAY -> "반복 좌우 움직임"
