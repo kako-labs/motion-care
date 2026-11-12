@@ -25,6 +25,11 @@ class GuidanceCopyTest {
         assertEquals(copies.size, copies.toSet().size)
     }
 
+    @Test fun `every topic has its own icon`() {
+        val icons = topics.map(::guidanceIcon)
+        assertEquals(icons.size, icons.toSet().size)
+    }
+
     @Test fun `each card recommends an action for its topic`() {
         val subject = mapOf(
             GuidanceTopic.Pattern(DrivingPattern.RAPID_START) to "출발",

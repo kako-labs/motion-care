@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Large icon of a guidance card: the topic's MotionIcons shape on the app's button gradient. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+    <path android:pathData="M24,24m-23,0a23,23 0,1 1,46 0a23,23 0,1 1,-46 0" android:strokeColor="#AAE1FF" android:strokeWidth="1">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="24" android:startY="1" android:endX="24" android:endY="47"
+                android:startColor="#3FA9F2" android:endColor="#0B5FC4" />
+        </aapt:attr>
+    </path>
+    <group android:translateX="10.8" android:translateY="10.8" android:scaleX="1.1" android:scaleY="1.1">
+        <path android:pathData="M6 4l6 6 6-6M6 11l6 6 6-6M5 21h14" android:strokeColor="#FFFFFF" android:strokeWidth="2.5"
+            android:strokeLineCap="round" android:strokeLineJoin="round" />
+    </group>
+</vector>

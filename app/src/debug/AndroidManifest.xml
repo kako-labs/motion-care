@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <!-- Debug builds only: shows one guidance card from adb to check how the system draws it. -->
+        <receiver android:name=".app.GuidancePreviewReceiver" android:exported="true" tools:ignore="ExportedReceiver" />
+    </application>
+</manifest>

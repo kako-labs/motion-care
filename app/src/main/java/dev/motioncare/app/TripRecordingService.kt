@@ -131,7 +131,7 @@ class TripRecordingService : Service() {
                     watchEnvironment(environment, tripId)
                 }
                 recorder.record(
-                    NotificationGuidancePresenter(this@TripRecordingService, R.drawable.ic_launcher, audio),
+                    NotificationGuidancePresenter(this@TripRecordingService, R.drawable.home_logo, audio),
                     environment.current,
                 )
                 environmentJob.cancelAndJoin()
