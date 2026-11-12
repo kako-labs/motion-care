@@ -48,6 +48,24 @@ D 기어 40km/h, 내비 표시 상태에서 중요도 HIGH 채널로 보냈습�
 - **경로 안내 화면:** 에뮬레이터 내비에 지도와 경로가 표시되지 않아, 회전 안내를 가리는지는 확인하지 못했습니다.
 - **내비 앱 내부 표시:** NaviHelper 문서의 API는 경로 요청, 경유지 추가, 내비 화면 호출, 이벤트 수신이며, 내비 화면 안에 문구를 넣는 기능은 찾지 못했습니다.
 
+### 앱 아이콘과 카드 아이콘
+
+2026-11-12에 시험 앱(저장소에 넣지 않음)으로 같은 `CATEGORY_MESSAGE` 카드의 아이콘과 모양을 바꾸는 API를 하나씩 넣어 보고, 하단 바와 앱 목록이 앱 아이콘을 어떻게 그리는지 확인했습니다. 카드 시험은 P 기어, 내비 앞입니다. 마지막 세 줄은 이 결과로 만든 실제 앱입니다. 아이콘을 고른 근거는 [화면 디자인](../design.md#앱-아이콘과-카드-아이콘)에 있습니다.
+
+| 시험 | 결과 | 증거 |
+| --- | --- | --- |
+| 카드 왼쪽 아이콘 | 알림의 작은 아이콘(`setSmallIcon`)이 보임. 큰 아이콘(`setLargeIcon`)을 넣으면 그것이 대신 보임. 앱 아이콘(Manifest `android:icon`)과는 따로 정해짐 | [122_card_icon_options](shots/122_card_icon_options.jpg), [123_launcher_vs_card_icon](shots/123_launcher_vs_card_icon.jpg) |
+| 카드 아이콘 그리기 | 틀을 씌우지 않고 받은 그림을 색 그대로 그림. 각진 사각형은 각진 채, 투명한 모서리는 카드의 흰 바탕으로 보임. 크기 약 77px. 오른쪽 아래에 파란 말풍선 배지를 얹음 | 같음 |
+| 카드 모양 바꾸기 | `setColor`, `setColorized`, `MessagingStyle`의 보낸 사람 아이콘, 사용자 지정 뷰(`DecoratedCustomViewStyle`와 뷰만) 모두 카드가 바뀌지 않음. 사용자 지정 뷰의 배경색과 글자도 보이지 않음 | [122_card_icon_options](shots/122_card_icon_options.jpg) |
+| 야간 모드 | `cmd uimode night yes`에서 상태 표시줄만 어두워지고 카드는 흰색. 시험 뒤 `no`로 되돌림 | 같음 |
+| 하단 바·앱 목록 | 적응형 아이콘은 108dp 중 가운데 72dp를 둥근 사각형(모서리 반경 약 20%)으로 잘라 보여 줌. 하단 바 아이콘 76px. 적응형이 아닌 아이콘(이전 앱 아이콘)은 각진 사각형 그대로 | [123_launcher_vs_card_icon](shots/123_launcher_vs_card_icon.jpg), [125_app_icon_dock_library](shots/125_app_icon_dock_library.jpg) |
+| 실제 앱의 카드 | `film_takes.py pattern`으로 정지 직전 감속 카드를 띄움. 카드 아이콘의 둥근 모서리 밖 화소가 카드 바탕과 같은 흰색 | [124_app_icon_card](shots/124_app_icon_card.jpg) |
+| 앱 업데이트 직후 | 앱 목록은 바로 새 아이콘. 하단 바는 앱을 강제 종료하고 다시 열어도 옛 아이콘을 보여 줌 | [125_app_icon_dock_library](shots/125_app_icon_dock_library.jpg) |
+| 에뮬레이터 재시작 뒤 | 하단 바도 새 아이콘 | 같음 |
+
+- **하단 바 갱신:** 하단 바는 시스템 UI(`com.android.systemui`, user 10)가 그립니다. `user` 빌드라 셸에서 앱 컴포넌트를 껐다 켤 수 없어(`SecurityException`) 재시작 말고 다른 갱신 방법은 시험하지 못했습니다. 촬영 전에 아이콘을 바꿨다면 에뮬레이터를 다시 시작합니다.
+- **기아 틀:** 가이드 그림의 기아 틀(왼쪽 위·오른쪽 아래를 자른 모양)은 에뮬레이터에 없어 확인하지 못했습니다.
+
 ### 앱의 차량 속도 기록
 
 시험 앱이 아니라 실제 앱을 설치해 시험했습니다. 주차 중 기록을 시작하고, 내비를 앞으로 띄운 뒤 91초 동안 최고 60km/h로 가감속했습니다. 주차 후 기록을 끝낸 총 길이는 약 114초입니다.
