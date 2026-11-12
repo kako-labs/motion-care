@@ -9,7 +9,8 @@
     "still": "remotion still src/index.ts MotionCareDemo",
     "render3": "remotion render src/index.ts MotionCare3Min out/motioncare-demo-3min.mp4 --crf=18",
     "studio3": "remotion studio src/index.ts",
-    "render-story": "remotion render src/index.ts MotionCareStory out/motioncare-story.mp4 --crf=18"
+    "render-story": "remotion render src/index.ts MotionCareStory out/motioncare-story.mp4 --crf=18",
+    "render-story-tts": "remotion render src/index.ts MotionCareStoryTts out/motioncare-story-tts.mp4 --crf=18"
   },
   "dependencies": {
     "@remotion/cli": "4.0.380",

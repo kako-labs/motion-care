@@ -11,7 +11,8 @@ export const CHAPTERS = ['출발 전', '주행', '도착', '기록', '다음 출
 export const ENDING_SEC = 9;
 
 export type Rect = [number, number, number, number];
-export type Caption = {at: number; title: string; sub?: string; bell?: boolean};
+/** ttsAt: when the caption shows in the narrated version, if its line needs to start earlier than `at`. */
+export type Caption = {at: number; title: string; sub?: string; bell?: boolean; ttsAt?: number};
 export type Scene = {
   id: string;
   src: 'story' | 'history';
@@ -83,7 +84,8 @@ const SCENES: Scene[] = [
     spots: [{at: 1.5, until: cardAt - 0.5, rect: SPEED, dim: false}, {at: cardAt + 0.7, until: cardAt + 8.8, rect: CARD, dim: false}], caps: [
       {at: 0, title: '그리고 10분이 채 안 돼 세 번째 급정거가 나옵니다'},
       {at: cardAt, title: '이렇게 같은 패턴이 반복되면 내비 위에 짧은 안내 카드가 뜹니다', bell: true},
-      {at: cardAt + 9.3, title: '카드는 누르지 않아도 잠시 뒤 사라지고 운전은 그대로 이어집니다'},
+      // Narrated, the line (about 6 s) starts while the card is still up, so it ends before the scene does.
+      {at: cardAt + 9.3, ttsAt: cardAt + 6.0, title: '카드는 누르지 않아도 잠시 뒤 사라지고 운전은 그대로 이어집니다'},
     ]},
 
   // Arrival: P, the trip ends by itself three minutes later, then the passenger rating.
@@ -161,5 +163,7 @@ export const sceneAt = (sec: number) => {
   return {scene, local: sec - scene.start};
 };
 
-export const captionAt = (scene: Placed, local: number): Caption =>
-  [...scene.caps].reverse().find((c) => local >= c.at) ?? scene.caps[0];
+export const capAt = (c: Caption, narration = false) => (narration ? c.ttsAt ?? c.at : c.at);
+
+export const captionAt = (scene: Placed, local: number, narration = false): Caption =>
+  [...scene.caps].reverse().find((c) => local >= capAt(c, narration)) ?? scene.caps[0];

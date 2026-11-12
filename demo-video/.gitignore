@@ -4,3 +4,4 @@ out/
 .cache/
 public/remap/
 public/rec/
+public/tts/

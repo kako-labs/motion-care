@@ -3,7 +3,8 @@ import {AbsoluteFill, Audio, Easing, Img, OffthreadVideo, Sequence, interpolate,
 import {THEME} from '../config/theme';
 import history from '../data/history.json';
 import story from '../data/story.json';
-import {CHAPTERS, END_SEC, FPS, MAIN_END, PLACED, captionAt, sceneAt, type Placed, type Rect} from './scenes';
+import {LINES, TITLE_LINE_AT, TTS_ENDING_SEC, TTS_TITLE_SEC} from './narration';
+import {CHAPTERS, END_SEC, ENDING_SEC, FPS, MAIN_END, PLACED, capAt, captionAt, sceneAt, type Placed, type Rect} from './scenes';
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 const ease = Easing.inOut(Easing.cubic);
@@ -129,10 +130,10 @@ const SkipLabel = ({sec}: {sec: number}) => {
   );
 };
 
-const Band = ({sec}: {sec: number}) => {
+const Band = ({sec, narration}: {sec: number; narration: boolean}) => {
   const {scene, local} = sceneAt(sec);
-  const cap = captionAt(scene, local);
-  const textIn = ramp(local - cap.at, 0, 0.35);
+  const cap = captionAt(scene, local, narration);
+  const textIn = ramp(local - capAt(cap, narration), 0, 0.35);
   const top = FRAME.y + FRAME.h + 18;
   return (
     <div style={{position: 'absolute', left: FRAME.x, width: FRAME.w, top}}>
@@ -156,7 +157,7 @@ const Band = ({sec}: {sec: number}) => {
   );
 };
 
-const Main = ({sec}: {sec: number}) => (
+const Main = ({sec, narration}: {sec: number; narration: boolean}) => (
   <AbsoluteFill>
     <div style={{position: 'absolute', left: FRAME.x, top: FRAME.y, width: FRAME.w, height: FRAME.h, borderRadius: 12, overflow: 'hidden',
       background: '#000', boxShadow: '0 18px 50px rgba(0,0,0,0.5)', border: `1px solid ${THEME.panelBorder}`}}>
@@ -166,7 +167,7 @@ const Main = ({sec}: {sec: number}) => (
       <ConsoleInset />
       <SkipLabel sec={sec} />
     </div>
-    <Band sec={sec} />
+    <Band sec={sec} narration={narration} />
   </AbsoluteFill>
 );
 
@@ -208,8 +209,8 @@ const Ending = ({sec}: {sec: number}) => {
 /** A calm title before the car screen: the app's icon, name and one line. No glow, no feature montage. */
 const TITLE_SEC = 3.6;
 
-const Title = ({sec}: {sec: number}) => {
-  const app = Math.min(ramp(sec, 0.2, 0.8), 1 - ramp(sec, TITLE_SEC - 0.4, TITLE_SEC + 0.2));
+const Title = ({sec, len}: {sec: number; len: number}) => {
+  const app = Math.min(ramp(sec, 0.2, 0.8), 1 - ramp(sec, len - 0.4, len + 0.2));
   return (
     <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', textAlign: 'center'}}>
       <div style={{display: 'flex', alignItems: 'center', gap: 28, opacity: app}}>
@@ -224,13 +225,13 @@ const Title = ({sec}: {sec: number}) => {
 };
 
 /** Everything after the title, timed from its own start (scenes.ts times). */
-const Body = () => {
+const Body = ({narration}: {narration: boolean}) => {
   const sec = useCurrentFrame() / FPS;
   const mainIn = ramp(sec, 0, 0.8);
   const mainOut = 1 - ramp(sec, MAIN_END - 0.8, MAIN_END);
   return (
     <AbsoluteFill>
-      {sec < MAIN_END ? <AbsoluteFill style={{opacity: Math.min(mainIn, mainOut)}}><Main sec={sec} /></AbsoluteFill> : null}
+      {sec < MAIN_END ? <AbsoluteFill style={{opacity: Math.min(mainIn, mainOut)}}><Main sec={sec} narration={narration} /></AbsoluteFill> : null}
       {sec >= MAIN_END - 0.2 ? <Ending sec={sec - MAIN_END} /> : null}
       {PLACED.filter((p) => p.audio).map((p) => {
         const frames = Math.round(p.dur * FPS);
@@ -241,22 +242,35 @@ const Body = () => {
           </Sequence>
         );
       })}
+      {narration ? LINES.map((l) => (
+        <Sequence key={l.key} from={Math.round(l.at * FPS)} durationInFrames={Math.ceil((l.sec + 0.1) * FPS)} layout="none">
+          <Audio src={staticFile(`tts/${l.key}.mp3`)} />
+        </Sequence>
+      )) : null}
     </AbsoluteFill>
   );
 };
 
-export const Story = () => {
+/** narration: the version with the captions read aloud (narration.ts); the title and ending hold for their lines. */
+export const Story = ({narration = false}: {narration?: boolean}) => {
   const sec = useCurrentFrame() / FPS;
+  const titleSec = narration ? TTS_TITLE_SEC : TITLE_SEC;
   return (
     <AbsoluteFill style={{background: THEME.bg, fontFamily: THEME.font}}>
       <style>{fontFace}</style>
       <AbsoluteFill style={{background: 'radial-gradient(900px 600px at 20% 0%, rgba(30,90,160,0.30), transparent 70%)'}} />
-      {sec < TITLE_SEC + 0.3 ? <Title sec={sec} /> : null}
-      <Sequence from={Math.round((TITLE_SEC - 0.2) * FPS)} layout="none">
-        <Body />
+      {sec < titleSec + 0.3 ? <Title sec={sec} len={titleSec} /> : null}
+      {narration ? (
+        <Sequence from={Math.round(TITLE_LINE_AT * FPS)} durationInFrames={Math.ceil((TTS_TITLE_SEC - TITLE_LINE_AT) * FPS)} layout="none">
+          <Audio src={staticFile('tts/title.mp3')} />
+        </Sequence>
+      ) : null}
+      <Sequence from={Math.round((titleSec - 0.2) * FPS)} layout="none">
+        <Body narration={narration} />
       </Sequence>
     </AbsoluteFill>
   );
 };
 
 export const STORY_FRAMES = Math.round((TITLE_SEC - 0.2 + END_SEC) * FPS);
+export const STORY_TTS_FRAMES = Math.round((TTS_TITLE_SEC - 0.2 + END_SEC - ENDING_SEC + TTS_ENDING_SEC) * FPS);
