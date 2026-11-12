@@ -49,7 +49,7 @@ cd demo-video/tools/rec && npm install     # @grpc/grpc-js, @grpc/proto-loader, 
 
 - Pleos 화면: 에뮬레이터 gRPC `streamScreenshot`을 1920x1080으로 받아 최신 프레임을 일정한 30fps로 씁니다(`screen.js`). 화면 변화는 초당 약 19~20번입니다. `adb screenrecord`도 같은 수준이었고, 2560 원본으로 받으면 초당 11번으로 떨어졌습니다.
 - 소리: gRPC `streamAudio`(`audio.js`).
-- Virtual Console: Playwright로 연 Chrome의 CDP 스크린캐스트(1240x1080)와, 콘솔이 차에 보낸 속도·페달·조향·기어를 0.1초마다 적은 기록(`console.js`). 주행 조작도 이 페이지의 컨트롤로 합니다(`/drive?gear=&accel=&brake=&steer=`).
+- Virtual Console: Playwright로 연 Chrome의 CDP 스크린캐스트(1240x1080, 초당 최대 30장 저장. `CONSOLE_MAX_FPS`)와, 콘솔이 차에 보낸 속도·페달·조향·기어를 0.1초마다 적은 기록(`console.js`). 주행 조작도 이 페이지의 컨트롤로 합니다(`/drive?gear=&accel=&brake=&steer=`).
 
 ## 시각 맞춤
 

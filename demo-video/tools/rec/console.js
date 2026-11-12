@@ -1,5 +1,8 @@
 // Records the Virtual Console page as timestamped JPEG frames through the Chrome DevTools screencast, until SIGTERM.
 // usage: node console.js <outDir> <meta.json>   -> outDir/frames/<n>.jpg and outDir/frames.json [{file, t}]
+// CONSOLE_MAX_FPS (default 30, 0 = every frame) caps the frames kept. Chrome sends one per repaint, about 100 a second
+// on this page: a 13-minute take kept 79,662 frames (8.5 GB) for an edit that is 30 fps. CONSOLE_URL opens another
+// page instead, for trying the recorder without the car.
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
@@ -15,16 +18,32 @@ const { chromium } = require('playwright-core');
     args: ['--window-position=0,0', '--window-size=1240,1180'],
   });
   const page = await browser.newPage({ viewport: { width: 1240, height: 1080 } });
-  await page.goto('http://127.0.0.1:8796/', { waitUntil: 'networkidle' });
+  await page.goto(process.env.CONSOLE_URL || 'http://127.0.0.1:8796/', { waitUntil: 'networkidle' });
   const cdp = await page.context().newCDPSession(page);
   const frames = [];
   let n = 0;
-  cdp.on('Page.screencastFrame', async (f) => {
+  const maxFps = Number(process.env.CONSOLE_MAX_FPS ?? 30);
+  const gap = maxFps > 0 ? 1000 / maxFps : 0;
+  // The first frame in each 1/maxFps slot is kept; measuring from the last kept frame gave 22 fps for a 30 cap.
+  let lastSlot = -Infinity, pending = null, flush = null;
+  const slotOf = (t) => (gap ? Math.floor(t / gap) : t);
+  const keep = (data, t) => {
     const file = path.join(frameDir, String(n++).padStart(6, '0') + '.jpg');
-    fs.writeFileSync(file, Buffer.from(f.data, 'base64'));
-    // metadata.timestamp is seconds since epoch when Chrome painted the frame.
-    frames.push({ file, t: Math.round((f.metadata.timestamp || Date.now() / 1000) * 1000) });
+    fs.writeFileSync(file, Buffer.from(data, 'base64'));
+    frames.push({ file, t });
+    lastSlot = Math.max(lastSlot, slotOf(t));
+  };
+  const keepPending = () => { if (pending) { keep(pending.data, pending.t); pending = null; } };
+  cdp.on('Page.screencastFrame', async (f) => {
+    // Every frame is acknowledged, or Chrome stops sending.
     try { await cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }); } catch (_) {}
+    // metadata.timestamp is seconds since epoch when Chrome painted the frame.
+    const t = Math.round((f.metadata.timestamp || Date.now() / 1000) * 1000);
+    clearTimeout(flush);
+    if (!gap || slotOf(t) > lastSlot) { pending = null; keep(f.data, t); return; }
+    // A skipped frame is kept after all if nothing newer comes, so the last state before the page goes still is there.
+    pending = { data: f.data, t };
+    flush = setTimeout(keepPending, gap);
   });
   await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 82, maxWidth: 1240, maxHeight: 1080, everyNthFrame: 1 });
   const meta = { startedAtMs: Date.now() };
@@ -74,6 +93,7 @@ const { chromium } = require('playwright-core');
   const stop = async () => {
     clearInterval(sampler); server.close();
     try { await cdp.send('Page.stopScreencast'); } catch (_) {}
+    clearTimeout(flush); keepPending();
     meta.stoppedAtMs = Date.now(); meta.frames = frames.length;
     fs.writeFileSync(path.join(outDir, 'telemetry.json'), JSON.stringify(telemetry));
     fs.writeFileSync(path.join(outDir, 'frames.json'), JSON.stringify(frames));
