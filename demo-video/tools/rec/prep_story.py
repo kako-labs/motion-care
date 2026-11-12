@@ -1,6 +1,6 @@
 """Lines up the one-take story recording (story_take.py) for the Remotion edit.
 
-usage: python3 tools/rec/prep_story.py <take_dir> <emulator_minus_host_ms> [<detail_take_dir>]
+usage: python3 tools/rec/prep_story.py <take_dir> <emulator_minus_host_ms> [name=<screen-only take dir> ...]
 Time zero is the first frame of the Pleos recording (screen.json). Writes public/rec/story_pleos.mp4,
 public/rec/story_console.mp4, public/rec/story_audio.wav and src/data/story.json with marks, taps, cards, sounds
 and the console telemetry in seconds from time zero.
@@ -143,5 +143,7 @@ def prep_screen_only(take, name):
     print(name, out)
 
 
-if len(sys.argv) > 3:
-    prep_screen_only(os.path.abspath(sys.argv[3]), "detail")
+# Screen-only takes as name=dir, e.g. history=<history_take.py dir> -> public/rec/history_pleos.mp4, src/data/history.json
+for arg in sys.argv[3:]:
+    name, take = arg.split("=", 1)
+    prep_screen_only(os.path.abspath(take), name)

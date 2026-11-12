@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Audio, Easing, Img, OffthreadVideo, Sequence, interpolate, staticFile, useCurrentFrame} from 'remotion';
 import {THEME} from '../config/theme';
-import detail from '../data/detail.json';
+import history from '../data/history.json';
 import story from '../data/story.json';
 import {CHAPTERS, END_SEC, FPS, MAIN_END, PLACED, captionAt, sceneAt, type Placed, type Rect} from './scenes';
 
@@ -16,7 +16,7 @@ const K = FRAME.w / 2560;
 
 const toFrame = ([x1, y1, x2, y2]: Rect) => ({left: x1 * K, top: y1 * K, width: (x2 - x1) * K, height: (y2 - y1) * K});
 
-const SOURCES = {story: {video: 'rec/story_pleos.mp4', taps: story.taps}, detail: {video: 'rec/detail_pleos.mp4', taps: detail.taps}};
+const SOURCES = {story: {video: 'rec/story_pleos.mp4', taps: story.taps}, history: {video: 'rec/history_pleos.mp4', taps: history.taps}};
 
 /**
  * A fixed zoom for small text only: at most 1.5x, eased in and out, held in between. The area's middle moves to the
@@ -205,22 +205,18 @@ const Ending = ({sec}: {sec: number}) => {
   );
 };
 
-/** A calm title before the car screen: the problem, then the app. No glow, no feature montage. */
-const TITLE_SEC = 5;
+/** A calm title before the car screen: the app's icon, name and one line. No glow, no feature montage. */
+const TITLE_SEC = 3.6;
 
 const Title = ({sec}: {sec: number}) => {
-  const problem = Math.min(ramp(sec, 0.2, 0.8), 1 - ramp(sec, 2.2, 2.7));
-  const app = Math.min(ramp(sec, 2.7, 3.3), 1 - ramp(sec, TITLE_SEC - 0.4, TITLE_SEC + 0.2));
+  const app = Math.min(ramp(sec, 0.2, 0.8), 1 - ramp(sec, TITLE_SEC - 0.4, TITLE_SEC + 0.2));
   return (
     <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', textAlign: 'center'}}>
-      <div style={{position: 'absolute', fontSize: 52, fontWeight: 800, color: THEME.text, opacity: problem}}>
-        운전하는 사람은 괜찮은데, 뒷자리 아이는 멀미를 합니다
-      </div>
-      <div style={{position: 'absolute', display: 'flex', alignItems: 'center', gap: 28, opacity: app}}>
+      <div style={{display: 'flex', alignItems: 'center', gap: 28, opacity: app}}>
         <Img src={staticFile('story/app_icon.png')} style={{width: 132, height: 132}} />
         <div style={{textAlign: 'left'}}>
           <div style={{fontSize: 88, fontWeight: 900, color: THEME.text, letterSpacing: -1}}>모션케어</div>
-          <div style={{fontSize: 34, fontWeight: 500, color: '#c9d6e8'}}>함께 타는 사람까지 편안한 운전을 돕는 Pleos 차량용 앱</div>
+          <div style={{fontSize: 34, fontWeight: 500, color: '#c9d6e8'}}>동승자의 멀미를 줄이도록 운전 습관을 돕는 Pleos 차량용 앱</div>
         </div>
       </div>
     </AbsoluteFill>
