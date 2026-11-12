@@ -1,0 +1,59 @@
+App icon and guidance card icon, generated with Codex CLI 0.167.0 image generation on 2026-11-12.
+Each step attached the images listed and piped the text below as the prompt.
+
+Launcher icon: logo_tight_draft.jpg -> logo_tight_symbol.png
+Card icon: road_draft.jpg -> flow_draft.jpg -> flow_symbol.png
+Attached in steps 1 to 3: the home screen capture and the header logo (app/src/main/res/drawable-nodpi/home_logo.png).
+
+=== 1. road_draft.jpg (round 1) ===
+Generate an Android app launcher icon for "MotionCare" (Korean name 모션케어), an in-car app that helps families with carsickness by observing driving motion and cabin air. Tagline: "a comfortable ride for everyone on board".
+Attached: the app's home screen and its current header logo (a glass bubble around a car with a cyan light wave). Match that visual language: deep navy background (#030E1F blending to #0B447F glow), luminous cyan (#5FE0FB) and light blue (#8FDDF7) accents, glassy translucent highlights, calm premium automotive-HMI look.
+
+Hard constraints:
+- 1024x1024 square, background fills every edge (no transparent corners, no drawn rounded-square frame, no border).
+- One simple, bold symbol, centered and kept inside the central 60% circle (launchers crop icons to circles or squircles).
+- Must stay recognizable at 48x48 px: few shapes, thick strokes, strong contrast. No fine detail, no photorealism, no city skyline, no tiny reflections.
+- Keep the bottom-right quarter visually quiet (a small badge will cover it).
+- No text, letters or numbers. No real brand logos (Hyundai, Pleos, Android). No medical cross or pill.
+
+Concept: A glowing cyan road ribbon that curves gently in an S into the distance, framed inside a soft glass circle, with a small bright dot (the car) riding the curve. Calm journey.
+
+=== 2. flow_draft.jpg (round 2, road_draft attached as well) ===
+Generate an Android app launcher icon for "MotionCare" (Korean name 모션케어), an in-car app that helps families with carsickness by observing how the car moves (acceleration, braking, sway) and the cabin air. Tagline: "a comfortable ride for everyone on board".
+Attached references: the app's home screen and its header logo (a glass bubble around a car with a cyan light wave). Some concepts also attach an earlier icon draft. Match the visual language: deep navy background (#030E1F blending to a #0B447F glow), luminous cyan (#5FE0FB) and light blue (#8FDDF7) accents, glassy translucent highlights, calm premium automotive-HMI look.
+The icon should feel like gentle, smoothed-out MOTION (movement made calm), not a map, road sign or navigation app.
+
+Hard constraints:
+- 1024x1024 square, background fills every edge (no transparent corners, no drawn rounded-square frame, no border). The car launcher shows the square as is.
+- One bold symbol, centered, filling about 70-75% of the square so it reads at small size.
+- Must stay recognizable at 48x48 px: few shapes, thick strokes, strong contrast. No fine detail, no city skyline, no scenery, no tiny reflections.
+- Keep the bottom-right corner area visually quiet (a small badge will cover it).
+- No text, letters or numbers, and the shape must not read as a letter (no S, M, N, Z shapes). No real brand logos. No medical cross or pill.
+
+Concept: Turn the attached road draft into pure motion: a single luminous, liquid-like ribbon of cyan light flowing in one gentle curve (not an S), with soft speed streaks, no road surface, no lanes, no dot.
+
+=== 3. logo_tight_draft.jpg (round 3) ===
+Generate an Android app launcher icon for "MotionCare" (Korean name 모션케어), an in-car app that helps families with carsickness by observing how the car moves and the cabin air. Tagline: "a comfortable ride for everyone on board".
+Attached references: the app's header logo (a detailed, realistic glass bubble around a silver SUV on a glowing road with a cyan light wave) and the home screen (which shows a silver SUV with a cyan light ring under it). This time the icon SHOULD be detailed and premium like the header logo: realistic 3D glass sphere, realistic silver SUV, cyan light, deep navy night mood.
+
+Constraints so it still works as a small icon:
+- 1024x1024 square, background fills every edge (no transparent corners, no drawn rounded-square frame, no border).
+- The glass sphere fills about 85-90% of the square; the car is large inside it and clearly readable as a car even at 64x64 px (strong silhouette, bright highlights against a dark background).
+- Background behind the car is simple (dark blue glow, at most a faint horizon); no busy city skyline or tiny details.
+- Keep the bottom-right corner area calmer than the rest (a small badge will cover it).
+- No text, letters or numbers, no license plate text, no real brand logos or badges on the car.
+
+Concept: Recreate the header logo as faithfully as possible (rear three-quarter view of the silver SUV driving away on a glowing road, cyan light wave crossing the sphere), but framed tighter: the sphere is bigger, the car is bigger, the city skyline is removed.
+
+=== 4. *_symbol.png (symbol only, the draft of each attached) ===
+Create the FOREGROUND layer of an Android adaptive app icon for "MotionCare" (모션케어), an in-car app that helps families with carsickness by smoothing out how the car moves. The attached image is the approved draft of the full icon; reproduce its main symbol faithfully (same shapes, colors, glow and glass look) but ONLY the symbol.
+
+Strict rules:
+- 1024x1024, background must be PURE BLACK (#000000) everywhere outside the symbol: no navy, no gradient, no vignette, no stars, no floor. (The black will be removed and replaced by a separate navy background layer.)
+- The symbol is centered and fits entirely inside a centered circle whose diameter is 58% of the image width (about 594 px). Nothing may extend beyond that circle, including glow.
+- Keep the bottom-right part of the symbol calm and free of key details.
+- No text, letters or numbers, no brand logos.
+
+logo_tight_symbol.png: Symbol: the realistic glass sphere with the silver SUV seen from the rear three-quarter view, glowing taillights, a short glowing road under it and the cyan light wave crossing the sphere. Inside the sphere behind the car may be dark blue, but outside the sphere must be pure black.
+
+flow_symbol.png: Symbol: the single smooth luminous cyan ribbon (swoosh) rising from lower-left to upper-right, with the soft translucent glassy highlight along its body and the two faint thin trailing lines under its lower-left tail. Make the ribbon body thick and bright enough to read at 48 px. Keep the whole ribbon inside the circle; the lower-right area stays empty.

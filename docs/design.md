@@ -230,6 +230,43 @@ Codex CLI로 생성한 이미지입니다. 시안 안에서는 `/_blob/<ID>`로 
 - **바꾸지 말 것:** 키는 저장된 값이라 이름을 바꾸지 않습니다. 새 캐릭터는 목록 뒤에 추가합니다.
 - **화면:** [사람 추가 창](pleos-emulator/shots/120_add_person_clay.jpg), [프로필 수정 창](pleos-emulator/shots/121_profile_edit_clay.jpg)
 
+### 앱 아이콘과 카드 아이콘
+
+2026-11-12부터 앱 아이콘은 홈 머리 로고를 줄인 유리 방울 속 SUV(`logo_tight`), 주행 중 안내 카드와 운행 기록 알림의 아이콘은 빛 리본(`flow`)입니다. 이전에는 둘 다 임시 아이콘(남색 사각형에 흰 지그재그)이었습니다. 위의 `appicon.png`는 시안의 아이콘이며 앱에는 쓰지 않습니다. ([실제 카드와 하단 바](pleos-emulator/shots/124_app_icon_card.jpg), [하단 바·앱 목록](pleos-emulator/shots/125_app_icon_dock_library.jpg))
+
+**Pleos 기준과 측정**
+
+| 항목 | 내용 | 근거 |
+| --- | --- | --- |
+| 쓰이는 곳 | 하단 바(GNB), 앱 목록(App Library), App Market | Pleos [App Icon](https://document.pleos.ai/docs/connect/guide/docs-design/foundations/contents-creation/app-icon) |
+| 형식 | Android 적응형 아이콘. 로고·핵심 그래픽(전경)과 배경을 나눔. 시스템이 브랜드별 틀을 씌움(현대·제네시스 둥근 사각형, 기아 왼쪽 위·오른쪽 아래를 자른 모양). 스타일은 차량 브랜드 정책을 따름 | 같음 |
+| 알림 형태 | App icon 형태는 "Used when receiving notifications from the app". 카드 아이콘이 앱 아이콘과 같아야 한다는 문구는 찾지 못함. 예시 그림은 확인하지 못함 | Pleos [System Notification](https://document.pleos.ai/docs/connect/guide/docs-design/components/notification/system-notification) |
+| 에뮬레이터 하단 바·앱 목록 | 108dp 중 가운데 72dp를 둥근 사각형(모서리 약 20%)으로 보여 줌. 하단 바 아이콘 76px | [측정](pleos-emulator/README.md#앱-아이콘과-카드-아이콘) |
+| 에뮬레이터 카드 | 앱 아이콘이 아니라 알림의 작은 아이콘(큰 아이콘을 넣으면 그것)을 틀 없이 색 그대로 그림. 약 77px. 오른쪽 아래에 말풍선 배지. 색·사용자 지정 뷰·야간 모드로는 카드가 바뀌지 않음 | 같음 |
+
+**고른 이유** (제품 판단, 사용자 결정)
+
+- **앱 아이콘 logo_tight:** 앱을 열면 보이는 머리 로고(`home_logo.png`)와 같은 그림이라 아이콘과 앱 안이 이어집니다. 76px에서는 차 윤곽은 보이지만 반사·미등 같은 세부는 뭉개집니다(측정 캡처).
+- **카드 아이콘 flow:** 카드는 내비 위에 잠깐 뜨므로 한 번에 읽히는 단순한 모양을 골랐습니다. 리본이 왼쪽 아래에서 오른쪽 위로 올라가 배지가 덮는 오른쪽 아래가 비어 있습니다.
+- **함께 검토한 안:** 카드 아이콘을 앱 아이콘과 같게 하는 안, 안내 종류마다 다른 아이콘을 쓰는 안을 비교했습니다. 종류별 아이콘은 기록 화면의 패턴 아이콘 대부분이 화살표라 내비 경로 안내와 헷갈릴 수 있고, 어느 앱의 알림인지가 제목 글자에만 남아 고르지 않았습니다(제품 판단). 앱 아이콘과 카드 아이콘이 다른 안은 운전자가 두 모양을 같은 앱으로 익혀야 하는 부담이 있습니다. 카드 제목 "모션케어"가 이를 보완합니다.
+
+**만든 방법**
+
+- **생성:** Codex CLI 0.167.0의 이미지 생성으로 만들었습니다. 홈 화면 캡처와 머리 로고를 붙여 앱 색(#030E1F 바탕, #5FE0FB 청록)과 유리 질감을 맞추게 했고, 고른 시안의 기호만 검은 바탕에 다시 그리게 했습니다. 프롬프트와 시안은 [design-archive/images/app-icon](design-archive/images/app-icon)에 있습니다. 외부 저작물을 쓰지 않았습니다.
+- **조립:** [app_icon.sh](design-archive/tools/app_icon.sh)가 검은 바탕을 투명하게 바꾸고, 앱 남색의 방사형 그라데이션 배경을 따로 만들어 층을 나눕니다. 다시 만들려면 ImageMagick 7을 설치하고 `bash docs/design-archive/tools/app_icon.sh`를 실행합니다. 같은 입력이면 같은 파일이 나옵니다.
+- **안전 영역:** 틀이 어떤 모양이어도 남는 가운데 66dp 원 안에 기호를 넣었습니다. 432px 층에서 원의 반지름 132px 대비 logo_tight는 117px, flow는 빛 번짐까지 129px입니다. flow는 생성된 리본이 원의 77%만 차서 25% 키웠습니다.
+- **카드 아이콘:** 카드는 틀을 씌우지 않으므로 앱 아이콘과 같은 배경 위 가운데 72dp를 하단 바와 같은 반경(20%)으로 잘라 모서리를 투명하게 둡니다. 192px 한 장(`drawable-nodpi`)이라 밀도에 따라 미리 줄지 않고 카드 크기에 맞춰 그려집니다.
+
+**파일과 바꿀 때**
+
+- 앱 아이콘: `app/src/main/res/mipmap-anydpi/ic_launcher.xml`과 `mipmap-*/ic_launcher_foreground.png`·`ic_launcher_background.png`. Manifest의 `android:icon`이 가리킵니다.
+- 카드 아이콘: `app/src/main/res/drawable-nodpi/ic_notification.png`. `TripRecordingService`가 운행 기록 알림과 안내 카드(`NotificationGuidancePresenter`)에 넘깁니다.
+- 두 아이콘은 따로 정해지므로 하나를 바꾸면 다른 하나도 확인합니다. 카드에 큰 아이콘(`setLargeIcon`)을 넣으면 카드에는 이 아이콘 대신 큰 아이콘이 보입니다.
+- 단색(monochrome) 층은 두지 않았습니다. Pleos 가이드는 전경과 배경만 요구하고, 테마 아이콘은 휴대폰 런처의 기능입니다. lint 경고는 `ic_launcher.xml`에서만 끕니다.
+- 에뮬레이터 하단 바는 앱을 업데이트해도 다시 시작하기 전까지 옛 아이콘을 보여 줍니다.
+
+**확인하지 못한 것:** 기아 틀, Pleos Figma 템플릿(`Pleos_Connect_design_assets_215.fig`)의 격자, App Market에 보이는 크기, 실차 화면 밀도. 일반 휴대폰 상태 표시줄은 알림 아이콘을 흰 실루엣으로 그리므로 둥근 사각형으로 보일 것으로 예상하지만 시험하지 않았습니다(이전 아이콘도 같은 사각형).
+
 ## 시안에 아직 반영되지 않은 Pleos 제약
 
 2026-11-03에 Pleos Connect 에뮬레이터 v2.1.0(API 34)에서 시험 앱으로 측정한 결과입니다. 실차와 App Market 심사에서는 확인하지 못했고, 권한은 adb로 강제로 부여했습니다. 측정 방법과 캡처는 [측정 기록](pleos-emulator/README.md)에 있습니다.

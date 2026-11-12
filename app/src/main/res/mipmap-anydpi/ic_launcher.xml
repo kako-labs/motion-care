@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pleos asks for an adaptive icon and masks it per vehicle brand. Layers are built by
+     docs/design-archive/tools/app_icon.sh; see docs/design.md. No monochrome layer: the Pleos guide asks only for
+     foreground and background, and the emulator's dock and app library draw the colored layers. Themed icons are a
+     phone launcher option. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" tools:ignore="MonochromeLauncherIcon">
+    <background android:drawable="@mipmap/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>
