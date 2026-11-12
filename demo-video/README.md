@@ -1,5 +1,7 @@
 # 모션케어 데모 영상 (약 3분 30초)
 
+**이야기 영상(`MotionCareStory`, 3분 10초)** 은 한 운행을 실제 순서대로 따라가도록 3분 영상을 다시 만든 것입니다. `docs/story.md`를 보세요.
+
 **3분 영상(`MotionCare3Min`, 2분 44초)** 은 에뮬레이터를 새로 녹화해 만든 별도 컴포지션입니다. `docs/3min.md`와 `docs/shot-list-3min.md`를 보세요. 아래는 기존 4분 영상(`MotionCareDemo`) 설명입니다.
 
 실제 녹화본으로 다시 만들려면 `docs/HANDOFF.md`부터 읽으세요. 장면표는 `docs/shot-list.md`, 기준 영상은 `reference/motioncare-demo-reference.mp4`입니다.
