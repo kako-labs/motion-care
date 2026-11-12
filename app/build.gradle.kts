@@ -8,6 +8,12 @@ plugins {
 val androidConfig = Properties().apply {
     rootProject.file("config/android-test.properties").inputStream().use { load(it) }
 }
+// Release signing comes from local.properties (release.storeFile, release.storePassword, release.keyAlias,
+// release.keyPassword), which Git ignores. Without it assembleRelease still builds, unsigned.
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+val releaseStore = localProperties.getProperty("release.storeFile")?.let(::file)?.takeIf { it.exists() }
 android {
     namespace = "dev.motioncare"
     compileSdk = androidConfig.getProperty("compileSdk").toInt()
@@ -17,8 +23,19 @@ android {
         minSdk = androidConfig.getProperty("minSdk").toInt()
         targetSdk = androidConfig.getProperty("targetSdk").toInt()
         versionCode = 1
-        versionName = "0.2.0-scaffold"
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    if (releaseStore != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = releaseStore
+                storePassword = localProperties.getProperty("release.storePassword")
+                keyAlias = localProperties.getProperty("release.keyAlias")
+                keyPassword = localProperties.getProperty("release.keyPassword")
+            }
+        }
+        buildTypes.getByName("release").signingConfig = signingConfigs.getByName("release")
     }
     buildFeatures { compose = true }
     compileOptions {
