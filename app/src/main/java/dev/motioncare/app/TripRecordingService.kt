@@ -131,7 +131,7 @@ class TripRecordingService : Service() {
                     watchEnvironment(environment, tripId)
                 }
                 recorder.record(
-                    NotificationGuidancePresenter(this@TripRecordingService, R.drawable.ic_launcher, audio),
+                    NotificationGuidancePresenter(this@TripRecordingService, R.drawable.ic_notification, audio),
                     environment.current,
                 )
                 environmentJob.cancelAndJoin()
@@ -180,7 +180,7 @@ class TripRecordingService : Service() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL_ID, "운행 기록", NotificationManager.IMPORTANCE_LOW))
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(if (recordingTrip != null || !watchingGear()) "운행 기록 중" else "운행 자동 기록 켜짐")
             .apply { if (recordingTrip == null && watchingGear()) setContentText("P에서 출발하면 기록을 시작해요") }
             .setOngoing(true)
