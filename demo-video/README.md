@@ -1,6 +1,8 @@
 # 모션케어 데모 영상 (약 3분 30초)
 
-**이야기 영상(`MotionCareStory`, 3분 10초)** 은 한 운행을 실제 순서대로 따라가도록 3분 영상을 다시 만든 것입니다. `docs/story.md`를 보세요.
+**만드는 순서와 배운 것**은 `docs/howto.md`에 판마다 모았습니다. 새로 만들 때는 이 문서부터 보세요.
+
+**이야기 영상(`MotionCareStory`, 3분 10초)** 은 한 운행을 실제 순서대로 따라가도록 3분 영상을 다시 만든 것입니다. 자막을 ElevenLabs 음성으로 읽는 비교용 내레이션 버전(`MotionCareStoryTts`, 3분 14초)도 있습니다. `docs/story.md`를 보세요.
 
 **3분 영상(`MotionCare3Min`, 2분 44초)** 은 에뮬레이터를 새로 녹화해 만든 별도 컴포지션입니다. `docs/3min.md`와 `docs/shot-list-3min.md`를 보세요. 아래는 기존 4분 영상(`MotionCareDemo`) 설명입니다.
 
