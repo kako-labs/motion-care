@@ -13,7 +13,7 @@
 
 ### APK
 
-`apk/TEAM_모션케어_release.apk`
+`apk/KA&KO_모션케어_release.apk`
 
 - release 빌드, 서명됨, 버전 1.0.0
 - 패키지 `dev.motioncare.scaffold`
@@ -31,7 +31,7 @@
 
 ### 설치와 실행
 
-1. 에뮬레이터를 켜고 APK를 설치합니다: `adb install apk/TEAM_모션케어_release.apk`
+1. 에뮬레이터를 켜고 APK를 설치합니다: `adb install "apk/KA&KO_모션케어_release.apk"` (파일 이름의 `&` 때문에 따옴표가 필요합니다)
 2. 하단 바의 모션케어 아이콘으로 앱을 엽니다.
 3. 홈의 설정 카드에서 **운행 자동 기록**을 켜고 권한을 허용합니다.
    - 차량 속도 권한은 위치 권한 묶음이라 '위치 정보'로 표시됩니다.

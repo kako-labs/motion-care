@@ -200,8 +200,8 @@ Kotlin, Jetpack Compose로 개발하며 주행, 프로필, 기록·분석 화면
 
 ## 7. 참고자료
 
-- **시연 영상(3분 10초):** Pleos Connect 에뮬레이터에서 녹화한 실제 앱 화면입니다. 한 운행을 출발 전 → 주행 → 도착 → 기록 → 다음 출발 순서로 따라갑니다. 기록 장면은 시연용 데이터입니다. 링크: (제출 전 기재)
-- **GitHub 저장소:** https://github.com/kako-labs/motion-care (최종 커밋: 제출 전 기재)
+- **시연 영상(3분 10초):** Pleos Connect 에뮬레이터에서 녹화한 실제 앱 화면입니다. 한 운행을 출발 전 → 주행 → 도착 → 기록 → 다음 출발 순서로 따라갑니다. 기록 장면은 시연용 데이터입니다. 링크: (접수 메일에 기재)
+- **GitHub 저장소:** https://github.com/kako-labs/motion-care (최종 커밋: 접수 메일에 기재)
   - 소스 코드와 release APK(`apk/` 폴더)가 들어 있습니다.
   - README에 실행 방법, 에뮬레이터 버전, 화면 규격을 적었습니다.
 - **근거 문서:** 안내 카드 규칙과 문구의 출처(`docs/guidance-card.md`), 운전 패턴 기준값의 출처(`docs/detection-thresholds.md`), 환경 데이터(`docs/environment.md`), 에뮬레이터 실측(`docs/pleos-emulator/README.md`)
